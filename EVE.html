@@ -2054,31 +2054,70 @@ const prev=a.src;
 a.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 a.play().then(()=>{a.pause();a.dataset.unlocked='1';if(prev)a.src=prev;}).catch(()=>{});
 });
-function speakLocal(text){
-if(!window.speechSynthesis||!text)return;
-const say=()=>{
-window.speechSynthesis.cancel();
-const u=new SpeechSynthesisUtterance(String(text).replace(/\s+/g,' ').slice(0,700));
-const voices=speechSynthesis.getVoices();
-const en=voices.filter(v=>/^en/i.test(v.lang||''));
+function pickFemaleVoice(){
+const voices=window.speechSynthesis?speechSynthesis.getVoices():[];
 const score=(v)=>{
-const n=(v.name+' '+(v.voiceURI||'')).toLowerCase();
+const n=(v.name+' '+(v.lang||'')+' '+(v.voiceURI||'')).toLowerCase();
 let s=0;
+if(/en[-_]us/.test(n)||/english.*united states/.test(n))s+=6;
+else if(/^en/.test(v.lang||'')||/english/.test(n))s+=3;
+if(/natural|neural|online/.test(n))s+=20;
+if(/jenny/.test(n))s+=18;
+if(/aria|samantha|ava|emma|michelle|sara|sonia|libby|natasha|victoria|karen|moira|serena|fiona|zira|hazel|susan|allison/.test(n))s+=12;
+if(/google/.test(n)&&/female|us english/.test(n))s+=14;
 if(/female|woman/.test(n))s+=8;
-if(/samantha|victoria|karen|moira|zira|serena|fiona|susan|allison|ava|jenny|aria|salli|joanna/.test(n))s+=14;
-if(/google uk english female|google us english female/.test(n))s+=16;
-if(/\bmale\b|daniel|fred|david|alex\b|tom\b/.test(n)&&!/female/.test(n))s-=12;
+if(/\bmale\b|daniel|fred|david|alex\b|tom\b|george|james|rishi/.test(n)&&!/female/.test(n))s-=20;
+if(/ana\b|child|boy|girl/.test(n))s-=8;
 return s;
 };
-const pool=(en.length?en:voices).slice().sort((a,b)=>score(b)-score(a));
-const v=pool[0];
+return voices.slice().sort((a,b)=>score(b)-score(a))[0]||null;
+}
+function primeVoice(){
+try{
+const a=ensureVoiceAudio();
+const prev=a.src;
+a.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+const p=a.play();
+if(p&&p.then)p.then(()=>{a.pause();a.dataset.unlocked='1';if(prev)a.src=prev;}).catch(()=>{});
+}catch(e){}
+if(window.speechSynthesis){
+try{speechSynthesis.resume();}catch(e){}
+try{
+const u=new SpeechSynthesisUtterance(' ');
+u.volume=0;
+speechSynthesis.speak(u);
+}catch(e){}
+}
+}
+function speakLocal(text){
+if(!window.speechSynthesis||!text)return;
+const chunks=[];
+let rest=String(text).replace(/\s+/g,' ').trim().slice(0,900);
+while(rest){
+if(rest.length<=180){chunks.push(rest);break;}
+let cut=rest.lastIndexOf('. ',180);
+if(cut<40)cut=rest.lastIndexOf(' ',180);
+if(cut<40)cut=180;
+chunks.push(rest.slice(0,cut+1).trim());
+rest=rest.slice(cut+1).trim();
+}
+const sayChunk=(i)=>{
+if(i>=chunks.length)return;
+const u=new SpeechSynthesisUtterance(chunks[i]);
+const v=pickFemaleVoice();
 if(v){u.voice=v;u.lang=v.lang||'en-US';}
-u.pitch=1.2;
-u.rate=1.02;
-window.speechSynthesis.speak(u);
+else u.lang='en-US';
+u.pitch=1.05;
+u.rate=1;
+u.onend=()=>sayChunk(i+1);
+try{speechSynthesis.resume();speechSynthesis.speak(u);}catch(e){}
 };
-if(speechSynthesis.getVoices().length)say();
-else speechSynthesis.addEventListener('voiceschanged',say,{once:true});
+const go=()=>{try{speechSynthesis.cancel();}catch(e){} sayChunk(0);};
+if(speechSynthesis.getVoices().length)go();
+else{
+speechSynthesis.addEventListener('voiceschanged',go,{once:true});
+setTimeout(()=>{if(!speechSynthesis.speaking)go();},400);
+}
 }
 let eveVoiceToken=0;
 function speakText(text){
@@ -2087,28 +2126,56 @@ if(box&&!box.checked)return;
 const clean=String(text||'').replace(/\s+/g,' ').trim().slice(0,900);
 if(!clean)return;
 const token=++eveVoiceToken;
-if(!navigator.onLine){speakLocal(clean);return;}
 const parts=[];
 let rest=clean;
 while(rest){
-if(rest.length<=150){parts.push(rest);break;}
-let cut=rest.lastIndexOf('. ',150);
-if(cut<40)cut=rest.lastIndexOf(' ',150);
-if(cut<40)cut=150;
+if(rest.length<=180){parts.push(rest);break;}
+let cut=rest.lastIndexOf('. ',180);
+if(cut<40)cut=rest.lastIndexOf(' ',180);
+if(cut<40)cut=180;
 parts.push(rest.slice(0,cut+1).trim());
 rest=rest.slice(cut+1).trim();
 }
 const audio=ensureVoiceAudio();
 let n=0;
+let heard=false;
+const localOnce=()=>{if(token!==eveVoiceToken||heard)return;heard=true;try{audio.pause();}catch(e){} speakLocal(clean);};
 const next=()=>{
 if(token!==eveVoiceToken||n>=parts.length)return;
-audio.onended=()=>next();
-audio.onerror=()=>{if(n<=1)speakLocal(clean);};
-audio.src='https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-US&q='+encodeURIComponent(parts[n++]);
-audio.play().catch(()=>{if(token===eveVoiceToken)speakLocal(clean);});
+const q=encodeURIComponent(parts[n]);
+const urls=[
+'https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=en-US&q='+q,
+'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-US&q='+q
+];
+let u=0;
+const timer=setTimeout(()=>{if(!heard)localOnce();},2500);
+const tryOne=()=>{
+if(token!==eveVoiceToken)return;
+if(u>=urls.length){clearTimeout(timer);localOnce();return;}
+let settled=false;
+const fail=()=>{
+if(settled||token!==eveVoiceToken)return;
+settled=true;
+u++;
+tryOne();
 };
-next();
+audio.onplaying=()=>{
+heard=true;
+clearTimeout(timer);
+try{speechSynthesis.cancel();}catch(e){}
+};
+audio.onended=()=>{if(token!==eveVoiceToken)return;n++;if(n<parts.length)next();};
+audio.onerror=fail;
+audio.src=urls[u];
+const play=audio.play();
+if(play&&play.catch)play.catch(fail);
+};
+tryOne();
+};
+if(navigator.onLine)next();
+else speakLocal(clean);
 }
+if(window.speechSynthesis){speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{};}
 function updateMicButton(){
 const b=document.getElementById('micBtn');
 if(b){
@@ -2177,7 +2244,8 @@ navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{micStream=stream
 }
 document.getElementById('micBtn').onclick=()=>{setVoiceMode(voiceMode==='manual'?'off':'manual');};
 document.getElementById('wakeWordToggle').onchange=(e)=>{setVoiceMode(e.target.checked?'wake':'off');};
-document.getElementById('voiceOutputToggle').checked=localStorage.getItem('eve_voice_output')!=='0';
+document.getElementById('voiceOutputToggle').checked=true;
+localStorage.setItem('eve_voice_output','1');
 document.getElementById('voiceOutputToggle').onchange=(e)=>localStorage.setItem('eve_voice_output',e.target.checked?'1':'0');
 function handleVoiceCommand(text){
 const lower=text.toLowerCase().trim();
@@ -2405,6 +2473,7 @@ if(hit)out+='\n\nClosest match:\n'+hit;
 return out.slice(0,3200);
 }
 document.getElementById('chatSend').onclick=async()=>{
+primeVoice();
 const inp=document.getElementById('chatInput');const txt=inp.value.trim();if(!txt)return;addChat('user',txt);inp.value='';
 let full='';addChat('ai','');const idx=chat.length-1;
 const statusEl=document.getElementById('chatStatus');
