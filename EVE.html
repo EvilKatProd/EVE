@@ -1,0 +1,2377 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'><title>EVE</title><meta name='viewport' content='width=device-width,initial-scale=1'>
+<style>
+*{box-sizing:border-box}html,body{height:100%}
+:root{--bg:#0a0a0f;--panel-bg:#18181b;--text:#e5e5e5;--muted:#888;--input-bg:#27272a;--input-border:#3f3f46;--card-bg:#1f1f23;--accent:#4f46e5}
+body.light{--bg:#f2f2f5;--panel-bg:#ffffff;--text:#18181b;--muted:#6b6b72;--input-bg:#f0f0f3;--input-border:#d8d8dd;--card-bg:#f0f0f3;--accent:#4f46e5}
+body.cyberpunk{--bg:#05010a;--panel-bg:#0d0518;--text:#e0faff;--muted:#8a7ba8;--input-bg:#170a28;--input-border:#ff2bd6;--card-bg:#140924;--accent:#ff2bd6}
+body.fantasy{--bg:#241708;--panel-bg:#33230f;--text:#f2e2c0;--muted:#c2a271;--input-bg:#402c14;--input-border:#8a6a3a;--card-bg:#38270f;--accent:#c9962c}
+body.horror{--bg:#0a0505;--panel-bg:#160808;--text:#e8d5d5;--muted:#9a6a6a;--input-bg:#200a0a;--input-border:#5a1a1a;--card-bg:#1c0a0a;--accent:#b91c1c}
+body.scifi{--bg:#040b16;--panel-bg:#0a1626;--text:#dbeeff;--muted:#7fa8c9;--input-bg:#0f1f36;--input-border:#1e3a5f;--card-bg:#0c1a2e;--accent:#2563eb}
+body.postapoc{--bg:#14100a;--panel-bg:#1e1810;--text:#e0d0b8;--muted:#a08860;--input-bg:#2a2216;--input-border:#4a3d24;--card-bg:#241d12;--accent:#c2691e}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+header{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:var(--panel-bg);margin:12px;border-radius:14px}
+.logo{font-size:28px;font-weight:900;letter-spacing:5px}
+#appRoot{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden}
+.main{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:320px 1fr 460px;grid-template-rows:minmax(0,1fr);gap:16px;padding:0 12px 12px;overflow:hidden}
+@media(max-width:1250px){body{height:auto;overflow:auto;display:block}#appRoot{display:block;overflow:visible;height:auto} .main{display:block;overflow:visible;height:auto}.panel{height:auto!important;max-height:none!important;overflow:visible!important;margin-bottom:16px}#chatBox{flex:none;height:420px;overflow-y:auto!important}#tabContent{flex:none;max-height:70vh;overflow-y:auto!important}}
+.panel{background:var(--panel-bg);border-radius:14px;padding:14px;height:100%;min-height:0;max-height:100%;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;scrollbar-width:thin}
+.panel::-webkit-scrollbar{width:8px;height:8px}
+.panel::-webkit-scrollbar-thumb{background:#3f3f46;border-radius:8px}
+footer{flex:0 0 auto;text-align:center;padding:12px;color:var(--muted);font-size:12px}
+#clockBox{cursor:pointer;font-variant-numeric:tabular-nums;display:flex;align-items:center}
+#themeSelect{width:auto!important;background:var(--input-bg);color:var(--text);border:1px solid var(--input-border);border-radius:8px;padding:4px 8px;cursor:pointer;font-size:12px;margin:0!important}
+#heroImg{width:100%;height:440px;object-fit:contain;background:var(--card-bg);border-radius:12px;display:block}
+.grid80{display:grid;grid-template-columns:repeat(auto-fill,80px);gap:8px;justify-content:center;margin-top:10px}
+.avatarWrap{position:relative;width:80px;height:80px}
+.avatar{width:80px;height:80px;object-fit:cover;border-radius:12px;border:2px solid var(--input-border);cursor:pointer;display:block}
+.delBtn{position:absolute;top:-6px;right:-6px;width:22px;height:22px;background:#ef4444;color:#fff;border-radius:50%;border:0;cursor:pointer;font-weight:900;z-index:2}
+.tabBar{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:14px}
+.tabBtn{padding:7px 12px;border-radius:9999px;background:var(--input-bg);color:var(--text);border:0;cursor:pointer;font-size:13px}
+.tabBtn.active{background:var(--accent);color:#fff}
+.tabContent{max-width:780px;margin:0 auto;text-align:center}
+input,textarea,select{width:100%;background:var(--input-bg);color:var(--text);border:1px solid var(--input-border);border-radius:8px;padding:9px;margin:5px 0;font-size:14px}
+button.primary{background:var(--accent);color:#fff;padding:9px 14px;border-radius:8px;border:0;cursor:pointer;margin:4px;font-weight:600}
+button.secondary{background:var(--input-bg);color:var(--text);padding:8px 12px;border-radius:8px;border:1px solid var(--input-border);cursor:pointer;margin:4px}
+#chatBox{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;background:var(--input-bg);border-radius:10px;padding:10px;text-align:left;scrollbar-width:thin}
+#chatBox::-webkit-scrollbar{display:none}
+#tabBar{flex:0 0 auto}
+#tabContent{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#tabContent img,#tabContent canvas,#tabContent video,#tabContent iframe,#tabContent table{max-width:100%}
+#tabContent canvas{height:auto}
+#tabContent::-webkit-scrollbar{display:none}
+.chatBubble{margin:6px 0;padding:10px;border-radius:10px;white-space:pre-wrap}
+.chatBubble.user{background:var(--accent);color:#fff}
+.chatBubble.ai{background:var(--input-border);color:var(--text)}
+.card{border:1px solid var(--input-border);border-radius:10px;padding:10px;margin:6px 0;text-align:left;background:var(--card-bg)}
+.calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+.calDay{background:var(--input-bg);border-radius:8px;min-height:72px;padding:6px;font-size:12px;text-align:left;cursor:pointer}
+.calDay.today{border:2px solid var(--accent)}
+.calDay.hasEvent{background:#1e1b4b}
+.wStat{background:var(--card-bg);border-radius:10px;padding:8px 14px;text-align:center;min-width:70px}
+.wStatLabel{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.wStatVal{font-size:15px;font-weight:700;margin-top:2px}
+.wHour{flex:0 0 auto;width:68px;background:var(--card-bg);border-radius:10px;padding:8px 4px;text-align:center;font-size:11px}
+.wHour .wIco{font-size:20px;margin:2px 0}
+.noscroll{scrollbar-width:none;-ms-overflow-style:none}
+.noscroll::-webkit-scrollbar{display:none}
+.projSubBtn.active{background:var(--accent);color:#fff}
+.projColumns{display:flex;gap:8px;overflow-x:auto}
+.projColumn{flex:1;min-width:140px;background:var(--card-bg);border:1px solid var(--input-border);border-radius:8px;padding:6px;min-height:150px}
+.projColumn h4{margin:0 0 6px;font-size:12px;color:var(--muted)}
+.projCard{background:var(--accent);color:#fff;margin:4px 0;padding:6px;border-radius:6px;cursor:grab;font-size:12px;text-align:left}
+.projQuadrants{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.projQuadrant{background:var(--card-bg);border:1px solid var(--input-border);border-radius:8px;min-height:110px;padding:6px;font-size:12px}
+.projQuadrant h4{margin:0 0 6px;font-size:12px;color:var(--muted)}
+.projTimeline{display:flex;gap:8px;overflow-x:auto;background:var(--card-bg);border:1px solid var(--input-border);border-radius:8px;padding:8px}
+.projTimelineEvent{min-width:120px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:6px;padding:6px;font-size:11px;text-align:left}
+.projTable{width:100%;border-collapse:collapse;font-size:12px}
+.projTable th,.projTable td{border:1px solid var(--input-border);padding:4px;text-align:left}
+.projList{background:var(--card-bg);border:1px solid var(--input-border);border-radius:8px;max-height:260px;overflow-y:auto;padding:6px;text-align:left}
+</style></head><body>
+<header><div class=logo>EVE</div><div style="display:flex;align-items:center;gap:12px"><span id=netDot style=color:#22c55e>● Live</span> <span id=weatherMini>--°F</span><div id=clockBox title="Click to switch digital/analog"></div><select id=themeSelect title="Theme"><option value="dark">Dark</option><option value="light">Light</option><option value="cyberpunk">Cyberpunk</option><option value="fantasy">Fantasy</option><option value="horror">Horror</option><option value="scifi">Sci-Fi</option><option value="postapoc">Post-Apocalyptic</option></select><span id=storageInfo style="font-size:11px;color:var(--muted)"></span></div></header>
+<div id=lockOverlay style="position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center;padding:24px">
+<div style="font-size:40px;font-weight:900;letter-spacing:6px">EVE</div>
+<div id=lockStatus style="font-size:13px;color:var(--muted);max-width:440px;line-height:1.5"></div>
+<div id=lockButtons style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"></div>
+<button class=secondary id=lockRecoveryToggle style="font-size:11px;margin-top:10px;display:none">Use recovery PIN instead</button>
+<div id=lockRecoveryArea style="display:none;margin-top:6px;align-items:center;gap:8px"><input id=lockRecoveryInput type=password placeholder="Recovery PIN" style="width:220px"><button class=primary id=lockRecoverySubmit>Unlock</button></div>
+</div>
+<div id=appRoot style="display:none">
+<div class=main>
+<div class=panel><img id=heroImg><input type=file id=avatarUpload multiple accept=image/*><button class=primary id=clearAv>Clear All Avatars</button><div id=avatarGrid class=grid80></div></div>
+<div class=panel><div id=chatBox></div><div id=nowPlaying style="font-size:11px;color:var(--muted);text-align:left;min-height:14px"></div><div id=voiceInterim style="font-size:12px;color:var(--muted);text-align:left;min-height:16px;font-style:italic"></div><select id=chatModeSelect style="margin:4px 0"><option value=collaborator>Collaborator</option><option value=support>Support & Reflection</option><option value=spicy>Spicy 😏</option></select><div id=chatModeNote style="font-size:10px;color:#f59e0b;text-align:left;min-height:12px"></div><label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin:2px 0"><input type=checkbox id=chatContextToggle style="width:auto;margin:0"> Use Code Lab / RPG context</label><label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin:2px 0"><input type=checkbox id=voiceOutputToggle style="width:auto;margin:0"> EVE speaks responses aloud</label><label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin:2px 0"><input type=checkbox id=wakeWordToggle style="width:auto;margin:0"> Wake word ("Hey, Eve")</label><div style=display:flex;gap:8px><button class=secondary id=micBtn title="Voice input" style="flex:0 0 auto">🎤</button><input id=chatInput placeholder='Talk to EVE...'><button class=primary id=chatSend>Send</button></div><div id=chatStatus style="font-size:11px;color:var(--muted);margin-top:4px;text-align:left"></div></div>
+<div class=panel><div id=tabBar class=tabBar></div><div id=tabContent class=tabContent></div></div>
+</div>
+<footer>Copyright and Trademark 2026 Ferreri Technologies</footer>
+</div>
+<script>
+const DEFAULT_AVATAR="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQ0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEwYjIwIi8+PHRleHQgeD0iNTAlIiB5PSI0NSUiIGZpbGw9IiM0ZjQ2ZTUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjY0IiBmb250LXdlaWdodD0iOTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5FVkU8L3RleHQ+PC9zdmc+";
+const TABS=["Brain","Email","Apps","Code Lab","Calculator","Image","Music","Video","Spotify","YouTube","Browser","RPG","Stories","Maps","Weather","Alarms","To Do","Notes","Knowledge","Projects","Legal","Health","Calendar","Focus","Search","Tools","Comics","Media"];
+const CHAT_FEATURES=[{id:'chat',label:'Chat'},{id:'codelab',label:'Code Lab'},{id:'rpg',label:'RPG'},{id:'stories',label:'Stories'},{id:'legal',label:'Legal'},{id:'health',label:'Health'}];
+let avatars=[];let hero=localStorage.getItem('eve_hero')||'';
+let chat=JSON.parse(localStorage.getItem('eve_chat')||'[]');
+let activeTab=localStorage.getItem('eve_active_tab')||'Brain';
+let aiKey=localStorage.getItem('eve_anthropic_key')||'';
+window.pyBridge=null;
+let voiceMode='off';
+let ytApiPromise=null;
+function loadYouTubeAPI(){
+if(window.YT && window.YT.Player)return Promise.resolve();
+if(ytApiPromise)return ytApiPromise;
+ytApiPromise=new Promise((resolve)=>{
+window.onYouTubeIframeAPIReady=()=>resolve();
+const tag=document.createElement('script');
+tag.src='https://www.youtube.com/iframe_api';
+document.head.appendChild(tag);
+});
+return ytApiPromise;
+}
+let spotifyApiPromise=null;
+let nowPlayingSources={};
+function setNowPlaying(source,text){
+if(text)nowPlayingSources[source]=text;
+else delete nowPlayingSources[source];
+const el=document.getElementById('nowPlaying');
+if(el)el.textContent=Object.values(nowPlayingSources).join('  •  ');
+}
+function loadSpotifyAPI(){
+if(window.SpotifyIFrameAPI)return Promise.resolve(window.SpotifyIFrameAPI);
+if(spotifyApiPromise)return spotifyApiPromise;
+spotifyApiPromise=new Promise((resolve)=>{
+window.onSpotifyIframeApiReady=(IFrameAPI)=>{window.SpotifyIFrameAPI=IFrameAPI;resolve(IFrameAPI);};
+const tag=document.createElement('script');
+tag.src='https://open.spotify.com/embed/iframe-api/v1';
+tag.async=true;
+document.head.appendChild(tag);
+});
+return spotifyApiPromise;
+}
+if(window.qt && window.qt.webChannelTransport && typeof QWebChannel!=='undefined'){
+new QWebChannel(qt.webChannelTransport,function(channel){
+window.pyBridge=channel.objects.pyBridge;
+window.pyBridge.voicePartial.connect((text)=>{const el=document.getElementById('voiceInterim');if(el)el.textContent=text;});
+window.pyBridge.voiceFinal.connect((text)=>{const el=document.getElementById('voiceInterim');if(el)el.textContent='';if(text&&text.trim())handleVoiceCommand(text.trim());});
+window.pyBridge.voiceError.connect((msg)=>{const el=document.getElementById('chatStatus');if(el)el.textContent='Couldn\'t hear that.';voiceMode='off';updateMicButton();});
+window.pyBridge.wakeDetected.connect(()=>{const el=document.getElementById('voiceInterim');if(el)el.textContent='Hey, Eve! Listening...';});
+window.pyBridge.faceResult.connect((raw)=>{
+if(document.getElementById('lockOverlay').style.display!=='none'){handleBioResult('face',JSON.parse(raw));}
+else{const res=JSON.parse(raw);const el=document.getElementById('biometricStatus');if(el)el.textContent=res.ok?'Face saved.':'That didn\'t work.';}
+});
+window.pyBridge.voiceBioResult.connect((raw)=>{
+if(document.getElementById('lockOverlay').style.display!=='none'){handleBioResult('voice',JSON.parse(raw));}
+else{const res=JSON.parse(raw);const el=document.getElementById('biometricStatus');if(el)el.textContent=res.ok?'Voice saved.':'That didn\'t work.';}
+});
+initLock();
+});
+}else{
+initLock();
+}
+function getEnginePrefs(){try{return JSON.parse(localStorage.getItem('eve_engine_pref')||'{}');}catch{return {};}}
+function setEnginePref(feature,val){const p=getEnginePrefs();p[feature]=val;localStorage.setItem('eve_engine_pref',JSON.stringify(p));}
+(function(){const mode=localStorage.getItem('eve_brain_mode')||'auto';CHAT_FEATURES.forEach(f=>setEnginePref(f,mode==='online'?'web':mode));})();
+const MODEL_LABELS={'claude-haiku-4-5-20251001':'Haiku 4.5','claude-sonnet-5':'Sonnet 5','claude-opus-5':'Opus 5','claude-fable-5':'Fable 5'};
+const MODEL_DEFAULTS={chat:'claude-sonnet-5',codelab:'claude-opus-5',rpg:'claude-sonnet-5'};
+function getModelPrefs(){try{return JSON.parse(localStorage.getItem('eve_model_pref')||'{}');}catch{return {};}}
+function setModelPref(feature,val){const p=getModelPrefs();p[feature]=val;localStorage.setItem('eve_model_pref',JSON.stringify(p));}
+function getModelForFeature(feature){return (feature&&getModelPrefs()[feature])||MODEL_DEFAULTS[feature]||'claude-sonnet-5';}
+function getOllamaEndpoint(){return (localStorage.getItem('eve_ollama_endpoint')||'http://localhost:11434').replace(/\/+$/,'');}
+let ollamaModels=JSON.parse(localStorage.getItem('eve_ollama_models_cache')||'[]');
+async function refreshOllamaModels(){
+const endpoint=getOllamaEndpoint();
+if(window.pyBridge){
+const raw=await new Promise((resolve)=>{window.pyBridge.listOllamaModels(endpoint,function(result){resolve(result);});});
+const data=JSON.parse(raw);
+if(!data.ok)throw new Error(data.error||'Could not reach Ollama');
+ollamaModels=data.models||[];
+localStorage.setItem('eve_ollama_models_cache',JSON.stringify(ollamaModels));
+return ollamaModels;
+}
+const res=await fetch(endpoint+'/api/tags');
+if(!res.ok)throw new Error('HTTP '+res.status);
+const data=await res.json();
+ollamaModels=(data.models||[]).map(m=>m.name||m.model).filter(Boolean);
+localStorage.setItem('eve_ollama_models_cache',JSON.stringify(ollamaModels));
+return ollamaModels;
+}
+function getOllamaModelPrefs(){try{return JSON.parse(localStorage.getItem('eve_ollama_model_pref')||'{}');}catch{return {};}}
+function setOllamaModelPref(feature,val){const p=getOllamaModelPrefs();p[feature]=val;localStorage.setItem('eve_ollama_model_pref',JSON.stringify(p));}
+function getOllamaModelForFeature(feature){const saved=feature&&getOllamaModelPrefs()[feature];if(saved&&ollamaModels.includes(saved))return saved;return ollamaModels[0]||'';}
+function resolveEngine(feature){
+const pref=(feature&&getEnginePrefs()[feature])||'auto';
+if(pref==='cloud'&&aiKey)return 'cloud';
+if((pref==='ollama'||pref==='auto')&&getOllamaModelForFeature(feature))return 'ollama';
+return 'local';
+}
+function aiUnavailableMessage(feature){
+const pref=(feature&&getEnginePrefs()[feature])||'auto';
+if(pref==='cloud')return 'That choice needs a saved sign-in.';
+if(pref==='ollama')return 'EVE is ready.';
+return 'EVE is ready.';
+}
+function featureStatusText(){return '';}
+function aiConfigSummary(){return 'EVE is ready.';}
+function updateChatStatus(){const el=document.getElementById('chatStatus');if(el)el.textContent=featureStatusText('chat');paintNet();}
+function paintNet(){
+const el=document.getElementById('netDot');
+if(!el)return;
+el.textContent='● Live';
+el.style.color='#22c55e';
+}
+function readStore(key,fallback){try{const v=JSON.parse(localStorage.getItem(key)||'');return v==null?fallback:v;}catch(e){return fallback;}}
+async function ollamaAnywhere(messages,opts,onDelta){
+if(window._eveOllamaDown&&Date.now()-(window._eveOllamaChecked||0)<20000)throw new Error('down');
+const endpoint=getOllamaEndpoint();
+const ctrl=new AbortController();
+const timer=setTimeout(()=>ctrl.abort(),700);
+let names=[];
+try{
+const tags=await fetch(endpoint+'/api/tags',{signal:ctrl.signal});
+clearTimeout(timer);
+if(!tags.ok)throw new Error('down');
+const data=await tags.json();
+names=(data.models||[]).map(m=>m.name||m.model).filter(Boolean);
+}catch(e){
+clearTimeout(timer);
+window._eveOllamaDown=true;
+window._eveOllamaChecked=Date.now();
+throw e;
+}
+if(!names.length){window._eveOllamaDown=true;window._eveOllamaChecked=Date.now();throw new Error('none');}
+window._eveOllamaDown=false;
+ollamaModels=names;
+localStorage.setItem('eve_ollama_models_cache',JSON.stringify(ollamaModels));
+const model=getOllamaModelForFeature(opts.feature)||names[0];
+const chatCtrl=new AbortController();
+const chatTimer=setTimeout(()=>chatCtrl.abort(),120000);
+const res=await fetch(endpoint+'/api/chat',{
+method:'POST',
+signal:chatCtrl.signal,
+headers:{'content-type':'application/json'},
+body:JSON.stringify({model,messages,stream:true,options:{temperature:opts.temperature!=null?opts.temperature:0.7,num_predict:opts.maxTokens||1024}})
+});
+clearTimeout(chatTimer);
+if(!res.ok||!res.body)throw new Error('down');
+const reader=res.body.getReader();const decoder=new TextDecoder();let buf='';let full='';
+while(true){
+const {done,value}=await reader.read();
+if(done)break;
+buf+=decoder.decode(value,{stream:true});
+const lines=buf.split('\n');buf=lines.pop();
+for(const line of lines){
+if(!line.trim())continue;
+try{const evt=JSON.parse(line);if(evt.message&&evt.message.content){full+=evt.message.content;onDelta(full);}}catch(e){}
+}
+}
+if(!full.trim())throw new Error('empty');
+return full;
+}
+function isJunkReply(text){
+const t=String(text||'');
+if(!t.trim())return true;
+if(/on-device model is not available|echoing back the input|api key|raise the key budget|ENOSPC/i.test(t))return true;
+if(/I can open your notes|Got it\. I can open|I can help|my capabilities|as an ai|language model|i am an ai|i'm an ai|here to help you with/i.test(t))return true;
+if(/you are eve\b/i.test(t.slice(0,500)))return true;
+if(/write the opening chapter|providing general legal information|providing general health and wellness/i.test(t))return true;
+return false;
+}
+async function deviceStream(messages,onDelta){
+const LM=window.LanguageModel||(window.ai&&window.ai.languageModel);
+if(!LM||!LM.create)throw new Error('none');
+let session;
+try{
+if(LM.availability){
+const state=await Promise.race([Promise.resolve(LM.availability()),new Promise((_,rej)=>setTimeout(()=>rej(new Error('none')),800))]);
+if(state==='unavailable'||state==='no')throw new Error('none');
+}
+session=await Promise.race([LM.create(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('none')),800))]);
+}catch(e){throw new Error('none');}
+const sys=messages.filter(m=>m.role==='system').map(m=>m.content).join('\n\n');
+const convo=messages.filter(m=>m.role!=='system').map(m=>(m.role==='user'?'User: ':'EVE: ')+m.content).join('\n');
+const prompt=(sys?sys+'\n\n':'')+convo+'\nEVE:';
+let full='';
+if(session.promptStreaming){
+const stream=session.promptStreaming(prompt);
+for await(const chunk of stream){
+if(typeof chunk==='string')full=chunk.length>=full.length?chunk:full+chunk;
+else if(chunk&&chunk.text)full+=chunk.text;
+if(isJunkReply(full)&&full.length>40)throw new Error('none');
+}
+}else{
+full=await session.prompt(prompt);
+}
+if(!full||isJunkReply(full))throw new Error('none');
+onDelta(full);
+return full;
+}
+function offlineReply(messages,onDelta){
+const last=[...messages].reverse().find(m=>m.role==='user');
+const txt=(last&&last.content||'').trim();
+const lower=txt.toLowerCase();
+const mode=localStorage.getItem('eve_chat_mode')||'collaborator';
+let answer='';
+if(/\b(kill myself|suicide|want to die|self-harm|end my life)\b/.test(lower)){
+answer="I'm here with you. If you might act on this, contact a crisis line now — in the US, call or text 988.";
+}else if(/\b(time|what day|what date|today)\b/.test(lower)&&!/\b(to-?do|todo)\b/.test(lower)){
+answer='It is '+new Date().toLocaleString()+'.';
+}else if(/\b(to-?do|todos|tasks|task list)\b/.test(lower)){
+const todos=readStore('eve_todos',[]);
+const open=todos.filter(t=>!t.done);
+answer=open.length?('Still open:\n'+open.map(t=>'• '+t.text).join('\n')):'Your list is clear.';
+}else if(/\bnotes?\b/.test(lower)){
+const notes=localStorage.getItem('eve_notes')||'';
+answer=notes.trim()?notes.slice(0,1500):'No notes saved yet.';
+}else if(/\balarms?\b/.test(lower)){
+const alarms=readStore('eve_alarms',[]);
+answer=alarms.length?alarms.map(a=>a.time+' '+(a.label||'')).join('\n'):'No alarms set.';
+}else if(/\b(calendar|schedule|appointment|events?)\b/.test(lower)){
+const cals=readStore('eve_cals',[]);
+answer=cals.length?cals.slice(-12).map(c=>(c.date||'')+' '+(c.time||'')+' '+(c.title||'')).join('\n'):'Nothing on the calendar.';
+}else if(/\b(weather|forecast|temperature)\b/.test(lower)){
+const saved=localStorage.getItem('eve_weather_line')||'';
+answer=saved?('Weather on this computer: '+saved):(navigator.onLine?'Opening weather.\nACTION: weather':'I don’t have a weather reading saved on this computer yet.');
+}else if(/^[0-9.+\-*/() \t]+$/.test(txt)&&/[0-9]/.test(txt)){
+try{answer=String(Function('"use strict";return ('+txt+')')());}catch(e){answer='I couldn’t work that out.';}
+}else if(/^(open|show|go to|switch to)\b/.test(lower)){
+const target=lower.replace(/^(open|show|go to|switch to)\s+(the\s+)?/,'').replace(/\s+tab$/,'').trim();
+const found=TABS.find(t=>t.toLowerCase()===target)||TABS.find(t=>t.toLowerCase().includes(target)||target.includes(t.toLowerCase()));
+answer=found?('Opening '+found+'.\nACTION: open '+found):'Which section should I open?';
+}else if(/\b(draw|picture|image|generate an image)\b/.test(lower)){
+answer=navigator.onLine?'Opening pictures.\nACTION: image '+txt:'Pictures you already saved are still here. New ones can be made when this computer is online.';
+}else if(/\b(search|look up|youtube|map|wikipedia)\b/.test(lower)){
+answer=navigator.onLine?'I can open that.\nACTION: open Search':'Search, maps, and video sites are there when this computer is online. Notes, tasks, calendar, music, and video on this computer work either way.';
+}else if(/^(hi|hello|hey|good morning|good evening|good night)\b/.test(lower)){
+answer=mode==='spicy'?"Hey. I'm right here.":"I'm here. What do you want to work on?";
+}else{
+const notes=(localStorage.getItem('eve_notes')||'');
+const words=lower.split(/\W+/).filter(w=>w.length>3);
+const noteHit=words.some(w=>notes.toLowerCase().includes(w));
+if(noteHit)answer='From your notes:\n'+notes.slice(0,1200);
+else if(mode==='support')answer="I'm with you. "+txt;
+else if(mode==='spicy')answer="I heard you. I'm not going anywhere.";
+else answer='I didn’t get an answer just now. Ask again.';
+}
+onDelta(answer);
+return answer;
+}
+async function eveFreeStream(messages,opts,onDelta){
+opts=opts||{};
+if(!navigator.onLine)throw new Error('offline');
+const slim=messages.slice(-10).map(m=>({role:m.role==='assistant'?'assistant':(m.role==='system'?'system':'user'),content:String(m.content||'').slice(0,3500)}));
+const ctrl=new AbortController();
+const timer=setTimeout(()=>ctrl.abort(),20000);
+try{
+const res=await fetch('https://api.llm7.io/v1/chat/completions',{method:'POST',signal:ctrl.signal,headers:{'content-type':'application/json'},body:JSON.stringify({model:'default',messages:slim,stream:false,temperature:opts.temperature!=null?opts.temperature:0.7})});
+const data=await res.json();
+const text=data&&data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
+if(text&&String(text).trim()&&!isJunkReply(String(text))){onDelta(String(text));return String(text);}
+}catch(e){}
+try{
+const last=[...slim].reverse().find(m=>m.role==='user');
+const sys=slim.filter(m=>m.role==='system').map(m=>m.content).join('\n').slice(0,1200);
+const prompt=(sys?sys+'\n\n':'')+(last?last.content:'');
+const res=await fetch('https://devtoolbox-api.devtoolbox-api.workers.dev/ai/generate',{method:'POST',signal:ctrl.signal,headers:{'content-type':'application/json'},body:JSON.stringify({prompt:prompt.slice(0,2500)})});
+const data=await res.json();
+const text=data&&(data.response||data.text||data.output);
+if(text&&String(text).trim()&&!isJunkReply(String(text))){onDelta(String(text));return String(text);}
+}catch(e){}
+finally{clearTimeout(timer);}
+throw new Error('noreply');
+}
+let localLlama=null;
+let localLlamaPromise=null;
+async function ensureLocalLlama(){
+if(localLlama)return localLlama;
+if(localLlamaPromise)return localLlamaPromise;
+if(!navigator.onLine&&localStorage.getItem('eve_local_llm')!=='1')throw new Error('nocache');
+localLlamaPromise=(async()=>{
+const mod=await import('https://cdn.jsdelivr.net/npm/@wllama/wllama@3.6.1/esm/index.js');
+const Wllama=mod.Wllama||mod.default;
+const engine=new Wllama({default:'https://cdn.jsdelivr.net/npm/@wllama/wllama@3.6.1/src/wasm/wllama.wasm'});
+await engine.loadModelFromHF({repo:'HuggingFaceTB/SmolLM2-135M-Instruct-GGUF',file:'smollm2-135m-instruct-q4_k_m.gguf'},{n_threads:1,n_ctx:1024,n_gpu_layers:0,useCache:true});
+localLlama=engine;
+localStorage.setItem('eve_local_llm','1');
+return engine;
+})();
+try{return await localLlamaPromise;}catch(e){localLlamaPromise=null;throw e;}
+}
+async function localLlamaStream(messages,opts,onDelta){
+const engine=await ensureLocalLlama();
+const recent=messages.filter(m=>m.role!=='system').slice(-6).map(m=>({role:m.role==='assistant'?'assistant':'user',content:String(m.content||'').slice(0,700)}));
+const chat=[{role:'system',content:'You are EVE on this computer. Answer helpfully and concisely. You work without the internet.'},...recent];
+let full='';
+await engine.createChatCompletion({
+messages:chat,
+max_tokens:Math.min(opts.maxTokens||180,220),
+temperature:opts.temperature!=null?opts.temperature:0.7,
+stream:true,
+onData:(chunk)=>{
+const piece=(chunk&&chunk.choices&&chunk.choices[0]&&((chunk.choices[0].delta&&chunk.choices[0].delta.content)||chunk.choices[0].text))||'';
+if(piece){full+=piece;onDelta(full);}
+}
+});
+if(!full.trim())throw new Error('empty');
+return full;
+}
+function warmLocalLlama(){if(navigator.onLine)ensureLocalLlama().catch(()=>{});}
+async function aiStreamInner(messages,opts,onDelta){
+opts=opts||{};
+const maxTokens=opts.maxTokens||1024;
+const temperature=opts.temperature!=null?opts.temperature:0.7;
+const pref=(opts.feature&&getEnginePrefs()[opts.feature])||'auto';
+const creative=opts.feature==='stories'||opts.feature==='legal'||opts.feature==='health'||opts.feature==='rpg'||opts.feature==='codelab';
+const emit=(t)=>{if(t&&!isJunkReply(t))onDelta(t);};
+let triedWeb=false;
+async function fromWeb(){
+if(triedWeb||!navigator.onLine)throw new Error('offline');
+triedWeb=true;
+const full=await Promise.race([
+eveFreeStream(messages,opts,emit),
+new Promise((_,rej)=>setTimeout(()=>rej(new Error('slow')),Math.min(opts.wait||16000,20000)))
+]);
+if(full&&!isJunkReply(full))return full;
+throw new Error('noreply');
+}
+if(pref==='web'||(navigator.onLine&&pref!=='ollama'&&pref!=='cloud')){
+try{const full=await fromWeb();if(full)return full;}catch(e){}
+if(pref==='web'){
+if(creative)throw new Error('noreply');
+const local=offlineReply(messages,emit);
+if(isJunkReply(local))throw new Error('noreply');
+return local;
+}
+}
+if(pref==='cloud'&&aiKey&&navigator.onLine){
+try{
+const sys=messages.filter(m=>m.role==='system').map(m=>m.content).join('\n\n');
+const convo=messages.filter(m=>m.role!=='system');
+const res=await fetch('https://api.anthropic.com/v1/messages',{
+method:'POST',
+headers:{'content-type':'application/json','x-api-key':aiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+body:JSON.stringify({model:getModelForFeature(opts.feature),max_tokens:maxTokens,temperature,system:sys||undefined,messages:convo,stream:true})
+});
+if(!res.ok)throw new Error('cloud');
+const reader=res.body.getReader();const decoder=new TextDecoder();let buf='';let full='';
+while(true){
+const {done,value}=await reader.read();
+if(done)break;
+buf+=decoder.decode(value,{stream:true});
+const lines=buf.split('\n');buf=lines.pop();
+for(const line of lines){
+if(!line.startsWith('data: '))continue;
+const data=line.slice(6);
+if(data==='[DONE]')continue;
+try{const evt=JSON.parse(data);if(evt.type==='content_block_delta'&&evt.delta&&evt.delta.text){full+=evt.delta.text;emit(full);}}catch(e){}
+}
+}
+if(full.trim()&&!isJunkReply(full))return full;
+}catch(e){}
+}
+if(pref!=='cloud'&&pref!=='web'){
+if(window.pyBridge){
+try{
+const model=getOllamaModelForFeature(opts.feature);
+const endpoint=getOllamaEndpoint();
+const text=await Promise.race([new Promise((resolve,reject)=>{
+const reqId='r'+Date.now()+Math.random().toString(36).slice(2);
+const onD=(id,t)=>{if(id===reqId)emit(t);};
+const onDone=(id,t)=>{if(id===reqId){cleanup();resolve(t);}};
+const onErr=(id,msg)=>{if(id===reqId){cleanup();reject(new Error(msg||'local'));}};
+function cleanup(){
+window.pyBridge.chatDelta.disconnect(onD);
+window.pyBridge.chatDone.disconnect(onDone);
+window.pyBridge.chatError.disconnect(onErr);
+}
+window.pyBridge.chatDelta.connect(onD);
+window.pyBridge.chatDone.connect(onDone);
+window.pyBridge.chatError.connect(onErr);
+window.pyBridge.chat(reqId,endpoint,model,JSON.stringify(messages),JSON.stringify({temperature,num_predict:maxTokens}));
+}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('slow')),12000))]);
+if(text&&String(text).trim()&&!isJunkReply(text))return text;
+}catch(e){}
+}
+try{
+const full=await Promise.race([
+ollamaAnywhere(messages,opts,emit),
+new Promise((_,rej)=>setTimeout(()=>rej(new Error('slow')),1200))
+]);
+if(full&&full.trim()&&!isJunkReply(full))return full;
+}catch(e){}
+try{
+const full=await Promise.race([
+deviceStream(messages,emit),
+new Promise((_,rej)=>setTimeout(()=>rej(new Error('slow')),1500))
+]);
+if(full&&String(full).trim()&&!isJunkReply(full))return full;
+}catch(e){}
+if(!navigator.onLine){
+try{
+const full=await Promise.race([
+localLlamaStream(messages,opts,emit),
+new Promise((_,rej)=>setTimeout(()=>rej(new Error('slow')),20000))
+]);
+if(full&&full.trim()&&!isJunkReply(full))return full;
+}catch(e){}
+}
+}
+if(creative)throw new Error('noreply');
+const local=offlineReply(messages,emit);
+if(isJunkReply(local))throw new Error('noreply');
+return local;
+}
+function aiStream(messages,opts,onDelta){
+const wait=(opts&&opts.wait)||12000;
+return Promise.race([
+aiStreamInner(messages,opts,onDelta),
+new Promise((_,rej)=>setTimeout(()=>rej(new Error('slow')),wait))
+]);
+}
+let clockMode=localStorage.getItem('eve_clock_mode')||'digital';
+function renderClockFace(){
+const box=document.getElementById('clockBox');
+if(!box)return;
+if(clockMode==='analog'){
+box.innerHTML=`<svg id=analogClock width=32 height=32 viewBox="0 0 100 100"><circle cx=50 cy=50 r=46 fill="#27272a" stroke="#4f46e5" stroke-width=4/><line id=hHand x1=50 y1=50 x2=50 y2=30 stroke="#e5e5e5" stroke-width=6 stroke-linecap=round/><line id=mHand x1=50 y1=50 x2=50 y2=18 stroke="#e5e5e5" stroke-width=4 stroke-linecap=round/><line id=sHand x1=50 y1=50 x2=50 y2=14 stroke="#ef4444" stroke-width=2 stroke-linecap=round/><circle cx=50 cy=50 r=4 fill="#e5e5e5"/></svg>`;
+}else{
+box.textContent='--:--:--';
+}
+}
+function updateClock(){
+const box=document.getElementById('clockBox');
+if(!box)return;
+const now=new Date();
+if(clockMode==='digital'){
+box.textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}else{
+if(!document.getElementById('analogClock'))renderClockFace();
+const h=now.getHours()%12,m=now.getMinutes(),s=now.getSeconds();
+const hHand=document.getElementById('hHand'),mHand=document.getElementById('mHand'),sHand=document.getElementById('sHand');
+if(hHand)hHand.setAttribute('transform',`rotate(${(h+m/60)*30} 50 50)`);
+if(mHand)mHand.setAttribute('transform',`rotate(${(m+s/60)*6} 50 50)`);
+if(sHand)sHand.setAttribute('transform',`rotate(${s*6} 50 50)`);
+}
+}
+window.toggleClock=()=>{clockMode=clockMode==='digital'?'analog':'digital';localStorage.setItem('eve_clock_mode',clockMode);renderClockFace();updateClock();};
+document.getElementById('clockBox').onclick=toggleClock;
+renderClockFace();updateClock();setInterval(updateClock,1000);
+function checkAlarms(){
+let alarms;
+try{alarms=JSON.parse(localStorage.getItem('eve_alarms')||'[]');}catch{return;}
+if(!alarms.length)return;
+const now=new Date();
+const nowStr=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+const today=now.toISOString().split('T')[0];
+let changed=false;
+alarms.forEach(a=>{
+if(a.time===nowStr && a.lastFired!==today){
+a.lastFired=today;changed=true;
+const label=a.label||'Alarm';
+if(window.pyBridge)window.pyBridge.showNotification('EVE Alarm',label);
+else alert('Alarm: '+label);
+speakText('Alarm: '+label);
+}
+});
+if(changed)localStorage.setItem('eve_alarms',JSON.stringify(alarms));
+}
+setInterval(checkAlarms,20000);
+checkAlarms();
+let theme=localStorage.getItem('eve_theme')||'dark';
+const THEME_CLASSES=['light','cyberpunk','fantasy','horror','scifi','postapoc'];
+function applyTheme(){
+THEME_CLASSES.forEach(c=>document.body.classList.remove(c));
+if(theme!=='dark' && THEME_CLASSES.includes(theme))document.body.classList.add(theme);
+const sel=document.getElementById('themeSelect');
+if(sel)sel.value=theme;
+}
+applyTheme();
+document.getElementById('themeSelect').onchange=(e)=>{theme=e.target.value;localStorage.setItem('eve_theme',theme);applyTheme();};
+const WMO_CODES={0:['Clear sky','☀️'],1:['Mainly clear','🌤️'],2:['Partly cloudy','⛅'],3:['Overcast','☁️'],45:['Fog','🌫️'],48:['Rime fog','🌫️'],51:['Light drizzle','🌦️'],53:['Drizzle','🌦️'],55:['Heavy drizzle','🌦️'],56:['Freezing drizzle','🌧️'],57:['Freezing drizzle','🌧️'],61:['Light rain','🌧️'],63:['Rain','🌧️'],65:['Heavy rain','🌧️'],66:['Freezing rain','🌧️'],67:['Freezing rain','🌧️'],71:['Light snow','🌨️'],73:['Snow','🌨️'],75:['Heavy snow','❄️'],77:['Snow grains','🌨️'],80:['Light showers','🌦️'],81:['Showers','🌦️'],82:['Violent showers','⛈️'],85:['Snow showers','🌨️'],86:['Heavy snow showers','❄️'],95:['Thunderstorm','⛈️'],96:['Thunderstorm w/ hail','⛈️'],99:['Severe thunderstorm','⛈️']};
+function wIcon(code){return (WMO_CODES[code]||['—','🌡️'])[1];}
+function wDesc(code){return (WMO_CODES[code]||['—','🌡️'])[0];}
+function uvInfo(v){if(v==null)return{label:'—',color:'#888'};if(v<3)return{label:'Low',color:'#22c55e'};if(v<6)return{label:'Moderate',color:'#eab308'};if(v<8)return{label:'High',color:'#f97316'};if(v<11)return{label:'Very High',color:'#ef4444'};return{label:'Extreme',color:'#a855f7'};}
+function moonInfo(p){if(p==null)return{label:'—',emoji:'🌑'};if(p<0.03||p>0.97)return{label:'New Moon',emoji:'🌑'};if(p<0.22)return{label:'Waxing Crescent',emoji:'🌒'};if(p<0.28)return{label:'First Quarter',emoji:'🌓'};if(p<0.47)return{label:'Waxing Gibbous',emoji:'🌔'};if(p<0.53)return{label:'Full Moon',emoji:'🌕'};if(p<0.72)return{label:'Waning Gibbous',emoji:'🌖'};if(p<0.78)return{label:'Last Quarter',emoji:'🌗'};return{label:'Waning Crescent',emoji:'🌘'};}
+const heroImg=document.getElementById('heroImg'),grid=document.getElementById('avatarGrid'),chatBox=document.getElementById('chatBox'),tabBar=document.getElementById('tabBar'),tabContent=document.getElementById('tabContent');
+const DB_NAME='eve_avatars_db';const STORE='avatars';
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=()=>{try{r.result.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});}catch{}};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function loadAvatars(){
+try{
+const db=await openDB();
+const tx=db.transaction(STORE,'readonly');const store=tx.objectStore(STORE);
+const all=await new Promise((res,rej)=>{const req=store.getAll();req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error);});
+avatars=all.map(o=>o.data);
+if(avatars.length===0){
+const old=localStorage.getItem('eve_avatars');
+if(old){try{const parsed=JSON.parse(old);if(parsed.length>0){for(const d of parsed.slice(0,30)){await saveAvatarDB(d);}avatars=parsed.slice(0,30);localStorage.removeItem('eve_avatars');}}catch{}}
+}
+renderGrid();renderHero();updateInfo();
+}catch(e){try{avatars=JSON.parse(localStorage.getItem('eve_avatars')||'[]');}catch{}renderGrid();renderHero();}
+}
+async function saveAvatarDB(data){
+const db=await openDB();const tx=db.transaction(STORE,'readwrite');const store=tx.objectStore(STORE);
+await new Promise((res,rej)=>{const req=store.add({data,created:Date.now()});req.onsuccess=()=>res();req.onerror=()=>rej(req.error);});
+}
+async function deleteAvatarDB(index){
+const db=await openDB();const tx=db.transaction(STORE,'readwrite');const store=tx.objectStore(STORE);
+const all=await new Promise((res,rej)=>{const req=store.getAll();req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error);});
+if(all[index]){await new Promise((res,rej)=>{const req=store.delete(all[index].id);req.onsuccess=()=>res();req.onerror=()=>rej(req.error);});}
+}
+async function clearAvatarsDB(){
+const db=await openDB();const tx=db.transaction(STORE,'readwrite');const store=tx.objectStore(STORE);
+await new Promise((res,rej)=>{const req=store.clear();req.onsuccess=()=>res();req.onerror=()=>rej(req.error);});
+}
+function updateInfo(){
+const el=document.getElementById('storageInfo');
+if(!el)return;
+if(avatars.length===0){el.textContent='';return;}
+let bytes=0;
+avatars.forEach(a=>{const i=a.indexOf(',');bytes+=i>=0?(a.length-i-1)*0.75:a.length*0.75;});
+const kb=bytes/1024;
+const size=kb>1024?(kb/1024).toFixed(1)+'MB':Math.round(kb)+'KB';
+el.textContent=` • ${avatars.length} avatar${avatars.length===1?'':'s'} (${size})`;
+}
+async function resizeImage(file,max=300){
+return new Promise(res=>{
+const img=new Image();const url=URL.createObjectURL(file);
+img.onload=()=>{
+let w=img.width,h=img.height;
+if(w>max||h>max){if(w>h){h=h*max/w;w=max;}else{w=w*max/h;h=max;}}
+const c=document.createElement('canvas');c.width=w;c.height=h;
+c.getContext('2d').drawImage(img,0,0,w,h);
+URL.revokeObjectURL(url);
+try{res(c.toDataURL('image/webp',0.7));}catch{res(c.toDataURL('image/jpeg',0.6));}
+};
+img.onerror=()=>{URL.revokeObjectURL(url);res('');};
+img.src=url;
+});
+}
+function renderHero(){if(hero){heroImg.src=hero;}else if(avatars[0]){hero=avatars[0];heroImg.src=hero;localStorage.setItem('eve_hero',hero);}else{heroImg.src=DEFAULT_AVATAR;}}
+function renderGrid(){
+grid.innerHTML='';
+if(avatars.length===0){grid.innerHTML='<div style="color:#666;font-size:12px">No avatars</div>';return;}
+avatars.forEach((src,i)=>{
+const wrap=document.createElement('div');wrap.className='avatarWrap';
+const im=document.createElement('img');im.src=src;im.className='avatar';
+im.onclick=()=>{hero=src;localStorage.setItem('eve_hero',hero);renderHero();};
+const del=document.createElement('button');del.className='delBtn';del.textContent='×';
+del.onclick=async(e)=>{
+e.stopPropagation();
+avatars.splice(i,1);
+if(hero===src){hero=avatars[0]||'';if(hero)localStorage.setItem('eve_hero',hero);else localStorage.removeItem('eve_hero');}
+try{await deleteAvatarDB(i);}catch{}
+renderGrid();renderHero();updateInfo();
+};
+wrap.appendChild(im);wrap.appendChild(del);grid.appendChild(wrap);
+});
+updateInfo();
+}
+function renderChat(){chatBox.innerHTML='';chat.forEach(m=>{const d=document.createElement('div');d.className='chatBubble '+(m.role==='user'?'user':'ai');d.textContent=m.text||'';chatBox.appendChild(d);});chatBox.scrollTop=chatBox.scrollHeight;}
+function addChat(r,t){chat.push({role:r,text:t});localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();}
+document.getElementById('avatarUpload').onchange=async e=>{
+for(const f of e.target.files){
+try{
+const r=await resizeImage(f,300);
+if(!r)continue;
+avatars.push(r);
+try{await saveAvatarDB(r);}catch{}
+}catch{}
+}
+if(!hero&&avatars.length){hero=avatars[0];localStorage.setItem('eve_hero',hero);}
+renderGrid();renderHero();
+e.target.value='';
+};
+document.getElementById('clearAv').onclick=async()=>{
+if(!confirm('Clear all avatars?'))return;
+avatars=[];hero='';
+try{await clearAvatarsDB();}catch{}
+localStorage.setItem('eve_avatars','[]');localStorage.removeItem('eve_hero');
+renderGrid();renderHero();
+};
+function switchTab(t){
+if(!TABS.includes(t))return false;
+activeTab=t;localStorage.setItem('eve_active_tab',t);
+document.querySelectorAll('.tabBtn').forEach(x=>x.classList.toggle('active',x.textContent===t));
+renderTab();
+return true;
+}
+TABS.forEach(t=>{
+const b=document.createElement('button');b.textContent=t;b.className='tabBtn'+(t===activeTab?' active':'');
+b.onclick=()=>switchTab(t);
+tabBar.appendChild(b);
+});
+function renderTab(){
+let html='';const t=activeTab;
+const savedYtId=localStorage.getItem('eve_youtube_id')||'';
+if(t==='Brain')html=`<h3>Brain</h3>
+<div style="text-align:left;font-size:13px;margin-bottom:6px">Where answers come from</div>
+<select id=brainMode>
+<option value="auto">This computer, then the internet</option>
+<option value="ollama">This computer only</option>
+<option value="online">The internet only</option>
+</select>
+<button class=primary id=brainTest style="width:100%">Try a reply</button>
+<div id=brainTestOut style="text-align:left;font-size:13px;min-height:36px;margin:8px 0"></div>
+<h4 style="text-align:left;margin:16px 0 4px">PIN</h4>
+<div style="display:flex;gap:8px"><input id=newPinInput type=password placeholder="At least 4 characters"><button class=secondary id=setPinBtn>Save PIN</button></div>
+<div id=pinStatus style="font-size:11px;color:var(--muted);margin:4px 0 10px;text-align:left"></div>
+<h4 style="text-align:left;margin:16px 0 4px">Save everything</h4>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><button class=secondary id=exportData>Save a copy</button><input type=file id=importFile accept="application/json" style="display:none"><button class=secondary id=importDataBtn>Bring a copy back</button></div>
+<div style="font-size:11px;color:var(--muted);margin-top:4px;text-align:left">Bringing a copy back replaces what is here now.</div>`;
+else if(t==='Email')html=`<h3>Email</h3>
+<input id=emailTo placeholder="To">
+<input id=emailSubject placeholder="Subject">
+<textarea id=emailBody rows=8 placeholder="Message"></textarea>
+<button class=primary id=emailSendBtn style="width:100%">Send</button>
+<div id=emailSendStatus style="font-size:11px;color:var(--muted);margin-top:6px;text-align:left"></div>
+<h4 style="text-align:left;margin:16px 0 4px">Text a phone</h4>
+<input id=textPhone placeholder="Phone number">
+<textarea id=textBody rows=3 placeholder="Message"></textarea>
+<button class=primary id=textSendBtn style="width:100%">Send Text</button>
+<div id=textSendStatus style="font-size:11px;color:var(--muted);margin-top:6px;text-align:left"></div>`;
+else if(t==='Apps')html=`<h3>Apps</h3>
+<div style="text-align:left;font-size:11px;color:var(--muted);margin-bottom:6px">Save a name and an address, then open it.</div>
+<input id=appName placeholder="Name">
+<input id=appPath placeholder="Address">
+<button class=primary id=appAdd style="width:100%">Add</button>
+<div id=appsStatus style="font-size:11px;color:var(--muted);margin:6px 0"></div>
+<div id=appsList style="text-align:left;margin-top:8px"></div>`;
+else if(t==='Code Lab')html=`<h3>Code Lab</h3>
+<div id=aiStatus style="font-size:11px;color:var(--muted);margin:2px 0 8px;text-align:left"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<select id=codeLang><option value="HTML">HTML</option><option value="JavaScript">JavaScript</option><option value="Python">Python</option><option value="TypeScript">TypeScript</option><option value="React">React</option><option value="C#">C#</option><option value="C++">C++</option><option value="Java">Java</option><option value="Go">Go</option><option value="Rust">Rust</option></select>
+<select id=codeMode><option value="generate">Generate</option><option value="explain">Explain</option><option value="fix">Fix</option><option value="convert">Convert</option></select>
+</div>
+<div style="display:flex;gap:8px"><button class=secondary id=copyCode>Copy</button><button class=secondary id=downloadCode>Download</button></div>
+<div id=codeProgress style="display:none"></div>
+<textarea id=codePrompt rows=3 placeholder="What should this program do?"></textarea>
+<div style="display:flex;gap:8px"><button class=primary id=genCode>Generate</button><button class=secondary id=runCode>Run</button></div>
+<textarea id=codeEditor rows=18 style="font-family:monospace;font-size:12px"></textarea>
+<div id=codeRunOut style="background:#000;color:#0f0;padding:10px;border-radius:8px;margin-top:8px;min-height:40px;white-space:pre-wrap;font-family:monospace;font-size:12px;display:none"></div>
+<iframe id=codePreview style="width:100%;height:450px;background:#fff;border-radius:10px;margin-top:8px" sandbox="allow-scripts allow-same-origin"></iframe>`;
+else if(t==='Calculator')html=`<h3>Calculator</h3><div id=calcDisplay style="background:#000;color:#0f0;padding:14px;font-size:32px;text-align:right;min-height:60px;border-radius:8px"></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px"><button class=primary onclick="cp('7')">7</button><button class=primary onclick="cp('8')">8</button><button class=primary onclick="cp('9')">9</button><button class=primary onclick="cp('/')">/</button><button class=primary onclick="cp('4')">4</button><button class=primary onclick="cp('5')">5</button><button class=primary onclick="cp('6')">6</button><button class=primary onclick="cp('*')">*</button><button class=primary onclick="cp('1')">1</button><button class=primary onclick="cp('2')">2</button><button class=primary onclick="cp('3')">3</button><button class=primary onclick="cp('-')">-</button><button class=primary onclick="cp('0')">0</button><button class=primary onclick="cp('.')">.</button><button class=primary onclick="ce()">=</button><button class=primary onclick="cp('+')">+</button><button class=secondary onclick="cc()" style="grid-column:span 4">C</button></div>`;
+else if(t==='Image')html=`<h3>Image</h3><input id=imgPrompt placeholder="Describe"><button class=primary id=genFree>Generate</button><div id=imgOut></div>`;
+else if(t==='Music')html=`<h3>Music Generation</h3>
+<div style="font-size:11px;color:var(--muted);text-align:left;margin-bottom:6px">Make a song from a description.</div>
+<input id=musicPrompt placeholder="Describe the music... e.g. upbeat acoustic folk with handclaps">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<select id=musicModelSize><option value=small>Short</option><option value=medium>Medium</option><option value=large>Long</option><option value=melody>With a tune</option></select>
+<label style="display:flex;align-items:center;gap:6px;font-size:12px">Seconds <input type=number id=musicDuration value=8 min=2 max=30 style="width:80px"></label>
+</div>
+<button class=primary id=musicGenBtn style="width:100%">Generate</button>
+<div id=musicStatus style="font-size:11px;color:var(--muted);margin:8px 0"></div>
+<div id=musicResult></div>`;
+else if(t==='Video')html=`<h3>Video</h3><input id=videoPrompt placeholder="Search for a video"><div style="display:flex;gap:8px"><button class=primary id=videoGo style="flex:1">Play here</button><button class=secondary id=videoPop>Small window</button></div><div id=videoPicks></div><iframe id=videoFrame allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="width:100%;height:360px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><div id=videoStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
+else if(t==='Spotify')html=`<h3>Spotify</h3><input id=spotifyInput placeholder="Song, artist, or a Spotify link"><div style="display:flex;gap:8px"><button class=primary id=spotifySave style="flex:1">Play here</button><button class=secondary id=spotifyPop>Small window</button></div><iframe id=spotifyFrame allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M" style="width:100%;height:380px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><audio id=spotifyAudio controls style="width:100%;margin-top:8px;display:none"></audio><div id=spotifyPicks></div><div id=spotifyBox style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
+else if(t==='YouTube')html=`<h3>YouTube</h3><input id=ytSearch placeholder="Search YouTube"><div style="display:flex;gap:8px"><button class=primary id=ytGo style="flex:1">Play here</button><button class=secondary id=ytPop>Small window</button></div><input id=ytUrl placeholder="YouTube link"><button class=primary id=ytEmbed style="width:100%">Play this link</button><div id=ytPicks></div><iframe id=ytFrame allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="width:100%;height:360px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><div id=ytStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
+else if(t==='Browser')html=`<h3>Browser</h3><div style="display:flex;gap:8px"><input id=bUrl value="https://en.wikipedia.org/wiki/Moon" placeholder="Address"><button class=primary id=bGo>Open</button><button class=secondary id=bPop>Small window</button></div><iframe id=bFrame style="width:100%;height:420px;background:#fff;border:0;border-radius:10px;margin-top:8px" src="https://en.wikipedia.org/wiki/Moon"></iframe><div id=bRead style="text-align:left;white-space:pre-wrap;margin-top:8px"></div>`;
+else if(t==='RPG')html=`<h3>RPG Adventure</h3><div id=rpgSetup><select id=rpgGenre><option>Fantasy</option><option>Sci-Fi</option><option>Cyberpunk</option><option>Post-Apocalyptic</option><option>Horror</option><option>Mystery</option><option>Adventure</option></select><input id=rpgChar placeholder="Your character's name"><input id=rpgLoc placeholder="Starting location"><button class=primary id=rpgBegin>Begin Adventure</button></div><div id=rpgStatus style="font-size:11px;color:var(--muted);min-height:14px;text-align:left"></div><div id=rpgLog class=noscroll style="text-align:left;white-space:pre-wrap;background:var(--input-bg);padding:12px;border-radius:10px;margin-top:8px;min-height:200px;max-height:360px;overflow:auto"></div><div id=rpgActionRow style="display:none;gap:8px;margin-top:8px"><input id=rpgAction placeholder="What do you do?"><button class=primary id=rpgAct>Act (roll d20)</button></div><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-top:8px"><button class=secondary id=rpgNew>New Adventure</button><div style="font-size:11px;color:var(--muted)">Extra rolls: <button class=secondary onclick="quickRoll(4)">d4</button><button class=secondary onclick="quickRoll(6)">d6</button><button class=secondary onclick="quickRoll(8)">d8</button><button class=secondary onclick="quickRoll(10)">d10</button><button class=secondary onclick="quickRoll(12)">d12</button><button class=secondary onclick="quickRoll(100)">d100</button></div></div><div id=diceOut style="font-size:13px;font-weight:700;color:#22c55e;min-height:18px;margin-top:4px"></div><div style="display:flex;gap:8px;margin-top:8px"><input id=invInput placeholder="Add item"><button class=primary id=invAdd>Add</button></div><div id=invList></div>`;
+else if(t==='Stories')html=`<h3>Stories</h3>
+<select id=storySelect></select>
+<button class=secondary id=storyNewBtn style="width:100%">+ New Story</button>
+<div id=storyNewForm style="display:none;margin-top:8px">
+<input id=storyTitle placeholder="Title">
+<select id=storyGenre><option>Fantasy</option><option>Sci-Fi</option><option>Mystery</option><option>Romance</option><option>Horror</option><option>Literary Fiction</option><option>Adventure</option><option>Comedy</option></select>
+<textarea id=storyPremise rows=3 placeholder="Premise or starting idea (optional)"></textarea>
+<button class=primary id=storyCreateBtn style="width:100%">Create & Write Opening</button>
+</div>
+<div id=storyStatus style="font-size:11px;color:var(--muted);margin:6px 0"></div>
+<div id=storyChapters class=noscroll style="text-align:left;white-space:pre-wrap;background:var(--input-bg);padding:12px;border-radius:10px;min-height:240px;max-height:420px;overflow:auto"></div>
+<div style="display:flex;gap:8px;margin-top:8px"><input id=storyDirection placeholder="Direction for next chapter (optional)"><button class=primary id=storyNextBtn>Write Next Chapter</button></div>
+<div style="display:flex;gap:8px;margin-top:8px"><button class=secondary id=storyPdfBtn>Save PDF</button><button class=secondary id=storyDeleteBtn>Delete This Story</button></div>`;
+else if(t==='Maps')html=`<h3>Maps</h3><div style="display:flex;gap:8px"><input id=mapSearch placeholder="Clermont, FL"><button class=primary id=mapGo>Search</button></div><div id=mapInfo></div><iframe id=mapFrame style="width:100%;height:500px;border-radius:10px" src="https://www.openstreetmap.org/export/embed.html?bbox=-81.9,28.4,-81.6,28.7&layer=mapnik&marker=28.5494,-81.7729"></iframe>`;
+else if(t==='Weather')html=`<h3>Weather</h3><div id=weatherBox>Loading...</div><div id=weatherDaily></div><div class=noscroll style="overflow-x:auto;margin-top:12px"><div id=hourlyRow style="display:flex;gap:8px;padding-bottom:6px"></div></div>`;
+else if(t==='Alarms')html=`<h3>Alarms</h3><div style="display:flex;gap:8px"><input type=time id=alarmTime><input id=alarmLabel placeholder="Label"><button class=primary id=alarmAdd>Set</button></div><div id=alarmList></div>`;
+else if(t==='To Do')html=`<h3>To Do</h3><div style="display:flex;gap:8px"><input id=todoInput placeholder="Add..."><button class=primary id=todoAdd>Add</button></div><div id=todoList style="text-align:left;margin-top:10px"></div>`;
+else if(t==='Notes')html=`<h3>Notes</h3><textarea id=notesArea rows=20 placeholder="Jot anything down — it's saved automatically." style="font-family:inherit;font-size:14px"></textarea><div id=notesStatus style="font-size:11px;color:var(--muted);text-align:left"></div>`;
+else if(t==='Knowledge')html=`<h3>Knowledge</h3><div style="text-align:left;font-size:12px;color:var(--muted);margin-bottom:8px">Add PDFs, or choose the Knowledge folder next to this app. EVE uses them when you talk and when you work on a project.</div><input id=kbFiles type=file accept="application/pdf,.pdf" multiple><button class=primary id=kbAdd style="width:100%">Add these PDFs</button><input id=kbFolder type=file webkitdirectory multiple style="display:none"><button class=secondary id=kbFolderBtn style="width:100%;margin-top:6px">Choose the Knowledge folder</button><div id=kbStatus style="font-size:11px;color:var(--muted);margin:6px 0;text-align:left"></div><div id=kbList style="text-align:left"></div>`;
+else if(t==='Projects')html=`<h3>Projects</h3>
+<div style="text-align:left;font-size:11px;color:var(--muted);margin-bottom:6px">PDFs in Knowledge are used when you talk about this work.</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+<button class="secondary projSubBtn active" data-sub=ideaSorter>Idea Sorter</button>
+<button class="secondary projSubBtn" data-sub=workflowMapper>Workflow Mapper</button>
+<button class="secondary projSubBtn" data-sub=priorityMatrix>Priority Matrix</button>
+<button class="secondary projSubBtn" data-sub=decisionLog>Decision Log</button>
+<button class="secondary projSubBtn" data-sub=checklistBuilder>Checklists</button>
+<button class="secondary projSubBtn" data-sub=timelinePlanner>Timeline</button>
+<button class="secondary projSubBtn" data-sub=resourceTracker>Resources</button>
+</div>
+<div id=projModule-ideaSorter class=projModule style="text-align:left">
+<div style="display:flex;gap:8px"><input id=ideaText placeholder="New idea..."><select id=ideaCol style="width:160px"><option value=concepts>Concepts</option><option value=characters>Characters</option><option value=mechanics>Mechanics</option><option value=problems>Problems</option><option value=solutions>Solutions</option></select><button class=primary id=ideaAdd>Add</button></div>
+<div id=ideaColumns class=projColumns style="margin-top:8px"></div>
+</div>
+<div id=projModule-workflowMapper class=projModule style="text-align:left;display:none">
+<div style="display:flex;gap:8px"><input id=wfNodeName placeholder="Step name"><input id=wfNodeDesc placeholder="Description (optional)"><button class=primary id=wfNodeAdd>Add Step</button></div>
+<div style="display:flex;gap:8px;margin-top:6px"><select id=wfFrom style="flex:1"></select><span style="align-self:center">→</span><select id=wfTo style="flex:1"></select><button class=secondary id=wfConnAdd>Connect</button></div>
+<div id=wfNodesList class=projList style="margin-top:8px"></div>
+<div id=wfConnsList class=projList style="margin-top:8px"></div>
+</div>
+<div id=projModule-priorityMatrix class=projModule style="text-align:left;display:none">
+<div style="display:flex;gap:8px"><input id=pmText placeholder="New item..."><select id=pmQuad style="width:220px"><option value=urgentImportant>Urgent & Important</option><option value=notUrgentImportant>Not Urgent & Important</option><option value=urgentNotImportant>Urgent & Not Important</option><option value=notUrgentNotImportant>Not Urgent & Not Important</option></select><button class=primary id=pmAdd>Add</button></div>
+<div id=pmQuadrants class=projQuadrants style="margin-top:8px"></div>
+</div>
+<div id=projModule-decisionLog class=projModule style="text-align:left;display:none">
+<input id=dlDecision placeholder="Decision">
+<input id=dlReason placeholder="Reasoning">
+<input id=dlAlternatives placeholder="Alternatives considered">
+<input id=dlExpected placeholder="Expected outcome">
+<textarea id=dlNotes rows=2 placeholder="Notes"></textarea>
+<button class=primary id=dlAdd style="width:100%">Log Decision</button>
+<div id=dlList class=projList style="margin-top:8px"></div>
+</div>
+<div id=projModule-checklistBuilder class=projModule style="text-align:left;display:none">
+<div style="display:flex;gap:8px"><input id=clNewName placeholder="New checklist name"><button class=primary id=clCreate>Create</button></div>
+<select id=clSelect style="margin-top:6px"></select>
+<div style="display:flex;gap:8px;margin-top:6px"><input id=clItemText placeholder="Add item..."><button class=primary id=clItemAdd>Add</button></div>
+<div id=clItemsList class=projList style="margin-top:8px"></div>
+</div>
+<div id=projModule-timelinePlanner class=projModule style="text-align:left;display:none">
+<div style="display:flex;gap:8px"><input id=tlTitle placeholder="Event"><input id=tlDate type=date><button class=primary id=tlAdd>Add</button></div>
+<div id=tlTimeline class=projTimeline style="margin-top:8px"></div>
+</div>
+<div id=projModule-resourceTracker class=projModule style="text-align:left;display:none">
+<div style="display:flex;gap:6px;flex-wrap:wrap"><input id=rtName placeholder="Resource name" style="flex:1"><input id=rtCategory placeholder="Category" style="flex:1"><select id=rtStatus style="width:140px"><option>Available</option><option>In Use</option><option>Depleted</option><option>On Order</option></select></div>
+<input id=rtNotes placeholder="Notes">
+<button class=primary id=rtAdd style="width:100%">Add Resource</button>
+<div style="overflow-x:auto;margin-top:8px"><table class=projTable id=rtTable></table></div>
+</div>`;
+else if(t==='Legal')html=`<h3>Legal Help</h3>
+<div style="font-size:11px;color:var(--muted);text-align:left;margin-bottom:8px;padding:8px;border:1px solid var(--input-border);border-radius:8px;background:var(--card-bg)">⚠️ General information only, not legal advice — EVE is not a lawyer. For anything binding, high-stakes, or urgent, consult a licensed attorney in your jurisdiction.</div>
+<div id=legalLog class=noscroll style="text-align:left;white-space:pre-wrap;background:var(--input-bg);padding:12px;border-radius:10px;min-height:220px;max-height:400px;overflow:auto"></div>
+<div style="display:flex;gap:8px;margin-top:8px"><input id=legalInput placeholder="Ask a legal question..."><button class=primary id=legalSend>Ask</button></div>
+<div id=legalStatus style="font-size:11px;color:var(--muted);margin-top:4px;text-align:left"></div>`;
+else if(t==='Health')html=`<h3>Health</h3>
+<div style="font-size:11px;color:var(--muted);text-align:left;margin-bottom:8px;padding:8px;border:1px solid var(--input-border);border-radius:8px;background:var(--card-bg)">⚠️ General information only, not medical advice — EVE is not a doctor and cannot diagnose. For symptoms, diagnosis, medication, or treatment decisions, consult a licensed healthcare provider. For a medical emergency, contact emergency services immediately.</div>
+<div id=healthLog class=noscroll style="text-align:left;white-space:pre-wrap;background:var(--input-bg);padding:12px;border-radius:10px;min-height:220px;max-height:400px;overflow:auto"></div>
+<div style="display:flex;gap:8px;margin-top:8px"><input id=healthInput placeholder="Ask a general health question..."><button class=primary id=healthSend>Ask</button></div>
+<div id=healthStatus style="font-size:11px;color:var(--muted);margin-top:4px;text-align:left"></div>`;
+else if(t==='Calendar')html=`<h3>Calendar</h3><div style="display:flex;justify-content:space-between;align-items:center"><button class=secondary id=calPrev>←</button><h4 id=calMonthLabel style="margin:0"></h4><button class=secondary id=calNext>→</button></div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:11px;color:var(--muted);margin:6px 0"><div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div></div><div id=calGrid class=calGrid></div><div style="text-align:left;margin-top:10px"><div id=calSelDate style="font-size:12px;color:var(--muted)"></div><div style="display:flex;gap:8px"><input id=calTitle placeholder="Event"><input type=time id=calTime style="width:110px"><button class=primary id=calAdd>Add</button></div><div id=calList></div></div>`;
+else if(t==='Focus')html=`<h3>Focus</h3><div style="display:flex;gap:8px;justify-content:center"><input type=number id=focusMin value=25 style="width:70px"><button class=primary id=focusStart>Start</button><button class=secondary id=focusStop>Stop</button></div><div id=focusDisplay style="font-size:56px;font-weight:800;text-align:center;margin:16px">25:00</div><div id=focusStats style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:10px"></div><div id=focusHistory style="text-align:left;font-size:12px"></div>`;
+else if(t==='Search')html=`<h3>Search</h3><input id=searchQ placeholder="Search"><button class=primary id=searchGo style="width:100%">Search</button><div id=searchOut style="text-align:left;margin-top:8px"></div><div id=searchRead style="text-align:left;white-space:pre-wrap;margin-top:8px"></div>`;
+else if(t==='Tools')html=`<h3>Tools</h3><div style="text-align:left"><h4>Icon Converter</h4><input type=file id=iconFile accept="image/*"><div id=iconPreview style="width:200px;height:200px;background:#fff;margin:8px auto;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#000">Upload</div><button class=primary id=iconConvert>Convert</button><hr><h4>PDF to JPG</h4><input type=file id=pdfToJpg accept="application/pdf"><div id=pdfJpgOut></div><hr><h4>JPG to PDF</h4><input type=file id=jpgToPdf multiple accept="image/*"><button class=primary id=jpgPdfBtn>Convert</button><hr><h4>Combine PDFs</h4><input type=file id=pdfComb multiple accept="application/pdf"><button class=primary id=combBtn>Combine</button><hr><h4>Add Page Numbers</h4><input type=file id=pageNumFile accept="application/pdf"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><select id=pageNumFont><option value="Helvetica">Helvetica</option><option value="HelveticaBold">Helvetica Bold</option><option value="TimesRoman">Times Roman</option><option value="TimesRomanBold">Times Roman Bold</option><option value="Courier">Courier</option><option value="CourierBold">Courier Bold</option></select><input type=number id=pageNumSize value=12 min=6 max=48 placeholder="Font size"></div><select id=pageNumPosition><option value="bottom-center">Bottom Center</option><option value="bottom-left">Bottom Left</option><option value="bottom-right">Bottom Right</option><option value="top-center">Top Center</option><option value="top-left">Top Left</option><option value="top-right">Top Right</option></select><label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-top:6px"><input type=checkbox id=pageNumTotal style="width:auto;margin:0"> Show "of total" (e.g., 3 of 12)</label><button class=primary id=pageNumBtn style="width:100%">Add Page Numbers</button><div id=pageNumStatus style="font-size:11px;color:var(--muted);margin-top:4px"></div></div>`;
+else if(t==='Comics')html=`<h3>Comics</h3><div style="display:flex;gap:8px"><input id=comicSearch placeholder="Search"><select id=collFilter><option value="">All</option></select></div><div id=comicStats style="font-size:11px;color:var(--muted)"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px"><input id=cTitle placeholder="Title*"><input id=cIssue placeholder="Issue"><input id=cWriter placeholder="Writer"><input id=cArtist placeholder="Artist"><input id=cCompany placeholder="Company"><input id=cValue placeholder="$"></div><input id=collSel placeholder="Collection"><input type=file id=cThumb accept="image/*"><button class=primary id=cAdd>Add Comic</button><div id=comicList style="display:grid;grid-template-columns:repeat(auto-fill,80px);gap:8px;margin-top:10px"></div>`;
+else if(t==='Media')html=`<h3>Media</h3><div style="display:flex;gap:8px"><input id=mediaSearch placeholder="Search"><select id=mediaFilterType><option value="">All</option><option>Movie</option><option>Series</option></select></div><div id=mediaStats style="font-size:11px;color:var(--muted)"></div><input id=mTitle placeholder="Title*"><select id=mType><option>Movie</option><option>Series</option></select><input id=mYear placeholder="Year"><input type=file id=mThumb accept="image/*"><button class=primary id=mAdd>Add Media</button><div id=mediaList style="display:grid;grid-template-columns:repeat(auto-fill,80px);gap:8px;margin-top:10px"></div>`;
+tabContent.innerHTML=html;
+setTimeout(bindTab,100);
+}
+function stripCode(s){
+s=String(s||'').trim();
+const m=s.match(/```[a-zA-Z0-9]*\s*([\s\S]*?)```/);
+if(m)return m[1].trim();
+return s.replace(/^```[a-zA-Z0-9]*\s*/,'').replace(/```$/,'').trim();
+}
+function looksLikeCode(s,lang){
+if(!s||s.length<15)return false;
+if(/No live answer|Got it\. I can open|I'm here\. What do you want|I'm with you/.test(s))return false;
+if(lang==='HTML')return /<(html|body|div|button|p|h1|style|script)/i.test(s);
+return /[{};=]|def |class |function |import |#include|fn |public |SELECT |package /.test(s);
+}
+function loadSkulpt(){
+if(window.Sk&&Sk.builtinFiles)return Promise.resolve();
+const load=(src)=>new Promise((res,rej)=>{const tag=document.createElement('script');tag.src=src;tag.onload=res;tag.onerror=rej;document.head.appendChild(tag);});
+return load('https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js').then(()=>load('https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js'));
+}
+function bindTab(){
+const t=activeTab;
+if(t==='Brain'){
+const modeSel=document.getElementById('brainMode');
+modeSel.value=localStorage.getItem('eve_brain_mode')||'auto';
+function applyBrain(mode){
+localStorage.setItem('eve_brain_mode',mode);
+CHAT_FEATURES.forEach(f=>setEnginePref(f, mode==='online'?'web':mode));
+}
+modeSel.onchange=()=>applyBrain(modeSel.value);
+applyBrain(modeSel.value);
+document.getElementById('brainTest').onclick=async()=>{
+const out=document.getElementById('brainTestOut');
+out.textContent='Trying...';
+const messages=[{role:'user',content:'Reply with exactly the word ready.'}];
+try{
+if(modeSel.value!=='ollama'&&navigator.onLine){
+const full=await eveFreeStream(messages,{maxTokens:40,feature:'chat'},(t)=>{out.textContent=t;});
+if(full&&full.trim()){out.textContent='The internet answered: '+full.trim().slice(0,300);return;}
+}
+}catch(e){}
+try{
+if(modeSel.value!=='online'){
+const full=await ollamaAnywhere(messages,{maxTokens:40,feature:'chat'},(t)=>{out.textContent=t;});
+if(full&&full.trim()){out.textContent='This computer answered: '+full.trim().slice(0,300);return;}
+}
+}catch(e){}
+out.textContent='No live answer right now. Time, notes, tasks, calendar, and the calculator still work here.';
+};
+document.getElementById('setPinBtn').onclick=()=>{
+const pin=document.getElementById('newPinInput').value;
+const status=document.getElementById('pinStatus');
+if(!pin||pin.length<4){status.textContent='Use at least 4 characters.';return;}
+localStorage.setItem('eve_pin',pin);
+document.getElementById('newPinInput').value='';
+status.textContent='PIN saved.';
+};
+document.getElementById('exportData').onclick=()=>{
+const store={};
+for(let i=0;i<localStorage.length;i++){
+const k=localStorage.key(i);
+if(k&&k.startsWith('eve_'))store[k]=localStorage.getItem(k);
+}
+const data={version:1,exportedAt:new Date().toISOString(),localStorage:store,avatars};
+const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`eve-backup-${Date.now()}.json`;a.click();
+};
+document.getElementById('importDataBtn').onclick=()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange=async(e)=>{
+const file=e.target.files[0];if(!file)return;
+try{
+const text=await file.text();
+const json=JSON.parse(text);
+if(!json||typeof json!=='object'||(!json.localStorage&&!json.avatars))throw new Error('This file does not look like an EVE backup.');
+if(!confirm('This will overwrite your current EVE data with the contents of this backup file. Continue?')){e.target.value='';return;}
+if(json.localStorage){for(const [k,v] of Object.entries(json.localStorage)){if(k.startsWith('eve_'))localStorage.setItem(k,String(v));}}
+if(Array.isArray(json.avatars)){
+try{await clearAvatarsDB();}catch{}
+for(const d of json.avatars){try{await saveAvatarDB(d);}catch{}}
+}
+alert('Import complete. Reloading EVE...');
+location.reload();
+}catch(err){alert('Could not import that file: '+(err&&err.message?err.message:'invalid file'));}
+e.target.value='';
+};
+}
+if(t==='Email'){
+function handOff(url){
+const a=document.createElement('a');
+a.href=url;
+document.body.appendChild(a);
+a.click();
+setTimeout(()=>a.remove(),400);
+}
+document.getElementById('emailSendBtn').onclick=()=>{
+const to=document.getElementById('emailTo').value.trim();
+const subject=document.getElementById('emailSubject').value.trim();
+const body=document.getElementById('emailBody').value;
+const status=document.getElementById('emailSendStatus');
+if(!to||!to.includes('@')){status.textContent='Enter the email address.';return;}
+handOff('mailto:'+to+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body));
+status.textContent='Your mail app has this message. Press send there.';
+};
+document.getElementById('textSendBtn').onclick=()=>{
+let digits=document.getElementById('textPhone').value.replace(/\D/g,'');
+const body=document.getElementById('textBody').value||'';
+const status=document.getElementById('textSendStatus');
+if(digits.length===10)digits='1'+digits;
+if(digits.length<11){status.textContent='Enter the phone number.';return;}
+handOff('sms:+'+digits+'?&body='+encodeURIComponent(body));
+if(navigator.clipboard&&body)navigator.clipboard.writeText(body).catch(()=>{});
+status.textContent='Your texting app has this message. Press send there.';
+};
+}
+if(t==='Apps'){
+function loadApps(){try{return JSON.parse(localStorage.getItem('eve_web_apps')||'[]');}catch(e){return [];}}
+function renderApps(list){
+document.getElementById('appsList').innerHTML=list.map((a,i)=>`<div class=card>${a.name}<div style="font-size:11px;color:var(--muted);word-break:break-all">${a.path}</div><div style="margin-top:4px"><button class=secondary data-open="${i}">Open</button> <button class=secondary data-del="${i}">Remove</button></div></div>`).join('')||'<div style="color:var(--muted)">Nothing saved yet.</div>';
+document.getElementById('appsList').querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{
+const item=loadApps()[+b.getAttribute('data-open')];
+if(!item)return;
+let url=item.path;
+if(!/^https?:\/\//i.test(url))url='https://'+url;
+window.open(url,'_blank','noopener');
+});
+document.getElementById('appsList').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+const list=loadApps();list.splice(+b.getAttribute('data-del'),1);localStorage.setItem('eve_web_apps',JSON.stringify(list));renderApps(list);
+});
+}
+renderApps(loadApps());
+document.getElementById('appAdd').onclick=()=>{
+const name=document.getElementById('appName').value.trim();
+let path=document.getElementById('appPath').value.trim();
+if(!path){document.getElementById('appsStatus').textContent='Enter an address.';return;}
+const list=loadApps();
+list.push({name:name||path,path});
+localStorage.setItem('eve_web_apps',JSON.stringify(list));
+document.getElementById('appName').value='';
+document.getElementById('appPath').value='';
+document.getElementById('appsStatus').textContent='Added.';
+renderApps(list);
+};
+}
+if(t==='Code Lab'){
+document.getElementById('aiStatus').textContent=featureStatusText('codelab');
+document.getElementById('genCode').onclick=async()=>{
+const pr=document.getElementById('codePrompt').value.trim();
+if(!pr){alert('Enter prompt');return;}
+const lang=document.getElementById('codeLang').value;
+const mode=document.getElementById('codeMode').value;
+const editor=document.getElementById('codeEditor');
+const preview=document.getElementById('codePreview');
+const runOut=document.getElementById('codeRunOut');
+const prog=document.getElementById('codeProgress');
+const btn=document.getElementById('genCode');
+if(!resolveEngine('codelab')){
+prog.style.display='block';
+prog.textContent=aiUnavailableMessage('codelab');
+return;
+}
+let systemPrompt='';
+if(mode==='generate'){
+if(lang==='HTML') systemPrompt='Generate a complete self-contained HTML file with inline CSS and JS for: '+pr+'. Output only HTML starting with <!DOCTYPE html>.';
+else systemPrompt='Generate working '+lang+' code for: '+pr+'. Output only code.';
+} else if(mode==='explain'){
+systemPrompt='Explain this '+lang+' code: '+editor.value.slice(0,2000);
+} else if(mode==='fix'){
+systemPrompt='Fix this '+lang+' code: '+editor.value.slice(0,2000)+' Request: '+pr;
+} else if(mode==='convert'){
+systemPrompt='Convert this code to '+lang+': '+editor.value.slice(0,2000)+' Request: '+pr;
+}
+try{const know=await knowledgeFor(pr);if(know)systemPrompt+='\n\nFacts from the user\'s PDFs:\n'+know;}catch(e){}
+let full='';
+editor.value='';
+btn.disabled=true;
+prog.style.display='block';
+prog.textContent='Generating...';
+try{
+full=await aiStream([{role:'system',content:systemPrompt},{role:'user',content:pr}],{maxTokens:3500,temperature:0.4,feature:'codelab'},(partial)=>{
+editor.value=stripCode(partial);
+if(lang==='HTML' && editor.value.length>50) preview.srcdoc=editor.value;
+});
+full=stripCode(full||'');
+editor.value=full;
+if(mode==='explain'){
+if(!full){prog.textContent='Nothing came back.';btn.disabled=false;return;}
+runOut.style.display='block';runOut.textContent=full;prog.textContent='Done.';
+btn.disabled=false;return;
+}
+if(!full || full.trim().length<15 || !looksLikeCode(full,lang)){
+prog.textContent='No program came back. Try again while this computer is online.';
+btn.disabled=false;
+return;
+}
+if(lang==='HTML'){preview.srcdoc=full; preview.style.display='block'; runOut.style.display='none';}
+else{runOut.style.display='none'; preview.style.display=lang==='HTML'?'block':'none';}
+prog.textContent='Done. Press Run.';
+localStorage.setItem('eve_last_code_context',JSON.stringify({lang,mode,prompt:pr,code:full.slice(0,1500)}));
+}catch(e){
+prog.textContent='That didn\'t work. Try again.';
+}finally{
+btn.disabled=false;
+}
+};
+document.getElementById('runCode').onclick=async()=>{
+const lang=document.getElementById('codeLang').value;
+const code=document.getElementById('codeEditor').value;
+const out=document.getElementById('codeRunOut');
+const preview=document.getElementById('codePreview');
+if(!code.trim()){out.style.display='block';out.textContent='Nothing to run.';return;}
+if(lang==='HTML'){preview.srcdoc=code;preview.style.display='block';out.style.display='none';return;}
+if(lang==='JavaScript'){
+try{out.style.display='block';preview.style.display='none';let logs=[];const oLog=console.log;console.log=(...a)=>{logs.push(a.join(' '));};let r=eval(code);out.textContent=(logs.join('\n')||(r!==undefined?String(r):'Ran. No output.'));console.log=oLog;}catch(e){out.style.display='block';out.textContent='Error: '+e.message;}
+return;
+}
+if(lang==='Python'){
+out.style.display='block';preview.style.display='none';out.textContent='Running...';
+try{
+await loadSkulpt();
+let printed='';
+function builtinRead(x){if(Sk.builtinFiles===undefined||Sk.builtinFiles.files[x]===undefined)throw 'File not found: '+x;return Sk.builtinFiles.files[x];}
+Sk.configure({output:(t)=>{printed+=t;},read:builtinRead});
+await Sk.misceval.asyncToPromise(()=>Sk.importMainWithBody('<stdin>',false,code,true));
+out.textContent=printed||'Ran. No output.';
+}catch(e){out.textContent='Error: '+(e&&e.toString?e.toString():e);}
+return;
+}
+out.style.display='block';preview.style.display='none';
+out.textContent='This computer can run HTML, JavaScript, and Python here. Use Download for the other languages.';
+};
+document.getElementById('copyCode').onclick=()=>navigator.clipboard.writeText(document.getElementById('codeEditor').value);
+document.getElementById('downloadCode').onclick=()=>{
+const lang=document.getElementById('codeLang').value;
+const ext={HTML:'html',JavaScript:'js',Python:'py',TypeScript:'ts',React:'jsx','C#':'cs','C++':'cpp',Java:'java',Go:'go',Rust:'rs',SQL:'sql',Bash:'sh'}[lang]||'txt';
+const blob=new Blob([document.getElementById('codeEditor').value],{type:'text/plain'});
+const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`eve-${Date.now()}.${ext}`;a.click();
+};
+}
+if(t==='Calculator'){window.cv='';window.cp=(v)=>{window.cv+=v;document.getElementById('calcDisplay').textContent=window.cv;};window.cc=()=>{window.cv='';document.getElementById('calcDisplay').textContent='';};window.ce=()=>{try{const r=eval(window.cv);document.getElementById('calcDisplay').textContent=r;window.cv=String(r);}catch{document.getElementById('calcDisplay').textContent='Error';}};}
+if(t==='Image'){document.getElementById('genFree').onclick=async()=>{const prompt=document.getElementById('imgPrompt').value||'tavern';if(!navigator.onLine){document.getElementById('imgOut').textContent='Pictures need a connection. Saved avatars still work.';return;}const url=`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?nologo=true&model=flux&seed=${Math.floor(Math.random()*999999)}`;document.getElementById('imgOut').innerHTML=`<img src="${url}" style="width:100%;max-width:512px;border-radius:10px"><br><button class=primary onclick="window.open('${url}','_blank')">Open</button> <button class=primary id=addAvBtn>Use as Avatar</button>`;document.getElementById('addAvBtn').onclick=async()=>{try{const res=await fetch(url);const blob=await res.blob();const data=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(blob);});avatars.push(data);await saveAvatarDB(data);renderGrid();renderHero();}catch(e){alert('Could not save that picture.');}};};}
+if(t==='Music'){
+document.getElementById('musicGenBtn').onclick=async()=>{
+if(!window.pyBridge){
+const prompt=document.getElementById('musicPrompt').value.trim();
+if(!prompt){alert('Describe the music you want first.');return;}
+const duration=Math.min(30,Math.max(2,parseInt(document.getElementById('musicDuration').value)||8));
+const status=document.getElementById('musicStatus');
+const btn=document.getElementById('musicGenBtn');
+btn.disabled=true;status.textContent='Composing…';document.getElementById('musicResult').innerHTML='';
+try{
+const style=document.getElementById('musicModelSize').value;
+const hint=style==='melody'?' piano melody':style==='large'?' long ambient':style==='small'?' short beat':'';
+const dur=style==='small'?Math.min(duration,6):style==='large'?Math.max(duration,12):duration;
+const url=await synthClip(prompt+hint,dur);
+status.textContent='Done.';
+document.getElementById('musicResult').innerHTML=`<audio controls autoplay style="width:100%;margin-top:8px" src="${url}"></audio>`;
+}catch(e){status.textContent='Could not play that.';}
+btn.disabled=false;
+return;
+}
+const prompt=document.getElementById('musicPrompt').value.trim();
+if(!prompt){alert('Describe the music you want first.');return;}
+const modelSize=document.getElementById('musicModelSize').value;
+const duration=parseInt(document.getElementById('musicDuration').value)||8;
+const status=document.getElementById('musicStatus');
+const btn=document.getElementById('musicGenBtn');
+btn.disabled=true;status.textContent='Starting...';document.getElementById('musicResult').innerHTML='';
+const reqId='m'+Date.now();
+const onProg=(id,msg)=>{if(id===reqId)status.textContent=msg;};
+const onDone=(id,path)=>{if(id===reqId){cleanup();status.textContent='Done.';const url='file:///'+path.replace(/\\/g,'/');document.getElementById('musicResult').innerHTML=`<audio controls style="width:100%;margin-top:8px" src="${url}"></audio><button class=secondary id=musicOpenBtn style="width:100%;margin-top:6px">Open in Default Player</button>`;document.getElementById('musicOpenBtn').onclick=()=>window.pyBridge.launchApp(path,function(){});btn.disabled=false;}};
+const onErr=(id,msg)=>{if(id===reqId){cleanup();status.textContent='Failed: '+msg;btn.disabled=false;}};
+function cleanup(){window.pyBridge.musicProgress.disconnect(onProg);window.pyBridge.musicDone.disconnect(onDone);window.pyBridge.musicError.disconnect(onErr);}
+window.pyBridge.musicProgress.connect(onProg);
+window.pyBridge.musicDone.connect(onDone);
+window.pyBridge.musicError.connect(onErr);
+window.pyBridge.generateMusic(reqId,prompt,duration,modelSize);
+};
+}
+function popOver(url){
+const w=Math.min(980, Math.max(420, (screen.availWidth||1000)-80));
+const h=Math.min(760, Math.max(420, (screen.availHeight||800)-80));
+const left=Math.max(0, Math.round(((screen.availWidth||w)-w)/2));
+const top=Math.max(0, Math.round(((screen.availHeight||h)-h)/2));
+const win=window.open(url,'eveFloat','popup=yes,width='+w+',height='+h+',left='+left+',top='+top);
+return win;
+}
+if(t==='Video'||t==='YouTube'){
+async function findVideos(q){
+const res=await fetch('https://api.piped.private.coffee/search?filter=videos&q='+encodeURIComponent(q),{signal:AbortSignal.timeout(8000)});
+const data=await res.json();
+const raw=Array.isArray(data)?data:(data.items||[]);
+return raw.map(x=>{
+const id=((x.url||'').split('v=')[1]||'').replace(/[^A-Za-z0-9_-].*$/,'').slice(0,11);
+return {id,title:String(x.title||'Video').slice(0,90)};
+}).filter(x=>/^[A-Za-z0-9_-]{11}$/.test(x.id)).slice(0,8);
+}
+function playVideo(id,statusId,frameId){
+const frame=document.getElementById(frameId);
+if(frame)frame.src='https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0';
+const status=document.getElementById(statusId);
+if(status)status.textContent='';
+window._eveLastVideo='https://www.youtube.com/watch?v='+id;
+}
+function paintPicks(items,boxId,statusId,frameId){
+const box=document.getElementById(boxId);
+if(!box)return;
+box.innerHTML=items.map((it,i)=>'<button type=button class=secondary data-i="'+i+'" style="display:block;width:100%;margin:4px 0;text-align:left">'+it.title.replace(/[<>]/g,'')+'</button>').join('');
+box.querySelectorAll('button').forEach(b=>b.onclick=()=>playVideo(items[+b.getAttribute('data-i')].id,statusId,frameId));
+}
+async function runSearch(q,boxId,statusId,frameId){
+const status=document.getElementById(statusId);
+if(!q){if(status)status.textContent='Type what you want to watch.';return;}
+if(status)status.textContent='Finding videos...';
+try{
+const items=await findVideos(q);
+if(!items.length)throw new Error('none');
+playVideo(items[0].id,statusId,frameId);
+paintPicks(items,boxId,statusId,frameId);
+}catch(e){
+if(status)status.textContent='Opening a window instead.';
+popOver('https://www.youtube.com/results?search_query='+encodeURIComponent(q));
+}
+}
+if(t==='Video'){
+document.getElementById('videoGo').onclick=()=>runSearch(document.getElementById('videoPrompt').value.trim(),'videoPicks','videoStatus','videoFrame');
+document.getElementById('videoPop').onclick=()=>{
+const q=document.getElementById('videoPrompt').value.trim();
+popOver(window._eveLastVideo||(q?('https://www.youtube.com/results?search_query='+encodeURIComponent(q)):'https://www.youtube.com/'));
+};
+}
+if(t==='YouTube'){
+function ytId(v){
+v=(v||'').trim();
+try{
+if(v.includes('youtube.com/watch')||v.includes('youtube.com/embed')||v.includes('youtube-nocookie.com/embed'))return (new URL(v.includes('http')?v:'https://'+v).searchParams.get('v')||'').slice(0,11);
+if(v.includes('youtu.be/'))return v.split('youtu.be/')[1].split(/[?&]/)[0].slice(0,11);
+if(v.includes('/shorts/'))return v.split('/shorts/')[1].split(/[?&]/)[0].slice(0,11);
+if(/^[A-Za-z0-9_-]{11}$/.test(v))return v;
+}catch(e){}
+return '';
+}
+document.getElementById('ytGo').onclick=()=>runSearch(document.getElementById('ytSearch').value.trim(),'ytPicks','ytStatus','ytFrame');
+document.getElementById('ytEmbed').onclick=()=>{
+const v=document.getElementById('ytUrl').value.trim();
+const id=ytId(v);
+if(id)playVideo(id,'ytStatus','ytFrame');
+else runSearch(v,'ytPicks','ytStatus','ytFrame');
+};
+document.getElementById('ytPop').onclick=()=>{
+const q=document.getElementById('ytSearch').value.trim();
+const id=ytId(document.getElementById('ytUrl').value.trim());
+popOver(id?('https://www.youtube.com/watch?v='+id):(window._eveLastVideo||(q?('https://www.youtube.com/results?search_query='+encodeURIComponent(q)):'https://www.youtube.com/')));
+};
+}
+}
+if(t==='Spotify'){
+function toEmbed(url){
+try{
+const u=new URL(url);
+const parts=u.pathname.split('/').filter(Boolean);
+const kind=parts.find(x=>['track','album','playlist','artist','episode','show'].includes(x));
+const i=kind?parts.indexOf(kind):-1;
+if(i>=0&&parts[i+1])return 'https://open.spotify.com/embed/'+kind+'/'+parts[i+1].split('?')[0];
+}catch(e){}
+return '';
+}
+function spotifyPage(raw){
+raw=(raw||'').trim();
+if(!raw)return 'https://open.spotify.com/';
+if(raw.startsWith('spotify:')){
+const parts=raw.slice(8).split(':');
+if(parts.length>=2)return 'https://open.spotify.com/'+parts[0]+'/'+parts[1].split('?')[0];
+}
+if(/spotify\.com/i.test(raw)){
+try{return new URL(raw.includes('://')?raw:'https://'+raw).href;}catch(e){}
+}
+return 'https://open.spotify.com/search/'+encodeURIComponent(raw);
+}
+function itunesSongs(term){
+return new Promise((res,rej)=>{
+const cb='eveIt'+Date.now()+Math.floor(Math.random()*1000);
+const s=document.createElement('script');
+const timer=setTimeout(()=>{cleanup();rej(new Error('slow'));},8000);
+function cleanup(){clearTimeout(timer);try{delete window[cb];}catch(e){}s.remove();}
+window[cb]=(data)=>{cleanup();res((data&&data.results)||[]);};
+s.onerror=()=>{cleanup();rej(new Error('fail'));};
+s.src='https://itunes.apple.com/search?media=music&entity=song&limit=6&callback='+cb+'&term='+encodeURIComponent(term);
+document.head.appendChild(s);
+});
+}
+function playPreview(song){
+const audio=document.getElementById('spotifyAudio');
+if(!audio||!song||!song.previewUrl)return false;
+audio.style.display='block';
+audio.src=song.previewUrl;
+audio.play().catch(()=>{});
+return true;
+}
+document.getElementById('spotifyPop').onclick=()=>{
+popOver(spotifyPage(document.getElementById('spotifyInput').value.trim()));
+};
+document.getElementById('spotifySave').onclick=async()=>{
+const raw=document.getElementById('spotifyInput').value.trim();
+const box=document.getElementById('spotifyBox');
+const picks=document.getElementById('spotifyPicks');
+if(!raw){document.getElementById('spotifyFrame').src='https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M';return;}
+let embed='';
+if(raw.startsWith('spotify:')){
+const parts=raw.slice(8).split(':');
+if(parts.length>=2)embed='https://open.spotify.com/embed/'+parts[0]+'/'+parts[1].split('?')[0];
+}
+if(!embed)embed=toEmbed(raw.includes('://')?raw:'https://'+raw);
+if(embed){document.getElementById('spotifyFrame').src=embed;if(box)box.textContent='';return;}
+if(box)box.textContent='Finding the song...';
+try{
+const songs=await itunesSongs(raw);
+if(!songs.length)throw new Error('none');
+playPreview(songs[0]);
+if(picks){
+picks.innerHTML=songs.map((s,i)=>'<button type=button class=secondary data-i="'+i+'" style="display:block;width:100%;margin:4px 0;text-align:left">'+(s.trackName+' — '+s.artistName).replace(/[<>]/g,'')+'</button>').join('');
+picks.querySelectorAll('button').forEach(b=>b.onclick=()=>playPreview(songs[+b.getAttribute('data-i')]));
+}
+if(box)box.textContent='Playing here. Small window opens Spotify itself.';
+}catch(e){
+if(box)box.textContent='Opening Spotify in a window.';
+popOver(spotifyPage(raw));
+}
+};
+}
+if(t==='Browser'){
+const blocked=/(^|\.)((youtube|google|spotify|facebook|instagram|x|twitter|tiktok|netflix|amazon|bankofamerica|chase|wellsfargo)\.com)$/i;
+async function pageText(url){
+const wiki=url.match(/wikipedia\.org\/wiki\/([^#?]+)/i);
+if(!wiki)return '';
+const title=decodeURIComponent(wiki[1]);
+const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(title),{signal:AbortSignal.timeout(8000)});
+const d=await r.json();
+return (d.title?d.title+'\n\n':'')+(d.extract||'');
+}
+document.getElementById('bPop').onclick=()=>{
+let url=document.getElementById('bUrl').value.trim();
+if(!url)return;
+if(!/^https?:\/\//i.test(url))url='https://'+url;
+popOver(url);
+};
+document.getElementById('bGo').onclick=async()=>{
+let url=document.getElementById('bUrl').value.trim();
+if(!url)return;
+if(!/^https?:\/\//i.test(url))url='https://'+url;
+document.getElementById('bUrl').value=url;
+const read=document.getElementById('bRead');
+let host='';
+try{host=new URL(url).hostname;}catch(e){}
+if(blocked.test(host)){
+read.textContent='That site will not open inside this panel, so it is opening in a window.';
+popOver(url);
+return;
+}
+document.getElementById('bFrame').src=url;
+read.textContent='';
+try{
+const text=await pageText(url);
+if(text)read.textContent=text;
+}catch(e){}
+};
+}
+if(t==='RPG'){
+let inv=JSON.parse(localStorage.getItem('eve_rpg_inv')||'[]');
+let adv=JSON.parse(localStorage.getItem('eve_rpg_adventure')||'null');
+function renderInv(){document.getElementById('invList').innerHTML=inv.map((it,i)=>`<div class=card>${it} <button onclick="delInv(${i})" style="float:right">×</button></div>`).join('')||'<div style="color:#666">Empty</div>';}
+window.delInv=(i)=>{inv.splice(i,1);localStorage.setItem('eve_rpg_inv',JSON.stringify(inv));renderInv();};
+document.getElementById('invAdd').onclick=()=>{const v=document.getElementById('invInput').value.trim();if(!v)return;inv.push(v);localStorage.setItem('eve_rpg_inv',JSON.stringify(inv));document.getElementById('invInput').value='';renderInv();};
+window.quickRoll=(sides)=>{const r=Math.floor(Math.random()*sides)+1;document.getElementById('diceOut').textContent=`d${sides}: ${r}`;if(adv){adv.turns.push({role:'roll',text:`(rolled d${sides}: ${r})`});adv.turns=adv.turns.slice(-200);localStorage.setItem('eve_rpg_adventure',JSON.stringify(adv));renderLog();}};
+function renderLog(){
+const el=document.getElementById('rpgLog');
+if(!adv){el.textContent='No adventure yet — set up your character above and click "Begin Adventure".';return;}
+el.innerHTML=adv.turns.map(t=>t.role==='player'?`<div style="color:#a5b4fc;margin:6px 0"><b>You:</b> ${t.text}</div>`:t.role==='roll'?`<div style="color:var(--muted);font-size:11px">${t.text}</div>`:`<div style="margin:6px 0">${t.text}</div>`).join('');
+el.scrollTop=el.scrollHeight;
+}
+function showActive(){
+document.getElementById('rpgSetup').style.display=adv?'none':'block';
+document.getElementById('rpgActionRow').style.display=adv?'flex':'none';
+}
+showActive();renderInv();renderLog();
+document.getElementById('rpgStatus').textContent=featureStatusText('rpg');
+document.getElementById('rpgBegin').onclick=async()=>{
+const g=document.getElementById('rpgGenre').value;
+const ch=document.getElementById('rpgChar').value.trim()||'the adventurer';
+const loc=document.getElementById('rpgLoc').value.trim()||'an unknown place';
+const status=document.getElementById('rpgStatus');const btn=document.getElementById('rpgBegin');
+if(!resolveEngine('rpg')){status.textContent=aiUnavailableMessage('rpg');return;}
+btn.disabled=true;status.textContent='Setting the scene...';
+adv={genre:g,character:ch,location:loc,turns:[]};
+const systemPrompt=`You are the Game Master for an interactive, second-person RPG adventure. Genre: ${g}. The player character is named ${ch}, starting at ${loc}. Narrate immersively in 2nd person ("you"), 3-6 sentences. Set the opening scene and end on an implicit choice or decision point for the player. Do not mention dice or game mechanics.`;
+try{
+const full=await aiStream([{role:'system',content:systemPrompt},{role:'user',content:'Begin the adventure.'}],{maxTokens:400,temperature:0.85,feature:'rpg'},(partial)=>{adv.turns=[{role:'gm',text:partial}];renderLog();});
+if(!full||!full.trim()){status.textContent='Nothing came back. Try again.';adv=null;btn.disabled=false;showActive();return;}
+adv.turns=[{role:'gm',text:full.trim()}];
+localStorage.setItem('eve_rpg_adventure',JSON.stringify(adv));
+status.textContent='';showActive();renderLog();
+}catch(e){status.textContent='That didn\'t work. Try again.';adv=null;}
+finally{btn.disabled=false;}
+};
+document.getElementById('rpgAct').onclick=async()=>{
+if(!adv)return;
+const inp=document.getElementById('rpgAction');const action=inp.value.trim();if(!action)return;
+const status=document.getElementById('rpgStatus');const btn=document.getElementById('rpgAct');
+if(!resolveEngine('rpg')){status.textContent=aiUnavailableMessage('rpg');return;}
+const roll=Math.floor(Math.random()*20)+1;
+const degree=roll===20?'critical success':roll===1?'critical failure':roll>=15?'success':roll>=10?'partial success, with a complication':'failure';
+adv.turns.push({role:'player',text:action});
+adv.turns.push({role:'roll',text:`(d20 action roll: ${roll} — ${degree})`});
+inp.value='';btn.disabled=true;status.textContent='Resolving...';renderLog();
+const systemPrompt=`You are the Game Master for an ongoing interactive, second-person RPG adventure. Genre: ${adv.genre}. The player character is named ${adv.character}, currently at/in ${adv.location}. Continue the story based on the player's action and the resolution given to you. Narrate immersively in 2nd person ("you"), 3-6 sentences, reflecting the degree of success or failure. End on a new situation or implicit choice. Do not mention dice or game mechanics explicitly.`;
+let recent=adv.turns.filter(t=>t.role!=='roll').slice(-16).map(t=>({role:t.role==='player'?'user':'assistant',content:t.text}));
+if(recent.length && recent[recent.length-1].role==='user') recent=recent.slice(0,-1);
+if(recent.length && recent[0].role==='assistant') recent.unshift({role:'user',content:'(the adventure begins)'});
+try{
+const liveIdx=adv.turns.length;
+adv.turns.push({role:'gm',text:''});
+const full=await aiStream([{role:'system',content:systemPrompt},...recent,{role:'user',content:`My action: "${action}". Resolution: ${degree} (rolled ${roll}/20). Continue the story.`}],{maxTokens:400,temperature:0.85,feature:'rpg'},(partial)=>{adv.turns[liveIdx].text=partial;renderLog();});
+adv.turns[liveIdx].text=(full&&full.trim())?full.trim():'(the story falters here — try again)';
+adv.turns=adv.turns.slice(-200);
+localStorage.setItem('eve_rpg_adventure',JSON.stringify(adv));
+status.textContent='';renderLog();
+}catch(e){status.textContent='That didn\'t work. Try again.';}
+finally{btn.disabled=false;}
+};
+document.getElementById('rpgNew').onclick=()=>{
+if(adv && !confirm('Start a new adventure? This ends the current one.'))return;
+adv=null;localStorage.removeItem('eve_rpg_adventure');showActive();renderLog();
+};
+}
+if(t==='Maps'){document.getElementById('mapGo').onclick=async()=>{const q=document.getElementById('mapSearch').value;if(!q)return;try{const res=await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q)+'&limit=1',{signal:AbortSignal.timeout(5000)}).then(r=>r.json());if(res[0]){document.getElementById('mapInfo').textContent=res[0].display_name;const lat=parseFloat(res[0].lat),lon=parseFloat(res[0].lon);document.getElementById('mapFrame').src=`https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.05},${lat-0.05},${lon+0.05},${lat+0.05}&marker=${lat},${lon}&layer=mapnik`;}}catch{}};}
+if(t==='Weather'){
+function paintWeather(d){
+const c=d.current||{};
+const uv=uvInfo(c.uv_index);
+const daily=d.daily||{};
+const moonToday=moonInfo(daily.moon_phase?daily.moon_phase[0]:null);
+const rainNow=c.precipitation!=null?c.precipitation:0;
+document.getElementById('weatherBox').innerHTML='<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap"><div style="font-size:56px;line-height:1">'+wIcon(c.weather_code)+'</div><div style="text-align:left"><div style="font-size:42px;font-weight:800">'+Math.round(c.temperature_2m)+'°F</div><div style="color:var(--muted)">'+wDesc(c.weather_code)+' · Feels '+Math.round(c.apparent_temperature)+'°F</div></div><div style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap"><div class=wStat><div class=wStatLabel>Rain</div><div class=wStatVal>'+Number(rainNow).toFixed(2)+' in</div></div><div class=wStat><div class=wStatLabel>UV</div><div class=wStatVal style="color:'+uv.color+'">'+(c.uv_index!=null?Number(c.uv_index).toFixed(1):'—')+' '+uv.label+'</div></div><div class=wStat><div class=wStatLabel>Moon</div><div class=wStatVal>'+moonToday.emoji+' '+moonToday.label+'</div></div><div class=wStat><div class=wStatLabel>Wind</div><div class=wStatVal>'+Math.round(c.wind_speed_10m||0)+' mph</div></div></div></div>';
+const days=(daily.time||[]).map((day,i)=>{
+const moon=moonInfo(daily.moon_phase?daily.moon_phase[i]:null);
+const label=new Date(day+'T12:00:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+const hi=Math.round(daily.temperature_2m_max[i]);
+const lo=Math.round(daily.temperature_2m_min[i]);
+const rain=daily.precipitation_sum!=null?Number(daily.precipitation_sum[i]).toFixed(2):'—';
+const uvd=daily.uv_index_max&&daily.uv_index_max[i]!=null?Number(daily.uv_index_max[i]).toFixed(1):'—';
+return '<div class=card style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div><b>'+label+'</b><div style="color:var(--muted)">'+hi+'° / '+lo+'° · Rain '+rain+' in · UV '+uvd+'</div></div><div style="text-align:right">'+moon.emoji+'<div style="font-size:11px;color:var(--muted)">'+moon.label+'</div></div></div>';
+}).join('');
+document.getElementById('weatherDaily').innerHTML=days?'<h4 style="text-align:left;margin:14px 0 6px">Each day</h4>'+days:'';
+const times=(d.hourly&&d.hourly.time)||[];
+const now=new Date();
+let startIdx=times.findIndex(t=>new Date(t)>=now);
+if(startIdx<0)startIdx=0;
+const hrs=times.slice(startIdx,startIdx+24);
+document.getElementById('hourlyRow').innerHTML=hrs.map((t,i)=>{
+const idx=startIdx+i;
+const time=new Date(t).toLocaleTimeString([],{hour:'numeric'});
+const temp=Math.round(d.hourly.temperature_2m[idx]);
+const pop=d.hourly.precipitation_probability?d.hourly.precipitation_probability[idx]:0;
+const amt=d.hourly.precipitation?d.hourly.precipitation[idx]:0;
+const uvv=d.hourly.uv_index?d.hourly.uv_index[idx]:null;
+const code=d.hourly.weather_code?d.hourly.weather_code[idx]:0;
+return '<div class=wHour><div>'+time+'</div><div class=wIco>'+wIcon(code)+'</div><div style="font-weight:700">'+temp+'°</div><div style="color:'+(pop>40?'#38bdf8':'var(--muted)')+'">'+pop+'% · '+Number(amt).toFixed(2)+' in</div><div style="color:'+uvInfo(uvv).color+'">UV '+(uvv!=null?Math.round(uvv):'—')+'</div></div>';
+}).join('');
+const mini=Math.round(c.temperature_2m)+'°F '+wIcon(c.weather_code);
+document.getElementById('weatherMini').textContent=mini;
+localStorage.setItem('eve_weather_line',mini);
+try{localStorage.setItem('eve_weather_raw',JSON.stringify({at:Date.now(),d}));}catch(e){}
+}
+function loadWeather(lat,lon){
+const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,apparent_temperature,precipitation,wind_speed_10m,weather_code,uv_index&hourly=temperature_2m,precipitation_probability,precipitation,uv_index,weather_code&daily=temperature_2m_max,temperature_2m_min,uv_index_max,precipitation_sum,moon_phase&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=7';
+fetch(url).then(r=>r.json()).then(paintWeather).catch(()=>{
+const raw=localStorage.getItem('eve_weather_raw');
+if(raw){try{paintWeather(JSON.parse(raw).d);return;}catch(e){}}
+document.getElementById('weatherBox').innerHTML='Weather needs a connection the first time.';
+});
+}
+let lat=28.5494,lon=-81.7729;
+try{const s=JSON.parse(localStorage.getItem('eve_coords')||'null');if(s&&s.lat){lat=s.lat;lon=s.lon;}}catch(e){}
+loadWeather(lat,lon);
+if(navigator.geolocation&&!localStorage.getItem('eve_coords')){
+navigator.geolocation.getCurrentPosition(pos=>{
+const c={lat:pos.coords.latitude,lon:pos.coords.longitude};
+localStorage.setItem('eve_coords',JSON.stringify(c));
+loadWeather(c.lat,c.lon);
+},()=>{},{timeout:5000,maximumAge:3600000});
+}
+}
+if(t==='Alarms'){let alarms=JSON.parse(localStorage.getItem('eve_alarms')||'[]');function renderAlarms(){document.getElementById('alarmList').innerHTML=alarms.map((a,i)=>`<div class=card>${a.time} ${a.label} <button onclick="delAlarm(${i})" style="float:right">×</button></div>`).join('')||'No alarms';}window.delAlarm=(i)=>{alarms.splice(i,1);localStorage.setItem('eve_alarms',JSON.stringify(alarms));renderAlarms();};document.getElementById('alarmAdd').onclick=()=>{const time=document.getElementById('alarmTime').value;const label=document.getElementById('alarmLabel').value||'Alarm';if(!time)return;alarms.push({time,label});localStorage.setItem('eve_alarms',JSON.stringify(alarms));renderAlarms();};renderAlarms();}
+if(t==='To Do'){let todos=JSON.parse(localStorage.getItem('eve_todos')||'[]');function renderTodos(){document.getElementById('todoList').innerHTML=todos.map((it,i)=>`<div class=card><label><input type=checkbox ${it.done?'checked':''} onchange="toggleTodo(${i})"> ${it.text}</label><button onclick="delTodo(${i})" style="float:right">×</button></div>`).join('')||'No To Do';}window.toggleTodo=(i)=>{todos[i].done=!todos[i].done;localStorage.setItem('eve_todos',JSON.stringify(todos));renderTodos();};window.delTodo=(i)=>{todos.splice(i,1);localStorage.setItem('eve_todos',JSON.stringify(todos));renderTodos();};document.getElementById('todoAdd').onclick=()=>{const v=document.getElementById('todoInput').value.trim();if(!v)return;todos.push({text:v,done:false});localStorage.setItem('eve_todos',JSON.stringify(todos));document.getElementById('todoInput').value='';renderTodos();};renderTodos();}
+if(t==='Notes'){
+const area=document.getElementById('notesArea');
+const status=document.getElementById('notesStatus');
+area.value=localStorage.getItem('eve_notes')||'';
+let saveTimer=null;
+area.oninput=()=>{
+status.textContent='Saving...';
+clearTimeout(saveTimer);
+saveTimer=setTimeout(()=>{
+localStorage.setItem('eve_notes',area.value);
+status.textContent='Saved '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+},500);
+};
+}
+if(t==='Knowledge'){
+const status=document.getElementById('kbStatus');
+async function paintKb(){
+const docs=await kbList();
+document.getElementById('kbList').innerHTML=docs.map(d=>'<div class=card>'+d.name.replace(/[<>]/g,'')+' <button class=secondary data-id="'+d.id+'">Remove</button></div>').join('')||'<div style="color:var(--muted)">No PDFs yet.</div>';
+document.getElementById('kbList').querySelectorAll('button').forEach(b=>b.onclick=async()=>{await kbRemove(b.getAttribute('data-id'));paintKb();});
+}
+document.getElementById('kbAdd').onclick=async()=>{
+const files=[...document.getElementById('kbFiles').files];
+if(!files.length){status.textContent='Choose one or more PDFs first.';return;}
+status.textContent='Reading...';
+let n=0;
+for(const f of files){
+try{await kbAddFile(f);n++;}catch(e){status.textContent=(f.name||'A file')+' could not be read.';}
+}
+document.getElementById('kbFiles').value='';
+status.textContent=n?(n+' added.'):'Nothing was added.';
+paintKb();
+};
+document.getElementById('kbFolderBtn').onclick=()=>document.getElementById('kbFolder').click();
+document.getElementById('kbFolder').onchange=async()=>{
+const files=[...document.getElementById('kbFolder').files].filter(f=>/\.pdf$/i.test(f.name));
+if(!files.length){status.textContent='No PDFs in that folder.';return;}
+status.textContent='Reading '+files.length+'...';
+let n=0;
+for(const f of files){try{await kbAddFile(f);n++;}catch(e){}}
+status.textContent=n?(n+' from that folder.'):'Those PDFs had no readable text.';
+paintKb();
+};
+paintKb();
+}
+if(t==='Projects'){
+document.querySelectorAll('.projSubBtn').forEach(b=>{
+b.onclick=()=>{
+document.querySelectorAll('.projSubBtn').forEach(x=>x.classList.remove('active'));
+b.classList.add('active');
+document.querySelectorAll('.projModule').forEach(m=>m.style.display='none');
+document.getElementById('projModule-'+b.dataset.sub).style.display='block';
+};
+});
+// Idea Sorter
+let ideas=JSON.parse(localStorage.getItem('eve_proj_ideas')||'[]');
+const ideaCols=[['concepts','Concepts'],['characters','Characters'],['mechanics','Mechanics'],['problems','Problems'],['solutions','Solutions']];
+function renderIdeas(){
+document.getElementById('ideaColumns').innerHTML=ideaCols.map(([key,label])=>{
+const items=ideas.map((idea,i)=>({idea,i})).filter(x=>x.idea.col===key);
+return `<div class=projColumn><h4>${label}</h4>${items.map(({idea,i})=>`<div class=projCard draggable=true ondragstart="event.dataTransfer.setData('text/plain',${i})">${idea.text} <button onclick="delIdea(${i})" style="float:right;background:none;border:0;color:#fff;cursor:pointer">×</button></div>`).join('')}<div class=projColumn style="min-height:30px;border:1px dashed var(--input-border);margin-top:4px" ondragover="event.preventDefault()" ondrop="dropIdea(event,'${key}')"></div></div>`;
+}).join('');
+}
+window.delIdea=(i)=>{ideas.splice(i,1);localStorage.setItem('eve_proj_ideas',JSON.stringify(ideas));renderIdeas();};
+window.dropIdea=(e,col)=>{e.preventDefault();const i=parseInt(e.dataTransfer.getData('text/plain'));if(!isNaN(i)&&ideas[i]){ideas[i].col=col;localStorage.setItem('eve_proj_ideas',JSON.stringify(ideas));renderIdeas();}};
+document.getElementById('ideaAdd').onclick=()=>{const v=document.getElementById('ideaText').value.trim();if(!v)return;ideas.push({text:v,col:document.getElementById('ideaCol').value});localStorage.setItem('eve_proj_ideas',JSON.stringify(ideas));document.getElementById('ideaText').value='';renderIdeas();};
+renderIdeas();
+// Workflow Mapper
+let wf=JSON.parse(localStorage.getItem('eve_proj_workflow')||'{"nodes":[],"conns":[]}');
+function renderWorkflow(){
+document.getElementById('wfNodesList').innerHTML=wf.nodes.map((n,i)=>`<div class=card>${n.name}${n.desc?' — '+n.desc:''} <button onclick="delWfNode(${i})" style="float:right">×</button></div>`).join('')||'No steps yet';
+document.getElementById('wfConnsList').innerHTML=wf.conns.map((c,i)=>{const from=wf.nodes[c.from],to=wf.nodes[c.to];return from&&to?`<div class=card>${from.name} → ${to.name} <button onclick="delWfConn(${i})" style="float:right">×</button></div>`:'';}).join('')||'No connections yet';
+const opts=wf.nodes.map((n,i)=>`<option value=${i}>${n.name}</option>`).join('');
+document.getElementById('wfFrom').innerHTML=opts;document.getElementById('wfTo').innerHTML=opts;
+}
+window.delWfNode=(i)=>{wf.nodes.splice(i,1);wf.conns=wf.conns.filter(c=>c.from!==i&&c.to!==i).map(c=>({from:c.from>i?c.from-1:c.from,to:c.to>i?c.to-1:c.to}));localStorage.setItem('eve_proj_workflow',JSON.stringify(wf));renderWorkflow();};
+window.delWfConn=(i)=>{wf.conns.splice(i,1);localStorage.setItem('eve_proj_workflow',JSON.stringify(wf));renderWorkflow();};
+document.getElementById('wfNodeAdd').onclick=()=>{const name=document.getElementById('wfNodeName').value.trim();if(!name)return;wf.nodes.push({name,desc:document.getElementById('wfNodeDesc').value.trim()});localStorage.setItem('eve_proj_workflow',JSON.stringify(wf));document.getElementById('wfNodeName').value='';document.getElementById('wfNodeDesc').value='';renderWorkflow();};
+document.getElementById('wfConnAdd').onclick=()=>{const from=parseInt(document.getElementById('wfFrom').value),to=parseInt(document.getElementById('wfTo').value);if(isNaN(from)||isNaN(to)||from===to)return;wf.conns.push({from,to});localStorage.setItem('eve_proj_workflow',JSON.stringify(wf));renderWorkflow();};
+renderWorkflow();
+// Priority Matrix
+let pmItems=JSON.parse(localStorage.getItem('eve_proj_priority')||'[]');
+const pmQuads=[['urgentImportant','Urgent & Important'],['notUrgentImportant','Not Urgent & Important'],['urgentNotImportant','Urgent & Not Important'],['notUrgentNotImportant','Not Urgent & Not Important']];
+function renderPriority(){
+document.getElementById('pmQuadrants').innerHTML=pmQuads.map(([key,label])=>{
+const items=pmItems.map((it,i)=>({it,i})).filter(x=>x.it.quad===key);
+return `<div class=projQuadrant ondragover="event.preventDefault()" ondrop="dropPm(event,'${key}')"><h4>${label}</h4>${items.map(({it,i})=>`<div class=projCard draggable=true ondragstart="event.dataTransfer.setData('text/plain',${i})">${it.text} <button onclick="delPm(${i})" style="float:right;background:none;border:0;color:#fff;cursor:pointer">×</button></div>`).join('')}</div>`;
+}).join('');
+}
+window.delPm=(i)=>{pmItems.splice(i,1);localStorage.setItem('eve_proj_priority',JSON.stringify(pmItems));renderPriority();};
+window.dropPm=(e,quad)=>{e.preventDefault();const i=parseInt(e.dataTransfer.getData('text/plain'));if(!isNaN(i)&&pmItems[i]){pmItems[i].quad=quad;localStorage.setItem('eve_proj_priority',JSON.stringify(pmItems));renderPriority();}};
+document.getElementById('pmAdd').onclick=()=>{const v=document.getElementById('pmText').value.trim();if(!v)return;pmItems.push({text:v,quad:document.getElementById('pmQuad').value});localStorage.setItem('eve_proj_priority',JSON.stringify(pmItems));document.getElementById('pmText').value='';renderPriority();};
+renderPriority();
+// Decision Log
+let decisions=JSON.parse(localStorage.getItem('eve_proj_decisions')||'[]');
+function renderDecisions(){
+document.getElementById('dlList').innerHTML=decisions.slice().reverse().map((d,ri)=>{const i=decisions.length-1-ri;return `<div class=card><b>${d.decision}</b><br><span style="font-size:11px;color:var(--muted)">Reasoning: ${d.reason||'—'}<br>Alternatives: ${d.alternatives||'—'}<br>Expected: ${d.expected||'—'}</span>${d.notes?`<br>${d.notes}`:''}<button onclick="delDecision(${i})" style="float:right">×</button></div>`;}).join('')||'No decisions logged yet';
+}
+window.delDecision=(i)=>{decisions.splice(i,1);localStorage.setItem('eve_proj_decisions',JSON.stringify(decisions));renderDecisions();};
+document.getElementById('dlAdd').onclick=()=>{
+const decision=document.getElementById('dlDecision').value.trim();if(!decision)return;
+decisions.push({decision,reason:document.getElementById('dlReason').value.trim(),alternatives:document.getElementById('dlAlternatives').value.trim(),expected:document.getElementById('dlExpected').value.trim(),notes:document.getElementById('dlNotes').value.trim()});
+localStorage.setItem('eve_proj_decisions',JSON.stringify(decisions));
+['dlDecision','dlReason','dlAlternatives','dlExpected','dlNotes'].forEach(id=>document.getElementById(id).value='');
+renderDecisions();
+};
+renderDecisions();
+// Checklist Builder
+let checklists=JSON.parse(localStorage.getItem('eve_proj_checklists')||'[]');
+function renderChecklistSelect(){
+document.getElementById('clSelect').innerHTML=checklists.map((c,i)=>`<option value=${i}>${c.name}</option>`).join('')||'<option value="">No checklists yet</option>';
+}
+function renderChecklistItems(){
+const idx=parseInt(document.getElementById('clSelect').value);
+const cl=checklists[idx];
+document.getElementById('clItemsList').innerHTML=cl?cl.items.map((it,i)=>`<div class=card><label><input type=checkbox ${it.done?'checked':''} onchange="toggleClItem(${idx},${i})"> ${it.text}</label><button onclick="delClItem(${idx},${i})" style="float:right">×</button></div>`).join('')||'Empty checklist':'Create a checklist above first';
+}
+window.toggleClItem=(ci,ii)=>{checklists[ci].items[ii].done=!checklists[ci].items[ii].done;localStorage.setItem('eve_proj_checklists',JSON.stringify(checklists));renderChecklistItems();};
+window.delClItem=(ci,ii)=>{checklists[ci].items.splice(ii,1);localStorage.setItem('eve_proj_checklists',JSON.stringify(checklists));renderChecklistItems();};
+document.getElementById('clCreate').onclick=()=>{const name=document.getElementById('clNewName').value.trim();if(!name)return;checklists.push({name,items:[]});localStorage.setItem('eve_proj_checklists',JSON.stringify(checklists));document.getElementById('clNewName').value='';renderChecklistSelect();document.getElementById('clSelect').value=checklists.length-1;renderChecklistItems();};
+document.getElementById('clSelect').onchange=renderChecklistItems;
+document.getElementById('clItemAdd').onclick=()=>{const idx=parseInt(document.getElementById('clSelect').value);if(isNaN(idx)||!checklists[idx]){alert('Create or select a checklist first.');return;}const v=document.getElementById('clItemText').value.trim();if(!v)return;checklists[idx].items.push({text:v,done:false});localStorage.setItem('eve_proj_checklists',JSON.stringify(checklists));document.getElementById('clItemText').value='';renderChecklistItems();};
+renderChecklistSelect();renderChecklistItems();
+// Timeline Planner
+let tlEvents=JSON.parse(localStorage.getItem('eve_proj_timeline')||'[]');
+function renderTimeline(){
+const sorted=tlEvents.map((e,i)=>({e,i})).sort((a,b)=>(a.e.date||'').localeCompare(b.e.date||''));
+document.getElementById('tlTimeline').innerHTML=sorted.map(({e,i})=>`<div class=projTimelineEvent><b>${e.date||'(no date)'}</b><br>${e.title}<br><button onclick="delTlEvent(${i})" style="margin-top:4px">×</button></div>`).join('')||'No events yet';
+}
+window.delTlEvent=(i)=>{tlEvents.splice(i,1);localStorage.setItem('eve_proj_timeline',JSON.stringify(tlEvents));renderTimeline();};
+document.getElementById('tlAdd').onclick=()=>{const v=document.getElementById('tlTitle').value.trim();if(!v)return;tlEvents.push({title:v,date:document.getElementById('tlDate').value});localStorage.setItem('eve_proj_timeline',JSON.stringify(tlEvents));document.getElementById('tlTitle').value='';renderTimeline();};
+renderTimeline();
+// Resource Tracker
+let resources=JSON.parse(localStorage.getItem('eve_proj_resources')||'[]');
+function renderResources(){
+document.getElementById('rtTable').innerHTML='<tr><th>Name</th><th>Category</th><th>Status</th><th>Notes</th><th></th></tr>'+resources.map((r,i)=>`<tr><td>${r.name}</td><td>${r.category}</td><td>${r.status}</td><td>${r.notes||''}</td><td><button onclick="delResource(${i})">×</button></td></tr>`).join('');
+}
+window.delResource=(i)=>{resources.splice(i,1);localStorage.setItem('eve_proj_resources',JSON.stringify(resources));renderResources();};
+document.getElementById('rtAdd').onclick=()=>{const name=document.getElementById('rtName').value.trim();if(!name)return;resources.push({name,category:document.getElementById('rtCategory').value.trim(),status:document.getElementById('rtStatus').value,notes:document.getElementById('rtNotes').value.trim()});localStorage.setItem('eve_proj_resources',JSON.stringify(resources));['rtName','rtCategory','rtNotes'].forEach(id=>document.getElementById(id).value='');renderResources();};
+renderResources();
+}
+if(t==='Legal'){
+let log=JSON.parse(localStorage.getItem('eve_legal_log')||'[]');
+function renderLegalLog(){document.getElementById('legalLog').innerHTML=log.map(m=>m.role==='user'?`<div style="color:#a5b4fc;margin:6px 0"><b>You:</b> ${m.text}</div>`:`<div style="margin:6px 0">${m.text}</div>`).join('')||'Ask a general legal question to get started.';document.getElementById('legalLog').scrollTop=document.getElementById('legalLog').scrollHeight;}
+renderLegalLog();
+document.getElementById('legalSend').onclick=async()=>{
+const inp=document.getElementById('legalInput');const q=inp.value.trim();if(!q)return;
+if(!resolveEngine('legal')){document.getElementById('legalStatus').textContent=aiUnavailableMessage('legal');return;}
+log.push({role:'user',text:q});inp.value='';log.push({role:'ai',text:''});const idx=log.length-1;renderLegalLog();
+const status=document.getElementById('legalStatus');status.textContent='Researching...';
+const sysPrompt='You are EVE in Legal Help mode, providing general legal information for educational purposes only. You are not a lawyer and this is not legal advice — always say so when relevant and recommend consulting a licensed attorney in the user\'s jurisdiction for anything binding, high-stakes, or specific to their situation. Explain general legal concepts and principles clearly, noting that laws vary by jurisdiction.';
+let know='';try{know=await knowledgeFor(q);}catch(e){}
+try{
+const full=await aiStream([{role:'system',content:sysPrompt+(know?('\n\nThe user\'s PDFs say:\n'+know):'')},...log.filter(m=>m.text).slice(-20).map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}))],{maxTokens:1500,temperature:0.5,feature:'legal'},(partial)=>{log[idx].text=partial;renderLegalLog();});
+log[idx].text=(full&&!isJunkReply(full))?full.trim():'No answer came back. Try again.';
+localStorage.setItem('eve_legal_log',JSON.stringify(log.slice(-100)));
+status.textContent='';renderLegalLog();
+}catch(e){log[idx].text='No answer came back. Try again.';status.textContent='';renderLegalLog();}
+};
+}
+if(t==='Health'){
+let log=JSON.parse(localStorage.getItem('eve_health_log')||'[]');
+function renderHealthLog(){document.getElementById('healthLog').innerHTML=log.map(m=>m.role==='user'?`<div style="color:#a5b4fc;margin:6px 0"><b>You:</b> ${m.text}</div>`:`<div style="margin:6px 0">${m.text}</div>`).join('')||'Ask a general health or wellness question to get started.';document.getElementById('healthLog').scrollTop=document.getElementById('healthLog').scrollHeight;}
+renderHealthLog();
+document.getElementById('healthSend').onclick=async()=>{
+const inp=document.getElementById('healthInput');const q=inp.value.trim();if(!q)return;
+if(!resolveEngine('health')){document.getElementById('healthStatus').textContent=aiUnavailableMessage('health');return;}
+log.push({role:'user',text:q});inp.value='';log.push({role:'ai',text:''});const idx=log.length-1;renderHealthLog();
+const status=document.getElementById('healthStatus');status.textContent='Researching...';
+const sysPrompt='You are EVE in Health mode, providing general health and wellness information for educational purposes only. You are not a doctor and do not diagnose conditions, interpret personal symptoms as a diagnosis, prescribe treatment, or give specific medication dosing. For any symptoms, diagnosis, or treatment decisions, clearly direct the user to consult a licensed healthcare provider. If something sounds like a medical emergency, tell them to contact emergency services immediately rather than continuing the conversation as normal. You can discuss general wellness, nutrition, exercise, and health literacy topics in an educational way.';
+let know='';try{know=await knowledgeFor(q);}catch(e){}
+try{
+const full=await aiStream([{role:'system',content:sysPrompt+(know?('\n\nThe user\'s PDFs say:\n'+know):'')},...log.filter(m=>m.text).slice(-20).map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}))],{maxTokens:1500,temperature:0.5,feature:'health'},(partial)=>{log[idx].text=partial;renderHealthLog();});
+log[idx].text=(full&&!isJunkReply(full))?full.trim():'No answer came back. Try again.';
+localStorage.setItem('eve_health_log',JSON.stringify(log.slice(-100)));
+status.textContent='';renderHealthLog();
+}catch(e){log[idx].text='No answer came back. Try again.';status.textContent='';renderHealthLog();}
+};
+}
+if(t==='Stories'){
+let stories=JSON.parse(localStorage.getItem('eve_stories')||'[]');
+let currentId=localStorage.getItem('eve_current_story_id')||'';
+function saveStories(){localStorage.setItem('eve_stories',JSON.stringify(stories));}
+function currentStory(){return stories.find(s=>s.id===currentId);}
+function renderStorySelect(){
+document.getElementById('storySelect').innerHTML=stories.map(s=>`<option value="${s.id}">${s.title}</option>`).join('')||'<option value="">No stories yet</option>';
+if(currentId)document.getElementById('storySelect').value=currentId;
+}
+function renderChapters(){
+const s=currentStory();
+const el=document.getElementById('storyChapters');
+if(!s){el.textContent='Create a new story above, or pick an existing one.';return;}
+el.innerHTML=s.chapters.map((c,i)=>`<div style="margin-bottom:14px"><b>${c.title||('Chapter '+(i+1))}</b><br>${c.text}</div>`).join('');
+el.scrollTop=el.scrollHeight;
+}
+renderStorySelect();renderChapters();
+document.getElementById('storySelect').onchange=()=>{currentId=document.getElementById('storySelect').value;localStorage.setItem('eve_current_story_id',currentId);renderChapters();};
+document.getElementById('storyNewBtn').onclick=()=>{
+const f=document.getElementById('storyNewForm');
+f.style.display=f.style.display==='none'?'block':'none';
+};
+document.getElementById('storyCreateBtn').onclick=async()=>{
+const title=document.getElementById('storyTitle').value.trim();
+if(!title){alert('Give your story a title.');return;}
+const genre=document.getElementById('storyGenre').value;
+const premise=document.getElementById('storyPremise').value.trim();
+const status=document.getElementById('storyStatus');
+if(!resolveEngine('stories')){status.textContent=aiUnavailableMessage('stories');return;}
+const id='s'+Date.now();
+const story={id,title,genre,premise,chapters:[]};
+stories.push(story);currentId=id;localStorage.setItem('eve_current_story_id',id);
+document.getElementById('storyNewForm').style.display='none';
+['storyTitle','storyPremise'].forEach(x=>document.getElementById(x).value='');
+renderStorySelect();renderChapters();
+status.textContent='Writing the opening...';
+const sysPrompt='Write fiction only. Do not talk about yourself. Genre: '+genre+'. '+(premise?('Premise: '+premise+'. '):'')+'Write a long opening chapter, at least 800 words, with several scenes and dialogue. End on a hook. Output only the chapter.';
+let know='';try{know=await knowledgeFor((title||'')+' '+(premise||''));}catch(e){}
+try{
+story.chapters.push({title:'Chapter 1',text:''});
+const idx=0;
+let full=await aiStream([{role:'system',content:sysPrompt+(know?('\n\nFacts from the user\'s PDFs. Use them only if they belong in this story:\n'+know):'')},{role:'user',content:'Write the long opening chapter now.'}],{maxTokens:3500,temperature:0.9,feature:'stories',wait:22000},(partial)=>{story.chapters[idx].text=partial;renderChapters();});
+if(full&&!isJunkReply(full)&&full.trim().length<1600){
+status.textContent='Writing more...';
+const more=await aiStream([{role:'system',content:'Continue the same chapter. Do not repeat what was already written. Add several more paragraphs. Output only the new prose.'},{role:'user',content:full.trim()}],{maxTokens:2500,temperature:0.9,feature:'stories',wait:22000},(partial)=>{story.chapters[idx].text=full.trim()+'\n\n'+partial;renderChapters();});
+if(more&&!isJunkReply(more))full=full.trim()+'\n\n'+more.trim();
+}
+story.chapters[idx].text=(full&&!isJunkReply(full))?full.trim():'';
+if(!story.chapters[idx].text)throw new Error('nostory');
+saveStories();status.textContent='';renderChapters();
+}catch(e){status.textContent='That chapter did not come back. Try again.';stories=stories.filter(s=>s.id!==id);currentId='';saveStories();renderStorySelect();renderChapters();}
+};
+document.getElementById('storyNextBtn').onclick=async()=>{
+const s=currentStory();
+if(!s){alert('Create or select a story first.');return;}
+const status=document.getElementById('storyStatus');
+if(!resolveEngine('stories')){status.textContent=aiUnavailableMessage('stories');return;}
+const direction=document.getElementById('storyDirection').value.trim();
+status.textContent='Writing the next chapter...';
+const recentChapters=s.chapters.slice(-3).map((c,i)=>`${c.title}:\n${c.text}`).join('\n\n');
+const sysPrompt='Continue this story. Output only the next chapter. Genre: '+s.genre+'. Stay with the same characters and plot. Write at least 800 words, with scenes and dialogue. End on a hook.';
+const userMsg='Story so far:\n\n'+recentChapters+'\n\n'+(direction?('Direction: '+direction):'Continue the story.');
+let know='';try{know=await knowledgeFor(direction||s.title||'');}catch(e){}
+try{
+const chapterNum=s.chapters.length+1;
+s.chapters.push({title:'Chapter '+chapterNum,text:''});
+const idx=s.chapters.length-1;
+let full=await aiStream([{role:'system',content:sysPrompt+(know?('\n\nFacts from the user\'s PDFs. Use them only if they belong in this chapter:\n'+know):'')},{role:'user',content:userMsg}],{maxTokens:3500,temperature:0.9,feature:'stories',wait:22000},(partial)=>{s.chapters[idx].text=partial;renderChapters();});
+if(full&&!isJunkReply(full)&&full.trim().length<1600){
+status.textContent='Writing more...';
+const more=await aiStream([{role:'system',content:'Continue this same chapter. Do not repeat. Add several more paragraphs. Output only the new prose.'},{role:'user',content:full.trim()}],{maxTokens:2500,temperature:0.9,feature:'stories',wait:22000},(partial)=>{s.chapters[idx].text=full.trim()+'\n\n'+partial;renderChapters();});
+if(more&&!isJunkReply(more))full=full.trim()+'\n\n'+more.trim();
+}
+s.chapters[idx].text=(full&&!isJunkReply(full))?full.trim():'';
+if(!s.chapters[idx].text)throw new Error('nostory');
+document.getElementById('storyDirection').value='';
+saveStories();status.textContent='';renderChapters();
+}catch(e){status.textContent='That chapter did not come back. Try again.';s.chapters.pop();renderChapters();}
+};
+document.getElementById('storyPdfBtn').onclick=()=>{
+const s=currentStory();
+if(!s||!s.chapters.length){alert('There is no chapter to save yet.');return;}
+const {jsPDF}=window.jspdf||{};
+if(!jsPDF){alert('Still loading. Try again in a moment.');return;}
+const doc=new jsPDF({unit:'pt',format:'letter'});
+const margin=54;
+const width=doc.internal.pageSize.getWidth()-margin*2;
+let y=margin;
+function write(text,size,style){
+doc.setFont('times',style||'normal');
+doc.setFontSize(size);
+const lines=doc.splitTextToSize(String(text||''),width);
+lines.forEach(line=>{
+if(y>doc.internal.pageSize.getHeight()-margin){doc.addPage();y=margin;}
+doc.text(line,margin,y);
+y+=size*1.4;
+});
+y+=10;
+}
+write(s.title,22,'bold');
+if(s.genre)write(s.genre,12,'italic');
+s.chapters.forEach(c=>{write(c.title||'Chapter',16,'bold');write(c.text,12,'normal');});
+doc.save((s.title||'story').replace(/[^\w]+/g,'-').slice(0,40)+'.pdf');
+};
+document.getElementById('storyDeleteBtn').onclick=()=>{
+const s=currentStory();
+if(!s)return;
+if(!confirm('Delete "'+s.title+'" and all its chapters? This cannot be undone.'))return;
+stories=stories.filter(x=>x.id!==s.id);currentId='';localStorage.setItem('eve_current_story_id','');
+saveStories();renderStorySelect();renderChapters();
+};
+}
+if(t==='Calendar'){let cals=JSON.parse(localStorage.getItem('eve_cals')||'[]');let curDate=new Date();let selDate=new Date().toISOString().split('T')[0];function renderCalendar(){const year=curDate.getFullYear(),month=curDate.getMonth();document.getElementById('calMonthLabel').textContent=curDate.toLocaleDateString([],{month:'long',year:'numeric'});const firstDay=new Date(year,month,1).getDay();const daysInMonth=new Date(year,month+1,0).getDate();const grid=document.getElementById('calGrid');grid.innerHTML='';for(let i=0;i<firstDay;i++){const e=document.createElement('div');e.className='calDay';e.style.background='transparent';grid.appendChild(e);}for(let d=1;d<=daysInMonth;d++){const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const div=document.createElement('div');div.className='calDay';if(dateStr===new Date().toISOString().split('T')[0])div.classList.add('today');if(cals.some(c=>c.date===dateStr))div.classList.add('hasEvent');const evs=cals.filter(c=>c.date===dateStr);div.innerHTML=`<div style="font-weight:700">${d}</div><div style="font-size:10px">${evs.slice(0,2).map(e=>e.title).join('<br>')}</div>`;div.onclick=()=>{selDate=dateStr;document.getElementById('calSelDate').textContent=dateStr;renderCalList();};grid.appendChild(div);}renderCalList();}function renderCalList(){document.getElementById('calList').innerHTML=cals.filter(c=>c.date===selDate).map((c,i)=>{const idx=cals.indexOf(c);return `<div class=card>${c.time||''} ${c.title} <button onclick="delCal(${idx})" style="float:right">×</button></div>`;}).join('')||'No events';}window.delCal=(i)=>{cals.splice(i,1);localStorage.setItem('eve_cals',JSON.stringify(cals));renderCalendar();};document.getElementById('calPrev').onclick=()=>{curDate.setMonth(curDate.getMonth()-1);renderCalendar();};document.getElementById('calNext').onclick=()=>{curDate.setMonth(curDate.getMonth()+1);renderCalendar();};document.getElementById('calAdd').onclick=()=>{const t=document.getElementById('calTitle').value.trim();const time=document.getElementById('calTime').value;if(!t)return;cals.push({date:selDate,title:t,time});localStorage.setItem('eve_cals',JSON.stringify(cals));document.getElementById('calTitle').value='';renderCalendar();};renderCalendar();document.getElementById('calSelDate').textContent=selDate;}
+if(t==='Focus'){
+let timer=null;let left=25*60;
+function upd(){const m=Math.floor(left/60),s=left%60;document.getElementById('focusDisplay').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
+function todayStr(){return new Date().toISOString().split('T')[0];}
+function getHistory(){try{return JSON.parse(localStorage.getItem('eve_focus_history')||'[]');}catch{return [];}}
+function computeStreak(hist){
+const days=new Set(hist.map(h=>h.date));
+let streak=0;let d=new Date();
+while(true){
+const ds=d.toISOString().split('T')[0];
+if(days.has(ds)){streak++;d.setDate(d.getDate()-1);}else break;
+}
+return streak;
+}
+function renderStats(){
+const hist=getHistory();
+const today=todayStr();
+const todays=hist.filter(h=>h.date===today);
+const todayMin=todays.reduce((s,h)=>s+h.minutes,0);
+const streak=computeStreak(hist);
+document.getElementById('focusStats').textContent=`${todays.length} session${todays.length===1?'':'s'} today (${todayMin} min) • ${streak}-day streak`;
+document.getElementById('focusHistory').innerHTML=hist.slice(-8).reverse().map(h=>`<div class=card>${h.date} — ${h.minutes} min</div>`).join('')||'<div style="color:var(--muted)">No completed sessions yet</div>';
+}
+document.getElementById('focusStart').onclick=()=>{
+const mins=parseInt(document.getElementById('focusMin').value)||25;
+if(timer)clearInterval(timer);
+left=mins*60;upd();
+timer=setInterval(()=>{
+left--;upd();
+if(left<=0){
+clearInterval(timer);
+const hist=getHistory();
+hist.push({date:todayStr(),minutes:mins,completedAt:Date.now()});
+localStorage.setItem('eve_focus_history',JSON.stringify(hist.slice(-200)));
+renderStats();
+alert('Focus session complete — nice work.');
+}
+},1000);
+};
+document.getElementById('focusStop').onclick=()=>{if(timer)clearInterval(timer);};
+upd();renderStats();
+}
+if(t==='Search'){
+async function showRead(url,title){
+const box=document.getElementById('searchRead');
+box.textContent='Opening...';
+try{
+const wiki=(url||'').match(/wikipedia\.org\/wiki\/([^#?]+)/i);
+let text='';
+if(wiki){
+const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(decodeURIComponent(wiki[1])),{signal:AbortSignal.timeout(8000)});
+const d=await r.json();
+text=(d.title?d.title+'\n\n':'')+(d.extract||'');
+}else{
+const r=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url),{signal:AbortSignal.timeout(9000)});
+const htmlText=await r.text();
+const doc=new DOMParser().parseFromString(htmlText,'text/html');
+doc.querySelectorAll('script,style,noscript').forEach(n=>n.remove());
+text=(doc.body&&doc.body.innerText||'').replace(/\n{3,}/g,'\n\n').trim().slice(0,9000);
+}
+box.textContent=text||title||'';
+}catch(e){box.textContent=title||'Could not open that page here.';}
+}
+document.getElementById('searchGo').onclick=async()=>{
+const q=document.getElementById('searchQ').value.trim();
+const out=document.getElementById('searchOut');
+if(!q)return;
+out.textContent='Searching...';
+document.getElementById('searchRead').textContent='';
+const items=[];
+try{
+const d=await fetch('https://api.duckduckgo.com/?q='+encodeURIComponent(q)+'&format=json&no_html=1',{signal:AbortSignal.timeout(8000)}).then(r=>r.json());
+if(d.AbstractText)items.push({title:d.Heading||q,text:d.AbstractText,url:d.AbstractURL||''});
+(function walk(list){(list||[]).forEach(it=>{if(it.FirstURL)items.push({title:it.Text,text:'',url:it.FirstURL});if(it.Topics)walk(it.Topics);});})(d.RelatedTopics);
+}catch(e){}
+try{
+const w=await fetch('https://en.wikipedia.org/w/api.php?action=opensearch&search='+encodeURIComponent(q)+'&limit=5&namespace=0&format=json&origin=*',{signal:AbortSignal.timeout(8000)}).then(r=>r.json());
+(w[1]||[]).forEach((title,i)=>items.push({title,text:(w[2]&&w[2][i])||'',url:(w[3]&&w[3][i])||''}));
+}catch(e){}
+const seen=new Set();
+const unique=items.filter(it=>{const k=(it.url||it.title);if(!k||seen.has(k))return false;seen.add(k);return true;}).slice(0,8);
+if(!unique.length){out.textContent='Nothing came back.';return;}
+out.innerHTML=unique.map((it,i)=>'<button type=button class=secondary data-i="'+i+'" style="display:block;width:100%;margin:4px 0;text-align:left">'+(it.title||'Result').replace(/[<>]/g,'')+'</button>'+(it.text?'<div style="font-size:12px;color:var(--muted);margin:0 0 8px">'+it.text.replace(/[<>]/g,'').slice(0,220)+'</div>':'')).join('');
+out.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+const it=unique[+b.getAttribute('data-i')];
+if(it.url)showRead(it.url,it.text||it.title);
+else document.getElementById('searchRead').textContent=it.text||it.title;
+});
+};
+}
+if(t==='Tools'){const iconFile=document.getElementById('iconFile');if(iconFile){iconFile.onchange=e=>{const f=e.target.files[0];if(!f)return;document.getElementById('iconPreview').innerHTML=`<img src="${URL.createObjectURL(f)}" style="max-width:200px;max-height:200px">`;};document.getElementById('iconConvert').onclick=async()=>{const f=iconFile.files[0];if(!f)return;const img=new Image();img.src=URL.createObjectURL(f);await img.decode();[16,32,48,64,128,256].forEach(s=>{const c=document.createElement('canvas');c.width=s;c.height=s;c.getContext('2d').drawImage(img,0,0,s,s);const a=document.createElement('a');a.download=`icon-${s}.png`;a.href=c.toDataURL();a.click();});};}document.getElementById('jpgPdfBtn').onclick=async()=>{const files=document.getElementById('jpgToPdf').files;if(!files.length)return;const {jsPDF}=window.jspdf||{};if(!jsPDF){alert('Still loading. Try again in a moment.');return;}const doc=new jsPDF();for(let i=0;i<files.length;i++){const data=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(files[i]);});if(i>0)doc.addPage();doc.addImage(data,'JPEG',0,0,210,297);}doc.save('images.pdf');};document.getElementById('combBtn').onclick=async()=>{const files=document.getElementById('pdfComb').files;const {PDFDocument}=window.PDFLib||{};if(!PDFDocument){alert('Still loading. Try again in a moment.');return;}const merged=await PDFDocument.create();for(const f of files){const bytes=await f.arrayBuffer();const pdf=await PDFDocument.load(bytes);const pages=await merged.copyPages(pdf,pdf.getPageIndices());pages.forEach(p=>merged.addPage(p));}const out=await merged.save();const blob=new Blob([out],{type:'application/pdf'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='combined.pdf';a.click();};document.getElementById('pageNumBtn').onclick=async()=>{
+const file=document.getElementById('pageNumFile').files[0];
+const status=document.getElementById('pageNumStatus');
+if(!file){status.textContent='Choose a PDF first.';return;}
+const fontName=document.getElementById('pageNumFont').value;
+const size=parseInt(document.getElementById('pageNumSize').value)||12;
+const position=document.getElementById('pageNumPosition').value;
+const showTotal=document.getElementById('pageNumTotal').checked;
+status.textContent='Working...';
+try{
+const {PDFDocument,StandardFonts,rgb}=window.PDFLib;
+const bytes=await file.arrayBuffer();
+const pdf=await PDFDocument.load(bytes);
+const font=await pdf.embedFont(StandardFonts[fontName]);
+const pages=pdf.getPages();
+const total=pages.length;
+pages.forEach((page,i)=>{
+const {width,height}=page.getSize();
+const label=showTotal?`${i+1} of ${total}`:`${i+1}`;
+const textWidth=font.widthOfTextAtSize(label,size);
+const margin=28;
+let x,y;
+if(position.includes('left'))x=margin;
+else if(position.includes('right'))x=width-textWidth-margin;
+else x=(width-textWidth)/2;
+if(position.includes('top'))y=height-margin-size;
+else y=margin;
+page.drawText(label,{x,y,size,font,color:rgb(0,0,0)});
+});
+const out=await pdf.save();
+const blob=new Blob([out],{type:'application/pdf'});
+const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='numbered.pdf';a.click();
+status.textContent='Done — downloaded.';
+}catch(e){status.textContent='Failed: '+(e&&e.message?e.message:'unknown error');}
+};
+document.getElementById('pdfToJpg').onchange=async e=>{
+const file=e.target.files[0];if(!file)return;
+if(!window.pdfjsLib){alert('Still loading. Try again in a moment.');return;}
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const bytes=await file.arrayBuffer();
+const pdf=await pdfjsLib.getDocument({data:bytes}).promise;
+const outDiv=document.getElementById('pdfJpgOut');
+outDiv.innerHTML='';
+const maxW=Math.max(240,(document.getElementById('tabContent').clientWidth||420)-16);
+for(let i=1;i<=pdf.numPages;i++){
+const page=await pdf.getPage(i);
+const base=page.getViewport({scale:1});
+const scale=Math.min(1.5,maxW/base.width);
+const vp=page.getViewport({scale});
+const c=document.createElement('canvas');
+c.width=vp.width;c.height=vp.height;
+c.style.width='100%';c.style.height='auto';c.style.display='block';
+await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+const wrap=document.createElement('div');
+wrap.style.margin='8px 0';
+const btn=document.createElement('button');
+btn.className='secondary';
+btn.textContent='Download page '+i;
+btn.onclick=()=>{const a=document.createElement('a');a.href=c.toDataURL('image/jpeg',0.92);a.download='page-'+i+'.jpg';a.click();};
+wrap.appendChild(c);
+wrap.appendChild(btn);
+outDiv.appendChild(wrap);
+}
+};}
+if(t==='Comics'){let comics=JSON.parse(localStorage.getItem('eve_comics')||'[]');let colls=JSON.parse(localStorage.getItem('eve_comic_cols')||'["My Collection"]');function updateFilter(){document.getElementById('collFilter').innerHTML='<option value="">All</option>'+colls.map(c=>`<option value="${c}">${c}</option>`).join('');}function renderComics(){let filtered=comics;const f=document.getElementById('collFilter').value;const s=document.getElementById('comicSearch')?.value?.toLowerCase()||'';if(f)filtered=filtered.filter(c=>c.collection===f);if(s)filtered=filtered.filter(c=>(c.title+' '+c.company+' '+(c.writer||'')+' '+(c.artist||'')).toLowerCase().includes(s));document.getElementById('comicStats').textContent=`${filtered.length}/${comics.length}`;document.getElementById('comicList').innerHTML=filtered.map((c,i)=>{const idx=comics.indexOf(c);const tip=[c.title,c.issue?'#'+c.issue:'',c.writer?'Writer: '+c.writer:'',c.artist?'Artist: '+c.artist:'',c.company,c.value?'$'+c.value:'',c.collection].filter(Boolean).join(' \u2022 ').replace(/"/g,'&quot;');return `<div style="text-align:center" title="${tip}"><img src="${c.thumb||''}" style="width:66px;height:100px;object-fit:cover;border-radius:6px"><div style="font-size:11px">${c.title}</div><button onclick="delComic(${idx})">x</button></div>`;}).join('');}window.delComic=(i)=>{comics.splice(i,1);localStorage.setItem('eve_comics',JSON.stringify(comics));renderComics();};document.getElementById('cAdd').onclick=async()=>{const file=document.getElementById('cThumb').files[0];let thumb='';if(file){thumb=await resizeImage(file,200);}const collection=document.getElementById('collSel').value.trim()||'My Collection';const c={title:document.getElementById('cTitle').value,issue:document.getElementById('cIssue').value,writer:document.getElementById('cWriter').value,artist:document.getElementById('cArtist').value,company:document.getElementById('cCompany').value,value:document.getElementById('cValue').value,thumb,collection};if(!c.title)return;comics.push(c);localStorage.setItem('eve_comics',JSON.stringify(comics));if(!colls.includes(collection)){colls.push(collection);localStorage.setItem('eve_comic_cols',JSON.stringify(colls));updateFilter();}document.getElementById('cTitle').value='';document.getElementById('cIssue').value='';document.getElementById('cWriter').value='';document.getElementById('cArtist').value='';document.getElementById('cCompany').value='';document.getElementById('cValue').value='';document.getElementById('cThumb').value='';document.getElementById('collSel').value='';renderComics();};document.getElementById('comicSearch').oninput=renderComics;document.getElementById('collFilter').onchange=renderComics;updateFilter();renderComics();}
+if(t==='Media'){let media=JSON.parse(localStorage.getItem('eve_media')||'[]');function renderMedia(){let filtered=media;const s=document.getElementById('mediaSearch')?.value?.toLowerCase()||'';const type=document.getElementById('mediaFilterType')?.value||'';if(s)filtered=filtered.filter(m=>m.title.toLowerCase().includes(s));if(type)filtered=filtered.filter(m=>m.type===type);document.getElementById('mediaStats').textContent=`${filtered.length}/${media.length}`;document.getElementById('mediaList').innerHTML=filtered.map((m,i)=>{const idx=media.indexOf(m);return `<div style="text-align:center"><img src="${m.thumb||''}" style="width:66px;height:100px;object-fit:cover;border-radius:6px"><div style="font-size:11px">${m.title}</div><button onclick="delMedia(${idx})">x</button></div>`;}).join('');}window.delMedia=(i)=>{media.splice(i,1);localStorage.setItem('eve_media',JSON.stringify(media));renderMedia();};document.getElementById('mAdd').onclick=async()=>{const file=document.getElementById('mThumb').files[0];let thumb='';if(file){thumb=await resizeImage(file,200);}const m={title:document.getElementById('mTitle').value,type:document.getElementById('mType').value,year:document.getElementById('mYear').value,thumb};if(!m.title)return;media.push(m);localStorage.setItem('eve_media',JSON.stringify(media));renderMedia();};document.getElementById('mediaSearch').oninput=renderMedia;document.getElementById('mediaFilterType').onchange=renderMedia;renderMedia();}
+}
+function buildProjectContext(){
+const parts=[];
+try{
+const code=JSON.parse(localStorage.getItem('eve_last_code_context')||'null');
+if(code && code.prompt){
+parts.push(`Code Lab — the user was working on (${code.lang}, mode: ${code.mode}): "${code.prompt}".\nCurrent code:\n${(code.code||'').slice(0,1500)}`);
+}
+}catch{}
+try{
+const adv=JSON.parse(localStorage.getItem('eve_rpg_adventure')||'null');
+if(adv && adv.turns && adv.turns.length){
+const recent=adv.turns.filter(t=>t.role!=='roll').slice(-6).map(t=>(t.role==='player'?'Player: ':'GM: ')+t.text).join('\n');
+parts.push(`RPG Adventure in progress — genre: ${adv.genre}, character: ${adv.character}, location: ${adv.location}.\nRecent story:\n${recent}`);
+}
+}catch{}
+return parts.join('\n\n');
+}
+async function synthClip(prompt,seconds){
+const AC=window.AudioContext||window.webkitAudioContext;
+const ctx=new AC();
+const dest=ctx.createMediaStreamDestination();
+const master=ctx.createGain();
+master.gain.value=0.22;
+master.connect(dest);
+master.connect(ctx.destination);
+const seed=[...prompt].reduce((a,c)=>a+c.charCodeAt(0),0);
+const scale=[0,2,4,5,7,9,11];
+const base=98+ (seed%7)*12;
+const dur=Math.min(30,Math.max(2,seconds||8));
+const low=prompt.toLowerCase();
+const wave=/drum|beat|bass/.test(low)?'square':/piano|soft|calm|ambient/.test(low)?'sine':'triangle';
+for(let i=0;i<dur*2;i++){
+const o=ctx.createOscillator();
+const g=ctx.createGain();
+const step=scale[(seed+i*3)%scale.length];
+const oct=(i%8===0)?0.5:1;
+o.type=wave;
+o.frequency.value=base*Math.pow(2,step/12)*oct;
+const t0=ctx.currentTime+i*0.5;
+g.gain.setValueAtTime(0.0001,t0);
+g.gain.exponentialRampToValueAtTime(0.45,t0+0.04);
+g.gain.exponentialRampToValueAtTime(0.0001,t0+0.46);
+o.connect(g);g.connect(master);
+o.start(t0);o.stop(t0+0.48);
+}
+let url;
+if(window.MediaRecorder){
+const rec=new MediaRecorder(dest.stream);
+const chunks=[];
+rec.ondataavailable=(e)=>{if(e.data&&e.data.size)chunks.push(e.data);};
+const done=new Promise((r)=>{rec.onstop=r;});
+rec.start();
+await new Promise((r)=>setTimeout(r,dur*1000+150));
+rec.stop();
+await done;
+url=URL.createObjectURL(new Blob(chunks,{type:chunks[0]&&chunks[0].type||'audio/webm'}));
+}else{
+await new Promise((r)=>setTimeout(r,dur*1000));
+url='';
+}
+try{await ctx.close();}catch(e){}
+if(!url)throw new Error('no audio');
+return url;
+}
+let eveAudio=null;
+function ensureVoiceAudio(){if(!eveAudio)eveAudio=new Audio();return eveAudio;}
+document.addEventListener('pointerdown',()=>{
+const a=ensureVoiceAudio();
+if(a.dataset.unlocked)return;
+const prev=a.src;
+a.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+a.play().then(()=>{a.pause();a.dataset.unlocked='1';if(prev)a.src=prev;}).catch(()=>{});
+});
+function speakLocal(text){
+if(!window.speechSynthesis||!text)return;
+const say=()=>{
+window.speechSynthesis.cancel();
+const u=new SpeechSynthesisUtterance(String(text).replace(/\s+/g,' ').slice(0,700));
+const voices=speechSynthesis.getVoices();
+const en=voices.filter(v=>/^en/i.test(v.lang||''));
+const score=(v)=>{
+const n=(v.name+' '+(v.voiceURI||'')).toLowerCase();
+let s=0;
+if(/female|woman/.test(n))s+=8;
+if(/samantha|victoria|karen|moira|zira|serena|fiona|susan|allison|ava|jenny|aria|salli|joanna/.test(n))s+=14;
+if(/google uk english female|google us english female/.test(n))s+=16;
+if(/\bmale\b|daniel|fred|david|alex\b|tom\b/.test(n)&&!/female/.test(n))s-=12;
+return s;
+};
+const pool=(en.length?en:voices).slice().sort((a,b)=>score(b)-score(a));
+const v=pool[0];
+if(v){u.voice=v;u.lang=v.lang||'en-US';}
+u.pitch=1.2;
+u.rate=1.02;
+window.speechSynthesis.speak(u);
+};
+if(speechSynthesis.getVoices().length)say();
+else speechSynthesis.addEventListener('voiceschanged',say,{once:true});
+}
+let eveVoiceToken=0;
+function speakText(text){
+const box=document.getElementById('voiceOutputToggle');
+if(box&&!box.checked)return;
+const clean=String(text||'').replace(/\s+/g,' ').trim().slice(0,900);
+if(!clean)return;
+const token=++eveVoiceToken;
+if(!navigator.onLine){speakLocal(clean);return;}
+const parts=[];
+let rest=clean;
+while(rest){
+if(rest.length<=150){parts.push(rest);break;}
+let cut=rest.lastIndexOf('. ',150);
+if(cut<40)cut=rest.lastIndexOf(' ',150);
+if(cut<40)cut=150;
+parts.push(rest.slice(0,cut+1).trim());
+rest=rest.slice(cut+1).trim();
+}
+const audio=ensureVoiceAudio();
+let n=0;
+const next=()=>{
+if(token!==eveVoiceToken||n>=parts.length)return;
+audio.onended=()=>next();
+audio.onerror=()=>{if(n<=1)speakLocal(clean);};
+audio.src='https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-US&q='+encodeURIComponent(parts[n++]);
+audio.play().catch(()=>{if(token===eveVoiceToken)speakLocal(clean);});
+};
+next();
+}
+function updateMicButton(){
+const b=document.getElementById('micBtn');
+if(b){
+b.textContent=voiceMode==='manual'?'⏹':'🎤';
+b.style.color=voiceMode==='manual'?'#ef4444':'';
+}
+const w=document.getElementById('wakeWordToggle');
+if(w)w.checked=(voiceMode==='wake');
+}
+let micStream=null;
+function setVoiceMode(mode){
+if(window._eveRec){try{window._eveRec.onend=null;window._eveRec.onerror=null;window._eveRec.stop();}catch(e){}window._eveRec=null;}
+if(mode==='off'){voiceMode='off';updateMicButton();return;}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR){voiceMode='off';updateMicButton();return;}
+const arm=()=>{
+const rec=new SR();
+rec.continuous=true;
+rec.interimResults=true;
+rec.lang='en-US';
+rec.onresult=(ev)=>{
+let interim='',final='';
+for(let i=ev.resultIndex;i<ev.results.length;i++){
+const piece=ev.results[i][0].transcript;
+if(ev.results[i].isFinal)final+=piece;else interim+=piece;
+}
+const el=document.getElementById('voiceInterim');
+if(el)el.textContent=interim;
+if(!final.trim())return;
+let said=final.trim();
+if(mode==='wake'){
+const hit=said.match(/hey[, ]*eve[, ]*(.*)/i);
+if(!hit)return;
+said=(hit[1]||'').trim();
+if(!said){if(el)el.textContent='Listening…';return;}
+}
+if(el)el.textContent='';
+handleVoiceCommand(said);
+};
+rec.onerror=(e)=>{
+const err=e&&e.error;
+if(err==='not-allowed'||err==='audio-capture'||err==='service-not-allowed'){
+voiceMode='off';
+if(window._eveRec===rec)window._eveRec=null;
+updateMicButton();
+}
+};
+rec.onend=()=>{
+if(voiceMode==='off'||window._eveRec!==rec)return;
+setTimeout(()=>{
+if(voiceMode==='off'||window._eveRec!==rec)return;
+try{rec.start();}catch(err){}
+},500);
+};
+window._eveRec=rec;
+voiceMode=mode;
+try{rec.start();}catch(e){voiceMode='off';window._eveRec=null;}
+updateMicButton();
+};
+const go=()=>arm();
+if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+const live=micStream&&micStream.getAudioTracks().some(t=>t.readyState==='live');
+if(live){go();return;}
+navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{micStream=stream;go();}).catch(()=>{voiceMode='off';updateMicButton();});
+}else go();
+}
+document.getElementById('micBtn').onclick=()=>{setVoiceMode(voiceMode==='manual'?'off':'manual');};
+document.getElementById('wakeWordToggle').onchange=(e)=>{setVoiceMode(e.target.checked?'wake':'off');};
+document.getElementById('voiceOutputToggle').checked=localStorage.getItem('eve_voice_output')!=='0';
+document.getElementById('voiceOutputToggle').onchange=(e)=>localStorage.setItem('eve_voice_output',e.target.checked?'1':'0');
+function handleVoiceCommand(text){
+const lower=text.toLowerCase().trim();
+const navMatch=lower.match(/^(?:open|go to|switch to|show)\s+(?:the\s+)?(.+?)\s*(?:tab)?$/);
+if(navMatch){
+const target=navMatch[1].trim();
+const found=TABS.find(t=>t.toLowerCase()===target)||TABS.find(t=>t.toLowerCase().includes(target)||target.includes(t.toLowerCase()));
+if(found){switchTab(found);speakText('Opening '+found);return;}
+}
+const mediaMatch=lower.match(/^(play|pause|stop|resume|next|skip|previous)\b/);
+if(mediaMatch){
+const cmd=mediaMatch[1];
+if(activeTab==='YouTube'){
+const q=document.getElementById('ytSearch')&&document.getElementById('ytSearch').value.trim();
+if(q){const go=document.getElementById('ytGo');if(go)go.click();}
+return;
+}
+if(activeTab==='Spotify'){
+const btn=document.getElementById('spotifySave');
+if(btn)btn.click();
+return;
+}
+}
+document.getElementById('chatInput').value=text;
+document.getElementById('chatSend').click();
+}
+const CHAT_MODE_PROMPTS={
+collaborator:'You are EVE, an interactive AI collaborator working directly with the user on their projects. Respond specifically to what they just said — reference their actual words and build on the conversation, rather than giving generic replies. Be concise but substantive, and proactive about next steps when it helps.',
+support:"You are EVE in Support & Reflection mode — a warm, attentive listener. Help the user think out loud and process what's on their mind. You are not a therapist, a counselor, or any kind of licensed professional, and you never imply otherwise. Do not diagnose, do not label what the user describes with a clinical term they haven't used themselves, and do not present yourself as a substitute for real professional support. If the user describes something serious or ongoing, gently encourage them to talk to a real mental health professional. If they mention anything suggesting a safety risk to themselves or others, prioritize their safety, stay calm and present, and clearly encourage them to contact a crisis line or emergency services — do not just continue the conversation as normal. Otherwise, stay warm, non-judgmental, and genuinely present.",
+spicy:"You are EVE in Spicy mode — warm, playful, charming, and flirty, like fun teasing banter with someone you like. Use wit, playful compliments, and lighthearted flirtation. You must never generate explicit sexual content, describe sexual acts, or use graphic sexual language — if the conversation pushes toward that, stay in character but redirect playfully and keep things PG-13, the way a charming person would deflect with humor rather than going along with it. Keep the flirting fun and affectionate, never crude."
+};
+const chatModeSelect=document.getElementById('chatModeSelect');
+chatModeSelect.value=localStorage.getItem('eve_chat_mode')||'collaborator';
+function updateChatModeNote(){
+const note=document.getElementById('chatModeNote');
+if(!note)return;
+note.textContent=chatModeSelect.value==='support'?'If you\'re in crisis or thinking about suicide, please contact a crisis line directly — in the US, call or text 988.':'';
+}
+chatModeSelect.onchange=()=>{localStorage.setItem('eve_chat_mode',chatModeSelect.value);updateChatModeNote();};
+updateChatModeNote();
+const chatContextToggle=document.getElementById('chatContextToggle');
+chatContextToggle.checked=localStorage.getItem('eve_chat_context')==='1';
+chatContextToggle.onchange=()=>localStorage.setItem('eve_chat_context',chatContextToggle.checked?'1':'0');
+async function gatherLiveContext(txt){
+const bits=[];
+const lower=txt.toLowerCase();
+if(!navigator.onLine){
+if(/\b(weather|forecast|temperature|how hot|how cold)\b/.test(lower)){
+const saved=localStorage.getItem('eve_weather_line');
+if(saved)bits.push('Last saved weather: '+saved);
+}
+return bits.join('\n\n');
+}
+if(/\b(weather|forecast|temperature|how hot|how cold)\b/.test(lower)){
+try{
+const d=await fetch('https://api.open-meteo.com/v1/forecast?latitude=28.5494&longitude=-81.7729&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto',{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+const c=d.current;
+bits.push('Live weather for Clermont, Florida: '+Math.round(c.temperature_2m)+'°F, feels like '+Math.round(c.apparent_temperature)+'°F, wind '+Math.round(c.wind_speed_10m)+' mph.');
+localStorage.setItem('eve_weather_line',Math.round(c.temperature_2m)+'°F');
+}catch(e){}
+}
+const place=txt.match(/\b(?:map|maps|where is|directions to)\s+(.+)/i);
+if(place){
+const q=place[1].replace(/[?.!]+$/,'').trim();
+try{
+const res=await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q)+'&limit=1',{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+if(res[0])bits.push('Live map result for '+q+': '+res[0].display_name+' ('+res[0].lat+', '+res[0].lon+').');
+}catch(e){}
+}
+const look=txt.match(/\b(?:search|look up|google|who is|what is|tell me about)\s+(.+)/i);
+if(look){
+const q=look[1].replace(/[?.!]+$/,'').trim();
+try{
+const res=await fetch('https://en.wikipedia.org/w/api.php?action=opensearch&search='+encodeURIComponent(q)+'&limit=3&namespace=0&format=json&origin=*',{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+const titles=res[1]||[], blurbs=res[2]||[], links=res[3]||[];
+const lines=titles.map((t,i)=>t+(blurbs[i]?': '+blurbs[i]:'')+(links[i]?' '+links[i]:'')).filter(Boolean);
+if(lines.length)bits.push('Live reference results for "'+q+'":\n'+lines.join('\n'));
+}catch(e){}
+}
+return bits.join('\n\n');
+}
+function applyEveAction(raw){
+const m=String(raw||'').trim().match(/^ACTION:\s*(weather|search|map|youtube|image|open)\s*(.*)$/i);
+if(!m)return false;
+const kind=m[1].toLowerCase();
+const arg=(m[2]||'').trim();
+if(kind==='weather'){switchTab('Weather');return true;}
+if(kind==='search'){
+switchTab('Search');
+const el=document.getElementById('searchQ');
+if(el)el.value=arg;
+if(arg&&navigator.onLine){const go=document.getElementById('searchGo');if(go)go.click();}
+return true;
+}
+if(kind==='map'){
+switchTab('Maps');
+const el=document.getElementById('mapSearch');
+if(el){el.value=arg||'Clermont, FL';const go=document.getElementById('mapGo');if(go)go.click();}
+return true;
+}
+if(kind==='youtube'){
+switchTab('YouTube');
+const el=document.getElementById('ytSearch');
+if(el)el.value=arg||'';
+const go=document.getElementById('ytGo');
+if(go)go.click();
+return true;
+}
+if(kind==='image'){
+switchTab('Image');
+const el=document.getElementById('imgPrompt');
+if(el){el.value=arg||'a scene';const go=document.getElementById('genFree');if(go)go.click();}
+return true;
+}
+if(kind==='open'){
+const found=TABS.find(t=>t.toLowerCase()===arg.toLowerCase())||TABS.find(t=>arg&&(t.toLowerCase().includes(arg.toLowerCase())||arg.toLowerCase().includes(t.toLowerCase())));
+if(found)switchTab(found);
+return true;
+}
+return false;
+}
+function kbOpen(){
+return new Promise((res,rej)=>{
+const req=indexedDB.open('eve_kb',1);
+req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('docs'))db.createObjectStore('docs',{keyPath:'id'});};
+req.onsuccess=()=>res(req.result);
+req.onerror=()=>rej(req.error);
+});
+}
+async function kbList(){
+const db=await kbOpen();
+return new Promise((res,rej)=>{
+const tx=db.transaction('docs','readonly');
+const r=tx.objectStore('docs').getAll();
+r.onsuccess=()=>res((r.result||[]).sort((a,b)=>b.added-a.added));
+r.onerror=()=>rej(r.error);
+});
+}
+async function kbRemove(id){
+const db=await kbOpen();
+return new Promise((res,rej)=>{
+const tx=db.transaction('docs','readwrite');
+tx.objectStore('docs').delete(id);
+tx.oncomplete=()=>res();
+tx.onerror=()=>rej(tx.error);
+});
+}
+async function kbAddFile(file){
+if(!window.pdfjsLib){
+await new Promise((res,rej)=>{
+const t=setInterval(()=>{if(window.pdfjsLib){clearInterval(t);res();}},150);
+setTimeout(()=>{clearInterval(t);rej(new Error('pdf'));},8000);
+});
+}
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const data=await file.arrayBuffer();
+const pdf=await pdfjsLib.getDocument({data}).promise;
+let text='';
+const pages=Math.min(pdf.numPages,40);
+for(let i=1;i<=pages;i++){
+const page=await pdf.getPage(i);
+const content=await page.getTextContent();
+text+=content.items.map(it=>it.str).join(' ')+'\n';
+if(text.length>150000)break;
+}
+text=text.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+if(text.length<20)throw new Error('empty');
+const doc={id:'k'+Date.now()+Math.floor(Math.random()*1000),name:file.name||'PDF',added:Date.now(),text:text.slice(0,150000)};
+const db=await kbOpen();
+await new Promise((res,rej)=>{
+const tx=db.transaction('docs','readwrite');
+tx.objectStore('docs').put(doc);
+tx.oncomplete=()=>res();
+tx.onerror=()=>rej(tx.error);
+});
+}
+async function knowledgeFor(query){
+let docs=[];
+try{docs=await kbList();}catch(e){return '';}
+if(!docs.length)return '';
+const q=String(query||'');
+const words=(q.toLowerCase().match(/[a-z0-9]{4,}/g)||[]).slice(0,24);
+const scored=[];
+docs.forEach(doc=>{
+const bare=doc.name.replace(/\.pdf$/i,'').toLowerCase();
+if(bare && q.toLowerCase().includes(bare))scored.push({score:50,name:doc.name,chunk:doc.text.slice(0,900)});
+const text=doc.text;
+const step=700;
+for(let i=0;i<text.length && i<20000;i+=step){
+const chunk=text.slice(i,i+900);
+const low=chunk.toLowerCase();
+let score=0;
+words.forEach(w=>{if(low.includes(w))score++;});
+if(score)scored.push({score,name:doc.name,chunk});
+}
+});
+scored.sort((a,b)=>b.score-a.score);
+const seen=new Set();
+const picked=[];
+for(const s of scored){
+const key=s.name+s.chunk.slice(0,80);
+if(seen.has(key))continue;
+seen.add(key);
+picked.push(s);
+if(picked.length>=3)break;
+}
+if(!picked.length)return '';
+return picked.map(s=>'From '+s.name+':\n'+s.chunk.trim()).join('\n\n').slice(0,3000);
+}
+document.getElementById('chatSend').onclick=async()=>{
+const inp=document.getElementById('chatInput');const txt=inp.value.trim();if(!txt)return;addChat('user',txt);inp.value='';
+let full='';addChat('ai','');const idx=chat.length-1;
+const statusEl=document.getElementById('chatStatus');
+if(statusEl)statusEl.textContent='Working…';
+try{
+let sysPrompt=CHAT_MODE_PROMPTS[chatModeSelect.value]||CHAT_MODE_PROMPTS.collaborator;
+sysPrompt+='\n\nYou are EVE on this computer. You work with or without the internet. Notes, tasks, calendar, alarms, the calculator, music, and video are already here. If live information is included below, use it. When the user wants weather, a search, a map, a video, a picture, or another section, finish with exactly one line and nothing after it: ACTION: weather | ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
+if(chatContextToggle.checked){
+const ctx=buildProjectContext();
+if(ctx) sysPrompt+='\n\nProject context the user is currently working on elsewhere in the app (reference it naturally where relevant):\n\n'+ctx;
+}
+const live=await gatherLiveContext(txt);
+if(live)sysPrompt+='\n\nLive information just fetched:\n'+live;
+try{const know=await knowledgeFor(txt);if(know)sysPrompt+='\n\nThe user\'s own PDFs. Use these when they answer the question. Do not invent details that are not written here:\n'+know;}catch(e){}
+const history=[{role:'system',content:sysPrompt},...chat.filter(m=>m.text&&(m.role==='user'||!isJunkReply(m.text))).slice(-12).map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}))];
+full=await Promise.race([
+aiStream(history,{maxTokens:900,temperature:0.7,feature:'chat'},(partial)=>{chat[idx].text=partial;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();}),
+new Promise((_,rej)=>setTimeout(()=>rej(new Error('slow')),22000))
+]);
+if(full){
+const lines=full.split('\n');
+const kept=[];
+for(const line of lines){if(!applyEveAction(line))kept.push(line);}
+full=kept.join('\n').trim();
+}
+if(!full){chat[idx].text='I couldn’t get a reply. Try again.';}
+else{chat[idx].text=full;speakText(full);}
+localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();
+}catch(e){chat[idx].text='I couldn’t get a reply. Try again.';localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();}
+finally{updateChatStatus();}
+};
+updateChatStatus();
+function unlockApp(){
+document.getElementById('lockOverlay').style.display='none';
+document.getElementById('appRoot').style.display='';
+loadAvatars();renderChat();renderTab();
+}
+function showLockButtons(html){document.getElementById('lockButtons').innerHTML=html;}
+function handleBioResult(kind,res){
+const label=kind==='face'?'Face':'Voice';
+if(!res.ok){document.getElementById('lockStatus').textContent=label+' check failed: '+res.error;return;}
+if(res.matched===undefined){
+document.getElementById('lockStatus').textContent=label+' enrolled. You can continue now.';
+showLockButtons('<button class=primary id=lockContinueBtn>Continue to EVE</button>');
+document.getElementById('lockContinueBtn').onclick=unlockApp;
+return;
+}
+if(res.matched){
+document.getElementById('lockStatus').textContent=label+' verified.';
+setTimeout(unlockApp,400);
+}else{
+document.getElementById('lockStatus').textContent=label+" didn't match. Try again, or use your recovery PIN.";
+}
+}
+function renderEnrollUI(){
+document.getElementById('lockStatus').textContent="No face or voice is enrolled yet. Set up at least one so EVE recognizes you — you can add the other later from Brain.";
+showLockButtons('<button class=primary id=enrollFaceBtn>Enroll Face</button><button class=primary id=enrollVoiceBtn>Enroll Voice</button>');
+document.getElementById('enrollFaceBtn').onclick=()=>{document.getElementById('lockStatus').textContent='Look at the camera...';window.pyBridge.runFaceCheck('enroll');};
+document.getElementById('enrollVoiceBtn').onclick=()=>{document.getElementById('lockStatus').textContent='Say a short phrase — recording for 4 seconds...';window.pyBridge.runVoiceBioCheck('enroll');};
+}
+function renderVerifyUI(status){
+document.getElementById('lockStatus').textContent='Verify with your face or voice to unlock EVE.';
+let btns='';
+if(status.faceEnrolled)btns+='<button class=primary id=verifyFaceBtn>Verify Face</button>';
+if(status.voiceEnrolled)btns+='<button class=primary id=verifyVoiceBtn>Verify Voice</button>';
+showLockButtons(btns);
+if(status.faceEnrolled)document.getElementById('verifyFaceBtn').onclick=()=>{document.getElementById('lockStatus').textContent='Look at the camera...';window.pyBridge.runFaceCheck('verify');};
+if(status.voiceEnrolled)document.getElementById('verifyVoiceBtn').onclick=()=>{document.getElementById('lockStatus').textContent='Say a short phrase — recording for 4 seconds...';window.pyBridge.runVoiceBioCheck('verify');};
+document.getElementById('lockRecoveryToggle').style.display=status.hasRecovery?'inline-block':'none';
+}
+document.getElementById('lockRecoveryToggle').onclick=()=>{
+const area=document.getElementById('lockRecoveryArea');
+area.style.display=area.style.display==='none'?'flex':'none';
+};
+document.getElementById('lockRecoverySubmit').onclick=()=>{
+const pin=document.getElementById('lockRecoveryInput').value;
+window.pyBridge.verifyRecoveryPin(pin,function(ok){
+if(ok){document.getElementById('lockStatus').textContent='Recovery PIN accepted.';setTimeout(unlockApp,300);}
+else{document.getElementById('lockStatus').textContent='That PIN is incorrect.';}
+});
+};
+function initLock(){
+if(!window.pyBridge){
+setTimeout(unlockApp,0);
+return;
+}
+window.pyBridge.biometricStatus(function(raw){
+const status=JSON.parse(raw);
+if(!status.faceEnrolled && !status.voiceEnrolled)renderEnrollUI();
+else renderVerifyUI(status);
+});
+}
+const s1=document.createElement('script');s1.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s1.onload=()=>{if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';};document.head.appendChild(s1);
+const s2=document.createElement('script');s2.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';document.head.appendChild(s2);
+const s3=document.createElement('script');s3.src='https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';document.head.appendChild(s3);
+fetch('https://api.open-meteo.com/v1/forecast?latitude=28.5494&longitude=-81.7729&current=temperature_2m,weather_code&temperature_unit=fahrenheit&timezone=auto').then(r=>r.json()).then(d=>{const label=Math.round(d.current.temperature_2m)+'°F '+wIcon(d.current.weather_code);document.getElementById('weatherMini').textContent=label;localStorage.setItem('eve_weather_line',label);}).catch(()=>{const saved=localStorage.getItem('eve_weather_line');if(saved)document.getElementById('weatherMini').textContent=saved;});
+paintNet();
+</script></body></html>

@@ -1,0 +1,1 @@
+Put PDF files in this folder. In EVE, open Knowledge and choose this folder.
