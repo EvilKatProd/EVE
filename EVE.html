@@ -743,7 +743,7 @@ else if(t==='Music')html=`<h3>Music Generation</h3>
 <div id=musicResult></div>`;
 else if(t==='Video')html=`<h3>Video</h3><input id=videoPrompt placeholder="Describe the clip"><input id=videoImage type=file accept="image/*"><label style="display:flex;align-items:center;gap:6px;font-size:12px">Seconds <input type=number id=videoSeconds value=4 min=2 max=8 style="width:80px"></label><button class=primary id=videoGen style="width:100%">Generate</button><div style="font-size:11px;color:var(--muted);text-align:left;margin-top:6px">Makes a short clip from pictures of what you described. YouTube is the player.</div><div id=videoStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div><div id=videoResult></div>`;
 else if(t==='Spotify')html=`<h3>Spotify</h3><input id=spotifyInput placeholder="Song, artist, or a Spotify link"><div style="display:flex;gap:8px"><button class=primary id=spotifySave style="flex:1">Play here</button><button class=secondary id=spotifyPop>Small window</button></div><iframe id=spotifyFrame allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M" style="width:100%;height:380px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><audio id=spotifyAudio controls style="width:100%;margin-top:8px;display:none"></audio><div id=spotifyPicks></div><div id=spotifyBox style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
-else if(t==='YouTube')html=`<h3>YouTube</h3><input id=ytSearch placeholder="Search YouTube"><div style="display:flex;gap:8px"><button class=primary id=ytGo style="flex:1">Play here</button><button class=secondary id=ytPop>Small window</button></div><input id=ytUrl placeholder="YouTube link"><button class=primary id=ytEmbed style="width:100%">Play this link</button><div id=ytPicks></div><iframe id=ytFrame allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="width:100%;height:360px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><div id=ytStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
+else if(t==='YouTube')html=`<h3>YouTube</h3><input id=ytSearch placeholder="Search YouTube"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class=primary id=ytGo style="flex:1">Play here</button><button class=secondary id=ytPop>Small window</button><button class=secondary id=ytSite>YouTube.com</button></div><input id=ytUrl placeholder="YouTube link"><button class=primary id=ytEmbed style="width:100%">Play this link</button><div id=ytPicks></div><iframe id=ytFrame allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="width:100%;height:360px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><div id=ytStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
 else if(t==='Browser')html=`<h3>Browser</h3><div style="display:flex;gap:8px"><input id=bUrl value="https://en.wikipedia.org/wiki/Moon" placeholder="Address"><button class=primary id=bGo>Open</button><button class=secondary id=bPop>Small window</button></div><iframe id=bFrame style="width:100%;height:420px;background:#fff;border:0;border-radius:10px;margin-top:8px" src="https://en.wikipedia.org/wiki/Moon"></iframe><div id=bRead style="text-align:left;white-space:pre-wrap;margin-top:8px"></div>`;
 else if(t==='RPG')html=`<h3>RPG Adventure</h3><div id=rpgSetup><select id=rpgGenre><option>Fantasy</option><option>Sci-Fi</option><option>Cyberpunk</option><option>Post-Apocalyptic</option><option>Horror</option><option>Mystery</option><option>Adventure</option></select><input id=rpgChar placeholder="Your character's name"><input id=rpgLoc placeholder="Starting location"><button class=primary id=rpgBegin>Begin Adventure</button></div><div id=rpgStatus style="font-size:11px;color:var(--muted);min-height:14px;text-align:left"></div><div id=rpgLog class=noscroll style="text-align:left;white-space:pre-wrap;background:var(--input-bg);padding:12px;border-radius:10px;margin-top:8px;min-height:200px;max-height:360px;overflow:auto"></div><div id=rpgActionRow style="display:none;gap:8px;margin-top:8px"><input id=rpgAction placeholder="What do you do?"><button class=primary id=rpgAct>Act (roll d20)</button></div><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-top:8px"><button class=secondary id=rpgNew>New Adventure</button><div style="font-size:11px;color:var(--muted)">Extra rolls: <button class=secondary onclick="quickRoll(4)">d4</button><button class=secondary onclick="quickRoll(6)">d6</button><button class=secondary onclick="quickRoll(8)">d8</button><button class=secondary onclick="quickRoll(10)">d10</button><button class=secondary onclick="quickRoll(12)">d12</button><button class=secondary onclick="quickRoll(100)">d100</button></div></div><div id=diceOut style="font-size:13px;font-weight:700;color:#22c55e;min-height:18px;margin-top:4px"></div><div style="display:flex;gap:8px;margin-top:8px"><input id=invInput placeholder="Add item"><button class=primary id=invAdd>Add</button></div><div id=invList></div>`;
 else if(t==='Stories')html=`<h3>Stories</h3>
@@ -827,7 +827,7 @@ else if(t==='Health')html=`<h3>Health</h3>
 <div id=healthStatus style="font-size:11px;color:var(--muted);margin-top:4px;text-align:left"></div>`;
 else if(t==='Calendar')html=`<h3>Calendar</h3><div style="display:flex;justify-content:space-between;align-items:center"><button class=secondary id=calPrev>←</button><h4 id=calMonthLabel style="margin:0"></h4><button class=secondary id=calNext>→</button></div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:11px;color:var(--muted);margin:6px 0"><div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div></div><div id=calGrid class=calGrid></div><div style="text-align:left;margin-top:10px"><div id=calSelDate style="font-size:12px;color:var(--muted)"></div><div style="display:flex;gap:8px"><input id=calTitle placeholder="Event"><input type=time id=calTime style="width:110px"><button class=primary id=calAdd>Add</button></div><div id=calList></div></div>`;
 else if(t==='Focus')html=`<h3>Focus</h3><div style="display:flex;gap:8px;justify-content:center"><input type=number id=focusMin value=25 style="width:70px"><button class=primary id=focusStart>Start</button><button class=secondary id=focusStop>Stop</button></div><div id=focusDisplay style="font-size:56px;font-weight:800;text-align:center;margin:16px">25:00</div><div id=focusStats style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:10px"></div><div id=focusHistory style="text-align:left;font-size:12px"></div>`;
-else if(t==='Search')html=`<h3>Search</h3><input id=searchQ placeholder="Search"><button class=primary id=searchGo style="width:100%">Search</button><div id=searchOut style="text-align:left;margin-top:8px"></div><div id=searchRead style="text-align:left;white-space:pre-wrap;margin-top:8px"></div>`;
+else if(t==='Search')html=`<h3>Search</h3><input id=searchQ placeholder="Search"><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px"><button class=primary id=searchDDG>DuckDuckGo</button><button class=primary id=searchGoogle>Google</button><button class=primary id=searchBing>Bing</button><button class=primary id=searchWiki>Wikipedia</button></div>`;
 else if(t==='Tools')html=`<h3>Tools</h3><div style="text-align:left"><h4>Icon Converter</h4><input type=file id=iconFile accept="image/*"><div id=iconPreview style="width:200px;height:200px;background:#fff;margin:8px auto;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#000">Upload</div><button class=primary id=iconConvert>Convert</button><hr><h4>PDF to JPG</h4><input type=file id=pdfToJpg accept="application/pdf"><div id=pdfJpgOut></div><hr><h4>JPG to PDF</h4><input type=file id=jpgToPdf multiple accept="image/*"><button class=primary id=jpgPdfBtn>Convert</button><hr><h4>Combine PDFs</h4><input type=file id=pdfComb multiple accept="application/pdf"><button class=primary id=combBtn>Combine</button><hr><h4>Add Page Numbers</h4><input type=file id=pageNumFile accept="application/pdf"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><select id=pageNumFont><option value="Helvetica">Helvetica</option><option value="HelveticaBold">Helvetica Bold</option><option value="TimesRoman">Times Roman</option><option value="TimesRomanBold">Times Roman Bold</option><option value="Courier">Courier</option><option value="CourierBold">Courier Bold</option></select><input type=number id=pageNumSize value=12 min=6 max=48 placeholder="Font size"></div><select id=pageNumPosition><option value="bottom-center">Bottom Center</option><option value="bottom-left">Bottom Left</option><option value="bottom-right">Bottom Right</option><option value="top-center">Top Center</option><option value="top-left">Top Left</option><option value="top-right">Top Right</option></select><label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-top:6px"><input type=checkbox id=pageNumTotal style="width:auto;margin:0"> Show "of total" (e.g., 3 of 12)</label><button class=primary id=pageNumBtn style="width:100%">Add Page Numbers</button><div id=pageNumStatus style="font-size:11px;color:var(--muted);margin-top:4px"></div></div>`;
 else if(t==='Comics')html=`<h3>Comics</h3><div style="display:flex;gap:8px"><input id=comicSearch placeholder="Search"><select id=collFilter><option value="">All</option></select></div><div id=comicStats style="font-size:11px;color:var(--muted)"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px"><input id=cTitle placeholder="Title*"><input id=cIssue placeholder="Issue"><input id=cWriter placeholder="Writer"><input id=cArtist placeholder="Artist"><input id=cCompany placeholder="Company"><input id=cValue placeholder="$"></div><input id=collSel placeholder="Collection"><input type=file id=cThumb accept="image/*"><button class=primary id=cAdd>Add Comic</button><div id=comicList style="display:grid;grid-template-columns:repeat(auto-fill,80px);gap:8px;margin-top:10px"></div>`;
 else if(t==='Media')html=`<h3>Media</h3><div style="display:flex;gap:8px"><input id=mediaSearch placeholder="Search"><select id=mediaFilterType><option value="">All</option><option>Movie</option><option>Series</option></select></div><div id=mediaStats style="font-size:11px;color:var(--muted)"></div><input id=mTitle placeholder="Title*"><select id=mType><option>Movie</option><option>Series</option></select><input id=mYear placeholder="Year"><input type=file id=mThumb accept="image/*"><button class=primary id=mAdd>Add Media</button><div id=mediaList style="display:grid;grid-template-columns:repeat(auto-fill,80px);gap:8px;margin-top:10px"></div>`;
@@ -931,8 +931,13 @@ const subject=document.getElementById('emailSubject').value.trim();
 const body=document.getElementById('emailBody').value;
 const status=document.getElementById('emailSendStatus');
 if(!to||!to.includes('@')){status.textContent='Enter the email address.';return;}
-handOff('mailto:'+to+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body));
-status.textContent='Your mail app has this message. Press send there.';
+let url='https://mail.google.com/mail/?view=cm&fs=1&tf=1&to='+encodeURIComponent(to)+'&su='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+if(url.length>1800){
+url='https://mail.google.com/mail/?view=cm&fs=1&tf=1&to='+encodeURIComponent(to)+'&su='+encodeURIComponent(subject);
+if(navigator.clipboard&&body)navigator.clipboard.writeText(body).catch(()=>{});
+status.textContent='Gmail is open. The message was copied so you can paste it and press send.';
+}else status.textContent='Gmail is open with this message. Press send there.';
+popOver(url);
 };
 document.getElementById('textSendBtn').onclick=()=>{
 let digits=document.getElementById('textPhone').value.replace(/\D/g,'');
@@ -1259,6 +1264,11 @@ document.getElementById('ytPop').onclick=()=>{
 const q=document.getElementById('ytSearch').value.trim();
 const id=ytId(document.getElementById('ytUrl').value.trim());
 popOver(id?('https://www.youtube.com/watch?v='+id):(window._eveLastVideo||(q?('https://www.youtube.com/results?search_query='+encodeURIComponent(q)):'https://www.youtube.com/')));
+};
+document.getElementById('ytSite').onclick=()=>{
+const q=document.getElementById('ytSearch').value.trim();
+const id=ytId(document.getElementById('ytUrl').value.trim());
+popOver(id?('https://www.youtube.com/watch?v='+id):(q?('https://www.youtube.com/results?search_query='+encodeURIComponent(q)):'https://www.youtube.com/'));
 };
 }
 }
@@ -1835,52 +1845,12 @@ document.getElementById('focusStop').onclick=()=>{if(timer)clearInterval(timer);
 upd();renderStats();
 }
 if(t==='Search'){
-async function showRead(url,title){
-const box=document.getElementById('searchRead');
-box.textContent='Opening...';
-try{
-const wiki=(url||'').match(/wikipedia\.org\/wiki\/([^#?]+)/i);
-let text='';
-if(wiki){
-const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(decodeURIComponent(wiki[1])),{signal:AbortSignal.timeout(8000)});
-const d=await r.json();
-text=(d.title?d.title+'\n\n':'')+(d.extract||'');
-}else{
-const r=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url),{signal:AbortSignal.timeout(9000)});
-const htmlText=await r.text();
-const doc=new DOMParser().parseFromString(htmlText,'text/html');
-doc.querySelectorAll('script,style,noscript').forEach(n=>n.remove());
-text=(doc.body&&doc.body.innerText||'').replace(/\n{3,}/g,'\n\n').trim().slice(0,9000);
-}
-box.textContent=text||title||'';
-}catch(e){box.textContent=title||'Could not open that page here.';}
-}
-document.getElementById('searchGo').onclick=async()=>{
-const q=document.getElementById('searchQ').value.trim();
-const out=document.getElementById('searchOut');
-if(!q)return;
-out.textContent='Searching...';
-document.getElementById('searchRead').textContent='';
-const items=[];
-try{
-const d=await fetch('https://api.duckduckgo.com/?q='+encodeURIComponent(q)+'&format=json&no_html=1',{signal:AbortSignal.timeout(8000)}).then(r=>r.json());
-if(d.AbstractText)items.push({title:d.Heading||q,text:d.AbstractText,url:d.AbstractURL||''});
-(function walk(list){(list||[]).forEach(it=>{if(it.FirstURL)items.push({title:it.Text,text:'',url:it.FirstURL});if(it.Topics)walk(it.Topics);});})(d.RelatedTopics);
-}catch(e){}
-try{
-const w=await fetch('https://en.wikipedia.org/w/api.php?action=opensearch&search='+encodeURIComponent(q)+'&limit=5&namespace=0&format=json&origin=*',{signal:AbortSignal.timeout(8000)}).then(r=>r.json());
-(w[1]||[]).forEach((title,i)=>items.push({title,text:(w[2]&&w[2][i])||'',url:(w[3]&&w[3][i])||''}));
-}catch(e){}
-const seen=new Set();
-const unique=items.filter(it=>{const k=(it.url||it.title);if(!k||seen.has(k))return false;seen.add(k);return true;}).slice(0,8);
-if(!unique.length){out.textContent='Nothing came back.';return;}
-out.innerHTML=unique.map((it,i)=>'<button type=button class=secondary data-i="'+i+'" style="display:block;width:100%;margin:4px 0;text-align:left">'+(it.title||'Result').replace(/[<>]/g,'')+'</button>'+(it.text?'<div style="font-size:12px;color:var(--muted);margin:0 0 8px">'+it.text.replace(/[<>]/g,'').slice(0,220)+'</div>':'')).join('');
-out.querySelectorAll('button').forEach(b=>b.onclick=()=>{
-const it=unique[+b.getAttribute('data-i')];
-if(it.url)popOver(it.url);
-document.getElementById('searchRead').textContent=it.text||it.title||'';
-});
-};
+function q(){return document.getElementById('searchQ').value.trim();}
+function go(url){const v=q();if(!v)return;popOver(url+encodeURIComponent(v));}
+document.getElementById('searchDDG').onclick=()=>go('https://duckduckgo.com/?q=');
+document.getElementById('searchGoogle').onclick=()=>go('https://www.google.com/search?q=');
+document.getElementById('searchBing').onclick=()=>go('https://www.bing.com/search?q=');
+document.getElementById('searchWiki').onclick=()=>go('https://en.wikipedia.org/wiki/Special:Search?search=');
 }
 if(t==='Tools'){const iconFile=document.getElementById('iconFile');if(iconFile){iconFile.onchange=e=>{const f=e.target.files[0];if(!f)return;document.getElementById('iconPreview').innerHTML=`<img src="${URL.createObjectURL(f)}" style="max-width:200px;max-height:200px">`;};document.getElementById('iconConvert').onclick=async()=>{const f=iconFile.files[0];if(!f)return;const img=new Image();img.src=URL.createObjectURL(f);await img.decode();[16,32,48,64,128,256].forEach(s=>{const c=document.createElement('canvas');c.width=s;c.height=s;c.getContext('2d').drawImage(img,0,0,s,s);const a=document.createElement('a');a.download=`icon-${s}.png`;a.href=c.toDataURL();a.click();});};}document.getElementById('jpgPdfBtn').onclick=async()=>{const files=document.getElementById('jpgToPdf').files;if(!files.length)return;const {jsPDF}=window.jspdf||{};if(!jsPDF){alert('Still loading. Try again in a moment.');return;}const doc=new jsPDF();for(let i=0;i<files.length;i++){const data=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(files[i]);});if(i>0)doc.addPage();doc.addImage(data,'JPEG',0,0,210,297);}doc.save('images.pdf');};document.getElementById('combBtn').onclick=async()=>{const files=document.getElementById('pdfComb').files;const {PDFDocument}=window.PDFLib||{};if(!PDFDocument){alert('Still loading. Try again in a moment.');return;}const merged=await PDFDocument.create();for(const f of files){const bytes=await f.arrayBuffer();const pdf=await PDFDocument.load(bytes);const pages=await merged.copyPages(pdf,pdf.getPageIndices());pages.forEach(p=>merged.addPage(p));}const out=await merged.save();const blob=new Blob([out],{type:'application/pdf'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='combined.pdf';a.click();};document.getElementById('pageNumBtn').onclick=async()=>{
 const file=document.getElementById('pageNumFile').files[0];
@@ -2337,7 +2307,7 @@ if(kind==='search'){
 switchTab('Search');
 const el=document.getElementById('searchQ');
 if(el)el.value=arg;
-if(arg&&navigator.onLine){const go=document.getElementById('searchGo');if(go)go.click();}
+if(arg){const go=document.getElementById('searchDDG');if(go)go.click();}
 return true;
 }
 if(kind==='map'){
