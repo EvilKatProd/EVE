@@ -79,7 +79,7 @@ button.secondary{background:var(--input-bg);color:var(--text);padding:8px 12px;b
 <div id=appRoot style="display:none">
 <div class=main>
 <div class=panel><img id=heroImg><input type=file id=avatarUpload multiple accept=image/*><button class=primary id=clearAv>Clear All Avatars</button><div id=avatarGrid class=grid80></div></div>
-<div class=panel><div id=chatBox></div><div id=nowPlaying style="font-size:11px;color:var(--muted);text-align:left;min-height:14px"></div><div id=voiceInterim style="font-size:12px;color:var(--muted);text-align:left;min-height:16px;font-style:italic"></div><select id=chatModeSelect style="margin:4px 0"><option value=collaborator>Collaborator</option><option value=support>Support & Reflection</option><option value=spicy>Spicy 😏</option></select><div id=chatModeNote style="font-size:10px;color:#f59e0b;text-align:left;min-height:12px"></div><label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin:2px 0"><input type=checkbox id=chatContextToggle style="width:auto;margin:0"> Use Code Lab / RPG context</label><label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin:2px 0"><input type=checkbox id=voiceOutputToggle style="width:auto;margin:0"> EVE speaks responses aloud</label><label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin:2px 0"><input type=checkbox id=wakeWordToggle style="width:auto;margin:0"> Wake word ("Hey, Eve")</label><div style=display:flex;gap:8px><button class=secondary id=micBtn title="Voice input" style="flex:0 0 auto">🎤</button><input id=chatInput placeholder='Talk to EVE...'><button class=primary id=chatSend>Send</button></div><div id=chatStatus style="font-size:11px;color:var(--muted);margin-top:4px;text-align:left"></div></div>
+<div class=panel><div id=chatBox></div><div id=nowPlaying style="font-size:11px;color:var(--muted);text-align:left;min-height:14px"></div><div id=voiceInterim style="font-size:12px;color:var(--muted);text-align:left;min-height:16px;font-style:italic"></div><select id=chatModeSelect style="margin:4px 0"><option value=collaborator>Collaborator</option><option value=support>Support & Reflection</option><option value=spicy>Spicy 😏</option></select><div id=chatModeNote style="font-size:10px;color:#f59e0b;text-align:left;min-height:12px"></div><label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin:2px 0"><input type=checkbox id=chatContextToggle style="width:auto;margin:0"> Remember what I'm working on</label><label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin:2px 0"><input type=checkbox id=voiceOutputToggle style="width:auto;margin:0"> EVE speaks responses aloud</label><label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin:2px 0"><input type=checkbox id=wakeWordToggle style="width:auto;margin:0"> Wake word ("Hey, Eve")</label><div style=display:flex;gap:8px><button class=secondary id=micBtn title="Voice input" style="flex:0 0 auto">🎤</button><input id=chatInput placeholder='Talk to EVE...'><button class=primary id=chatSend>Send</button></div><div id=chatStatus style="font-size:11px;color:var(--muted);margin-top:4px;text-align:left"></div></div>
 <div class=panel><div id=tabBar class=tabBar></div><div id=tabContent class=tabContent></div></div>
 </div>
 <footer>Copyright and Trademark 2026 Ferreri Technologies</footer>
@@ -741,7 +741,7 @@ else if(t==='Music')html=`<h3>Music Generation</h3>
 <button class=primary id=musicGenBtn style="width:100%">Generate</button>
 <div id=musicStatus style="font-size:11px;color:var(--muted);margin:8px 0"></div>
 <div id=musicResult></div>`;
-else if(t==='Video')html=`<h3>Video</h3><input id=videoPrompt placeholder="Describe the clip"><input id=videoImage type=file accept="image/*"><label style="display:flex;align-items:center;gap:6px;font-size:12px">Seconds <input type=number id=videoSeconds value=4 min=2 max=8 style="width:80px"></label><button class=primary id=videoGen style="width:100%">Generate</button><div style="font-size:11px;color:var(--muted);text-align:left;margin-top:6px">Makes a short clip from pictures of what you described. YouTube is the player.</div><div id=videoStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div><div id=videoResult></div>`;
+else if(t==='Video')html=`<h3>Video</h3><input id=videoPrompt placeholder="Describe the clip"><input id=videoImage type=file accept="image/*"><label style="display:flex;align-items:center;gap:6px;font-size:12px">Seconds <input type=number id=videoSeconds value=4 min=2 max=8 style="width:80px"></label><button class=primary id=videoGen style="width:100%">Generate</button><div id=videoStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div><div id=videoResult></div>`;
 else if(t==='Spotify')html=`<h3>Spotify</h3><input id=spotifyInput placeholder="Song, artist, or a Spotify link"><div style="display:flex;gap:8px"><button class=primary id=spotifySave style="flex:1">Play here</button><button class=secondary id=spotifyPop>Small window</button></div><iframe id=spotifyFrame allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M" style="width:100%;height:380px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><audio id=spotifyAudio controls style="width:100%;margin-top:8px;display:none"></audio><div id=spotifyPicks></div><div id=spotifyBox style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
 else if(t==='YouTube')html=`<h3>YouTube</h3><input id=ytSearch placeholder="Search YouTube"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class=primary id=ytGo style="flex:1">Play here</button><button class=secondary id=ytPop>Small window</button><button class=secondary id=ytSite>YouTube.com</button></div><input id=ytUrl placeholder="YouTube link"><button class=primary id=ytEmbed style="width:100%">Play this link</button><div id=ytPicks></div><iframe id=ytFrame allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="width:100%;height:360px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><div id=ytStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
 else if(t==='Browser')html=`<h3>Browser</h3><div style="display:flex;gap:8px"><input id=bUrl value="https://en.wikipedia.org/wiki/Moon" placeholder="Address"><button class=primary id=bGo>Open</button><button class=secondary id=bPop>Small window</button></div><iframe id=bFrame style="width:100%;height:420px;background:#fff;border:0;border-radius:10px;margin-top:8px" src="https://en.wikipedia.org/wiki/Moon"></iframe><div id=bRead style="text-align:left;white-space:pre-wrap;margin-top:8px"></div>`;
@@ -869,16 +869,16 @@ const messages=[{role:'user',content:'Reply with exactly the word ready.'}];
 try{
 if(modeSel.value!=='ollama'&&navigator.onLine){
 const full=await eveFreeStream(messages,{maxTokens:40,feature:'chat'},(t)=>{out.textContent=t;});
-if(full&&full.trim()){out.textContent='The internet answered: '+full.trim().slice(0,300);return;}
+if(full&&full.trim()){out.textContent=full.trim().slice(0,300);return;}
 }
 }catch(e){}
 try{
 if(modeSel.value!=='online'){
 const full=await ollamaAnywhere(messages,{maxTokens:40,feature:'chat'},(t)=>{out.textContent=t;});
-if(full&&full.trim()){out.textContent='This computer answered: '+full.trim().slice(0,300);return;}
+if(full&&full.trim()){out.textContent=full.trim().slice(0,300);return;}
 }
 }catch(e){}
-out.textContent='No live answer right now. Time, notes, tasks, calendar, and the calculator still work here.';
+out.textContent='No answer right now.';
 };
 document.getElementById('setPinBtn').onclick=()=>{
 const pin=document.getElementById('newPinInput').value;
@@ -935,8 +935,8 @@ let url='https://mail.google.com/mail/?view=cm&fs=1&tf=1&to='+encodeURIComponent
 if(url.length>1800){
 url='https://mail.google.com/mail/?view=cm&fs=1&tf=1&to='+encodeURIComponent(to)+'&su='+encodeURIComponent(subject);
 if(navigator.clipboard&&body)navigator.clipboard.writeText(body).catch(()=>{});
-status.textContent='Gmail is open. The message was copied so you can paste it and press send.';
-}else status.textContent='Gmail is open with this message. Press send there.';
+}
+status.textContent='Opened. Press send there.';
 popOver(url);
 };
 document.getElementById('textSendBtn').onclick=()=>{
@@ -983,7 +983,7 @@ if(t==='Code Lab'){
 document.getElementById('aiStatus').textContent=featureStatusText('codelab');
 document.getElementById('genCode').onclick=async()=>{
 const pr=document.getElementById('codePrompt').value.trim();
-if(!pr){alert('Enter prompt');return;}
+if(!pr){alert('Say what it should do.');return;}
 const lang=document.getElementById('codeLang').value;
 const mode=document.getElementById('codeMode').value;
 const editor=document.getElementById('codeEditor');
@@ -1012,7 +1012,7 @@ let full='';
 editor.value='';
 btn.disabled=true;
 prog.style.display='block';
-prog.textContent='Generating...';
+prog.textContent='Writing…';
 try{
 full=await aiStream([{role:'system',content:systemPrompt},{role:'user',content:pr}],{maxTokens:3500,temperature:0.4,feature:'codelab'},(partial)=>{
 editor.value=stripCode(partial);
@@ -1026,7 +1026,7 @@ runOut.style.display='block';runOut.textContent=full;prog.textContent='Done.';
 btn.disabled=false;return;
 }
 if(!full || full.trim().length<15 || !looksLikeCode(full,lang)){
-prog.textContent='No program came back. Try again while this computer is online.';
+prog.textContent='Nothing came back. Try again.';
 btn.disabled=false;
 return;
 }
@@ -1048,7 +1048,7 @@ const preview=document.getElementById('codePreview');
 if(!code.trim()){out.style.display='block';out.textContent='Nothing to run.';return;}
 if(lang==='HTML'){preview.srcdoc=code;preview.style.display='block';out.style.display='none';return;}
 if(lang==='JavaScript'){
-try{out.style.display='block';preview.style.display='none';let logs=[];const oLog=console.log;console.log=(...a)=>{logs.push(a.join(' '));};let r=eval(code);out.textContent=(logs.join('\n')||(r!==undefined?String(r):'Ran. No output.'));console.log=oLog;}catch(e){out.style.display='block';out.textContent='Error: '+e.message;}
+try{out.style.display='block';preview.style.display='none';let logs=[];const oLog=console.log;console.log=(...a)=>{logs.push(a.join(' '));};let r=eval(code);out.textContent=(logs.join('\n')||(r!==undefined?String(r):'Ran. No output.'));console.log=oLog;}catch(e){out.style.display='block';out.textContent='That didn\'t run.';}
 return;
 }
 if(lang==='Python'){
@@ -1060,11 +1060,11 @@ function builtinRead(x){if(Sk.builtinFiles===undefined||Sk.builtinFiles.files[x]
 Sk.configure({output:(t)=>{printed+=t;},read:builtinRead});
 await Sk.misceval.asyncToPromise(()=>Sk.importMainWithBody('<stdin>',false,code,true));
 out.textContent=printed||'Ran. No output.';
-}catch(e){out.textContent='Error: '+(e&&e.toString?e.toString():e);}
+}catch(e){out.textContent='That didn\'t run.';}
 return;
 }
 out.style.display='block';preview.style.display='none';
-out.textContent='This computer can run HTML, JavaScript, and Python here. Use Download for the other languages.';
+out.textContent='Press Download for this one.';
 };
 document.getElementById('copyCode').onclick=()=>navigator.clipboard.writeText(document.getElementById('codeEditor').value);
 document.getElementById('downloadCode').onclick=()=>{
@@ -1106,7 +1106,7 @@ btn.disabled=true;status.textContent='Starting...';document.getElementById('musi
 const reqId='m'+Date.now();
 const onProg=(id,msg)=>{if(id===reqId)status.textContent=msg;};
 const onDone=(id,path)=>{if(id===reqId){cleanup();status.textContent='Done.';const url='file:///'+path.replace(/\\/g,'/');document.getElementById('musicResult').innerHTML=`<audio controls style="width:100%;margin-top:8px" src="${url}"></audio><button class=secondary id=musicOpenBtn style="width:100%;margin-top:6px">Open in Default Player</button>`;document.getElementById('musicOpenBtn').onclick=()=>window.pyBridge.launchApp(path,function(){});btn.disabled=false;}};
-const onErr=(id,msg)=>{if(id===reqId){cleanup();status.textContent='Failed: '+msg;btn.disabled=false;}};
+const onErr=(id,msg)=>{if(id===reqId){cleanup();status.textContent='That didn\'t work.';btn.disabled=false;}};
 function cleanup(){window.pyBridge.musicProgress.disconnect(onProg);window.pyBridge.musicDone.disconnect(onDone);window.pyBridge.musicError.disconnect(onErr);}
 window.pyBridge.musicProgress.connect(onProg);
 window.pyBridge.musicDone.connect(onDone);
@@ -1160,7 +1160,7 @@ playVideo(items[0].id,statusId,frameId);
 popOver('https://www.youtube.com/watch?v='+items[0].id);
 paintPicks(items,boxId,statusId,frameId);
 }catch(e){
-if(status)status.textContent='Opening a window instead.';
+if(status)status.textContent='Opening YouTube.';
 popOver('https://www.youtube.com/results?search_query='+encodeURIComponent(q));
 }
 }
@@ -1339,9 +1339,9 @@ if(picks){
 picks.innerHTML=songs.map((s,i)=>'<button type=button class=secondary data-i="'+i+'" style="display:block;width:100%;margin:4px 0;text-align:left">'+(s.trackName+' — '+s.artistName).replace(/[<>]/g,'')+'</button>').join('');
 picks.querySelectorAll('button').forEach(b=>b.onclick=()=>playPreview(songs[+b.getAttribute('data-i')]));
 }
-if(box)box.textContent='Playing here. Small window opens Spotify itself.';
+if(box)box.textContent='Playing.';
 }catch(e){
-if(box)box.textContent='Opening Spotify in a window.';
+if(box)box.textContent='Opening Spotify.';
 popOver(spotifyPage(raw));
 }
 };
@@ -1371,7 +1371,7 @@ const read=document.getElementById('bRead');
 let host='';
 try{host=new URL(url).hostname;}catch(e){}
 if(blocked.test(host)){
-read.textContent='That site will not open inside this panel, so it is opening in a window.';
+read.textContent='Opening that site.';
 popOver(url);
 return;
 }
@@ -1659,7 +1659,7 @@ document.getElementById('legalSend').onclick=async()=>{
 const inp=document.getElementById('legalInput');const q=inp.value.trim();if(!q)return;
 if(!resolveEngine('legal')){document.getElementById('legalStatus').textContent=aiUnavailableMessage('legal');return;}
 log.push({role:'user',text:q});inp.value='';log.push({role:'ai',text:''});const idx=log.length-1;renderLegalLog();
-const status=document.getElementById('legalStatus');status.textContent='Researching...';
+const status=document.getElementById('legalStatus');status.textContent='Looking that up…';
 const sysPrompt='You are EVE in Legal Help mode, providing general legal information for educational purposes only. You are not a lawyer and this is not legal advice — always say so when relevant and recommend consulting a licensed attorney in the user\'s jurisdiction for anything binding, high-stakes, or specific to their situation. Explain general legal concepts and principles clearly, noting that laws vary by jurisdiction.';
 let know='';try{know=await knowledgeFor(q);}catch(e){}
 try{
@@ -1678,7 +1678,7 @@ document.getElementById('healthSend').onclick=async()=>{
 const inp=document.getElementById('healthInput');const q=inp.value.trim();if(!q)return;
 if(!resolveEngine('health')){document.getElementById('healthStatus').textContent=aiUnavailableMessage('health');return;}
 log.push({role:'user',text:q});inp.value='';log.push({role:'ai',text:''});const idx=log.length-1;renderHealthLog();
-const status=document.getElementById('healthStatus');status.textContent='Researching...';
+const status=document.getElementById('healthStatus');status.textContent='Looking that up…';
 const sysPrompt='You are EVE in Health mode, providing general health and wellness information for educational purposes only. You are not a doctor and do not diagnose conditions, interpret personal symptoms as a diagnosis, prescribe treatment, or give specific medication dosing. For any symptoms, diagnosis, or treatment decisions, clearly direct the user to consult a licensed healthcare provider. If something sounds like a medical emergency, tell them to contact emergency services immediately rather than continuing the conversation as normal. You can discuss general wellness, nutrition, exercise, and health literacy topics in an educational way.';
 let know='';try{know=await knowledgeFor(q);}catch(e){}
 try{
@@ -1885,7 +1885,7 @@ const out=await pdf.save();
 const blob=new Blob([out],{type:'application/pdf'});
 const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='numbered.pdf';a.click();
 status.textContent='Done — downloaded.';
-}catch(e){status.textContent='Failed: '+(e&&e.message?e.message:'unknown error');}
+}catch(e){status.textContent='That didn\'t work.';}
 };
 document.getElementById('pdfToJpg').onchange=async e=>{
 const file=e.target.files[0];if(!file)return;
@@ -2447,7 +2447,7 @@ primeVoice();
 const inp=document.getElementById('chatInput');const txt=inp.value.trim();if(!txt)return;addChat('user',txt);inp.value='';
 let full='';addChat('ai','');const idx=chat.length-1;
 const statusEl=document.getElementById('chatStatus');
-if(statusEl)statusEl.textContent='Working…';
+if(statusEl)statusEl.textContent='';
 try{
 let sysPrompt=CHAT_MODE_PROMPTS[chatModeSelect.value]||CHAT_MODE_PROMPTS.collaborator;
 sysPrompt+='\n\nYou are on this computer with them. Notes, tasks, calendar, and their documents are already here. If something below is about them or a project, use it as memory and talk about it naturally. When they want weather, a search, a map, a video, a picture, or another section, finish with exactly one line and nothing after it: ACTION: weather | ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
