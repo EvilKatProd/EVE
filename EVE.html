@@ -706,6 +706,7 @@ else if(t==='Email')html=`<h3>Email</h3>
 <div id=emailSendStatus style="font-size:11px;color:var(--muted);margin-top:6px;text-align:left"></div>
 <h4 style="text-align:left;margin:16px 0 4px">Text a phone</h4>
 <input id=textPhone placeholder="Phone number">
+<select id=textCarrier><option value="txt.att.net">AT&T</option><option value="vtext.com">Verizon</option><option value="tmomail.net">T-Mobile</option><option value="sms.cricketwireless.net">Cricket</option><option value="sms.myboostmobile.com">Boost</option><option value="email.uscc.net">US Cellular</option><option value="msg.fi.google.com">Google Fi</option></select>
 <textarea id=textBody rows=3 placeholder="Message"></textarea>
 <button class=primary id=textSendBtn style="width:100%">Send Text</button>
 <div id=textSendStatus style="font-size:11px;color:var(--muted);margin-top:6px;text-align:left"></div>`;
@@ -944,10 +945,12 @@ let digits=document.getElementById('textPhone').value.replace(/\D/g,'');
 const body=document.getElementById('textBody').value||'';
 const status=document.getElementById('textSendStatus');
 if(digits.length===10)digits='1'+digits;
+const carrier=document.getElementById('textCarrier').value;
 if(digits.length<11){status.textContent='Enter the phone number.';return;}
-handOff('sms:+'+digits+'?&body='+encodeURIComponent(body));
-if(navigator.clipboard&&body)navigator.clipboard.writeText(body).catch(()=>{});
-status.textContent='Your texting app has this message. Press send there.';
+const to=digits+'@'+carrier;
+const outlook='https://outlook.live.com/mail/0/deeplink/compose?to='+encodeURIComponent(to)+'&subject=&body='+encodeURIComponent(body);
+if(!popOver(outlook)) handOff('mailto:'+to+'?body='+encodeURIComponent(body));
+status.textContent='Opened. Press send there.';
 };
 }
 if(t==='Apps'){
@@ -1087,9 +1090,11 @@ const btn=document.getElementById('musicGenBtn');
 btn.disabled=true;status.textContent='Composing…';document.getElementById('musicResult').innerHTML='';
 try{
 const style=document.getElementById('musicModelSize').value;
-const hint=style==='melody'?' piano melody':style==='large'?' long ambient':style==='small'?' short beat':'';
-const dur=style==='small'?Math.min(duration,6):style==='large'?Math.max(duration,12):duration;
-const url=await synthClip(prompt+hint,dur);
+const hint=style==='melody'?' with a clear melody':style==='large'?' long and full':style==='small'?' short':'';
+const made=await gradioCall('https://facebook-musicgen.hf.space','predict_batched',[prompt+hint+' , about '+duration+' seconds', null]);
+const audio=made&&made[0]||{};
+const url=audio.url||(audio.path?('https://facebook-musicgen.hf.space/gradio_api/file='+audio.path):'');
+if(!url)throw new Error('none');
 status.textContent='Done.';
 document.getElementById('musicResult').innerHTML=`<audio controls autoplay style="width:100%;margin-top:8px" src="${url}"></audio>`;
 }catch(e){status.textContent='Could not play that.';}
@@ -1165,78 +1170,24 @@ popOver('https://www.youtube.com/results?search_query='+encodeURIComponent(q));
 }
 }
 if(t==='Video'){
-function loadImg(src){
-return new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src=src;});
-}
-function drawCover(g,img){
-const cw=640,ch=360;
-const s=Math.max(cw/img.width,ch/img.height);
-const w=img.width*s,h=img.height*s;
-g.drawImage(img,(cw-w)/2,(ch-h)/2,w,h);
-}
-async function pictureFrom(prompt,seed){
-const url='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?width=640&height=360&nologo=true&seed='+seed;
-for(let attempt=0;attempt<2;attempt++){
-const res=await fetch(url,{signal:AbortSignal.timeout(25000)});
-if(res.status===429){await new Promise(r=>setTimeout(r,1500));continue;}
-const blob=await res.blob();
-if(res.ok&&blob.size>800&&(blob.type||'').startsWith('image/'))return loadImg(URL.createObjectURL(blob));
-}
-throw new Error('picture');
-}
 document.getElementById('videoGen').onclick=async()=>{
 const prompt=document.getElementById('videoPrompt').value.trim();
 const file=document.getElementById('videoImage').files[0];
-const seconds=Math.min(8,Math.max(2,parseInt(document.getElementById('videoSeconds').value,10)||4));
+const seconds=Math.min(8,Math.max(2,parseFloat(document.getElementById('videoSeconds').value)||4));
 const status=document.getElementById('videoStatus');
 const box=document.getElementById('videoResult');
 if(!prompt&&!file){status.textContent='Describe the clip, or add a picture.';return;}
-status.textContent='Building the clip...';
+if(!navigator.onLine){status.textContent='A clip needs a connection.';return;}
+status.textContent='Making the clip...';
 box.innerHTML='';
 try{
-const frames=[];
-if(file)frames.push(await loadImg(URL.createObjectURL(file)));
-const base=prompt||'the same scene a moment later';
-const seeds=[1,2,3,4].map(n=>(Date.now()+n*97)%999983);
-const need=file?2:3;
-for(let i=frames.length;i<need;i++){
-status.textContent='Building the clip...';
-frames.push(await pictureFrom(base+', continuous scene, moment '+(i+1), seeds[i]));
-}
-if(frames.length<2)frames.push(frames[0]);
-const canvas=document.createElement('canvas');
-canvas.width=640;canvas.height=360;
-const g=canvas.getContext('2d');
-const stream=canvas.captureStream(12);
-const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
-const rec=new MediaRecorder(stream,{mimeType:mime});
-const chunks=[];
-rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
-const done=new Promise(r=>rec.onstop=r);
-rec.start();
-const total=seconds*1000;
-const t0=performance.now();
-while(performance.now()-t0<total){
-const p=Math.min(0.999,(performance.now()-t0)/total);
-const pos=p*(frames.length-1);
-const i=Math.min(frames.length-2,Math.floor(pos));
-const f=pos-i;
-g.clearRect(0,0,640,360);
-g.globalAlpha=1;
-drawCover(g,frames[i]);
-g.globalAlpha=f;
-drawCover(g,frames[i+1]);
-g.globalAlpha=1;
-await new Promise(r=>setTimeout(r,80));
-}
-rec.stop();
-await done;
-const blob=new Blob(chunks,{type:'video/webm'});
-if(blob.size<1000)throw new Error('short');
-const url=URL.createObjectURL(blob);
+const made=await makeRealClip(prompt,file,seconds);
+const clip=made&&made[0];
+const url=(clip&&clip.video&&clip.video.url)||(clip&&clip.url)||'';
+if(!/\.mp4|gradio_api\/file=|video/i.test(url))throw new Error('none');
 box.innerHTML='<video controls autoplay src="'+url+'" style="width:100%;border-radius:10px;margin-top:8px;background:#000"></video>';
 const a=document.createElement('a');
-a.href=url;a.download='clip.webm';a.textContent='Download clip';a.className='secondary';a.style.display='block';a.style.marginTop='8px';a.style.textAlign='center';
+a.href=url;a.download='clip.mp4';a.textContent='Download clip';a.className='secondary';a.style.display='block';a.style.marginTop='8px';a.style.textAlign='center';
 box.appendChild(a);
 status.textContent='';
 }catch(e){status.textContent='The clip did not come back. Try again.';}
@@ -1968,52 +1919,70 @@ parts.push(`RPG Adventure in progress — genre: ${adv.genre}, character: ${adv.
 }catch{}
 return parts.join('\n\n');
 }
-async function synthClip(prompt,seconds){
-const AC=window.AudioContext||window.webkitAudioContext;
-const ctx=new AC();
-const dest=ctx.createMediaStreamDestination();
-const master=ctx.createGain();
-master.gain.value=0.22;
-master.connect(dest);
-master.connect(ctx.destination);
-const seed=[...prompt].reduce((a,c)=>a+c.charCodeAt(0),0);
-const scale=[0,2,4,5,7,9,11];
-const base=98+ (seed%7)*12;
-const dur=Math.min(30,Math.max(2,seconds||8));
-const low=prompt.toLowerCase();
-const wave=/drum|beat|bass/.test(low)?'square':/piano|soft|calm|ambient/.test(low)?'sine':'triangle';
-for(let i=0;i<dur*2;i++){
-const o=ctx.createOscillator();
-const g=ctx.createGain();
-const step=scale[(seed+i*3)%scale.length];
-const oct=(i%8===0)?0.5:1;
-o.type=wave;
-o.frequency.value=base*Math.pow(2,step/12)*oct;
-const t0=ctx.currentTime+i*0.5;
-g.gain.setValueAtTime(0.0001,t0);
-g.gain.exponentialRampToValueAtTime(0.45,t0+0.04);
-g.gain.exponentialRampToValueAtTime(0.0001,t0+0.46);
-o.connect(g);g.connect(master);
-o.start(t0);o.stop(t0+0.48);
+async function gradioCall(base,api,data){
+const start=await fetch(base+'/gradio_api/call/'+api,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({data}),signal:AbortSignal.timeout(20000)});
+if(!start.ok)throw new Error('start');
+const info=await start.json();
+if(!info.event_id)throw new Error('start');
+const res=await fetch(base+'/gradio_api/call/'+api+'/'+info.event_id);
+if(!res.ok||!res.body)throw new Error('wait');
+const reader=res.body.getReader();
+const dec=new TextDecoder();
+let buf='';
+const deadline=Date.now()+180000;
+while(Date.now()<deadline){
+const {value,done}=await reader.read();
+if(value)buf+=dec.decode(value,{stream:true});
+const blocks=[...buf.matchAll(/event:\s*complete\s*\ndata:\s*(.*)/g)];
+if(blocks.length){try{reader.cancel();}catch(e){} return JSON.parse(blocks[blocks.length-1][1]);}
+if(/event:\s*error/.test(buf)&&!/event:\s*complete/.test(buf))throw new Error('fail');
+if(done)break;
 }
-let url;
-if(window.MediaRecorder){
-const rec=new MediaRecorder(dest.stream);
-const chunks=[];
-rec.ondataavailable=(e)=>{if(e.data&&e.data.size)chunks.push(e.data);};
-const done=new Promise((r)=>{rec.onstop=r;});
-rec.start();
-await new Promise((r)=>setTimeout(r,dur*1000+150));
-rec.stop();
-await done;
-url=URL.createObjectURL(new Blob(chunks,{type:chunks[0]&&chunks[0].type||'audio/webm'}));
-}else{
-await new Promise((r)=>setTimeout(r,dur*1000));
-url='';
+throw new Error('empty');
 }
-try{await ctx.close();}catch(e){}
-if(!url)throw new Error('no audio');
-return url;
+async function makeRealClip(prompt,file,seconds){
+const ltx='https://lightricks-ltx-video-distilled.hf.space';
+try{
+if(file){
+const img=await uploadClipImage(ltx,file);
+return await gradioCall(ltx,'image_to_video',[
+prompt||'The scene starts to move',
+'worst quality, inconsistent motion, blurry, jittery, distorted',
+img,null,512,704,'image-to-video',seconds,9,Math.floor(Math.random()*1e9),true,1,false
+]);
+}
+return await gradioCall(ltx,'text_to_video',[
+prompt,
+'worst quality, inconsistent motion, blurry, jittery, distorted',
+null,null,512,704,'text-to-video',seconds,9,Math.floor(Math.random()*1e9),true,1,false
+]);
+}catch(e){}
+const wan='https://multimodalart-wan2-1-fast.hf.space';
+let pic=file;
+if(!pic){
+const still=await fetch('https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?width=512&height=512&nologo=true',{signal:AbortSignal.timeout(30000)});
+const blob=await still.blob();
+if(!still.ok||blob.size<500)throw new Error('picture');
+pic=new File([blob],'start.jpg',{type:blob.type||'image/jpeg'});
+}
+const img=await uploadClipImage(wan,pic);
+return await gradioCall(wan,'generate_video',[
+img,
+prompt||'the scene comes alive',
+512,896,
+'blurry, static, jittery',
+Math.min(3.4,seconds),1,4,Math.floor(Math.random()*1e9),true
+]);
+}
+async function uploadClipImage(base,file){
+const fd=new FormData();
+fd.append('files',file,file.name||'picture.png');
+const res=await fetch(base+'/gradio_api/upload',{method:'POST',body:fd,signal:AbortSignal.timeout(30000)});
+if(!res.ok)throw new Error('upload');
+const paths=await res.json();
+const path=paths&&paths[0];
+if(!path)throw new Error('upload');
+return {path,url:base+'/gradio_api/file='+path,orig_name:file.name||'picture.png',meta:{_type:'gradio.FileData'}};
 }
 let eveAudio=null;
 function ensureVoiceAudio(){if(!eveAudio)eveAudio=new Audio();return eveAudio;}
