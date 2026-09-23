@@ -249,7 +249,7 @@ function isJunkReply(text){
 const t=String(text||'');
 if(!t.trim())return true;
 if(/on-device model is not available|echoing back the input|api key|raise the key budget|ENOSPC/i.test(t))return true;
-if(/I can open your notes|Got it\. I can open|I can help|my capabilities|as an ai|language model|i am an ai|i'm an ai|here to help you with/i.test(t))return true;
+if(/I can open your notes|Got it\. I can open|my capabilities|as an ai|language model|i am an ai|i'm an ai/i.test(t))return true;
 if(/you are eve\b/i.test(t.slice(0,500)))return true;
 if(/write the opening chapter|providing general legal information|providing general health and wellness/i.test(t))return true;
 return false;
@@ -320,15 +320,18 @@ answer=navigator.onLine?'Opening pictures.\nACTION: image '+txt:'Pictures you al
 }else if(/\b(search|look up|youtube|map|wikipedia)\b/.test(lower)){
 answer=navigator.onLine?'I can open that.\nACTION: open Search':'Search, maps, and video sites are there when this computer is online. Notes, tasks, calendar, music, and video on this computer work either way.';
 }else if(/^(hi|hello|hey|good morning|good evening|good night)\b/.test(lower)){
-answer=mode==='spicy'?"Hey. I'm right here.":"I'm here. What do you want to work on?";
+answer=mode==='spicy'?"Hey. I'm right here.":"Hey. What are we getting into?";
 }else{
-const notes=(localStorage.getItem('eve_notes')||'');
+const sys=messages.filter(m=>m.role==='system').map(m=>m.content).join('\n');
+const know=(sys.split('What you already know about them:')[1]||'').trim();
 const words=lower.split(/\W+/).filter(w=>w.length>3);
-const noteHit=words.some(w=>notes.toLowerCase().includes(w));
-if(noteHit)answer='From your notes:\n'+notes.slice(0,1200);
-else if(mode==='support')answer="I'm with you. "+txt;
+const hit=know && words.some(w=>know.toLowerCase().includes(w));
+if(hit){
+const line=know.split('\n').find(l=>words.some(w=>l.toLowerCase().includes(w)))||know.slice(0,400);
+answer=line.replace(/^[^:]+:\s*/,'').slice(0,500);
+}else if(mode==='support')answer="I'm with you. "+txt;
 else if(mode==='spicy')answer="I heard you. I'm not going anywhere.";
-else answer='I didn’t get an answer just now. Ask again.';
+else answer="I'm here. Say a little more about that and I'll stay with it.";
 }
 onDelta(answer);
 return answer;
@@ -738,7 +741,7 @@ else if(t==='Music')html=`<h3>Music Generation</h3>
 <button class=primary id=musicGenBtn style="width:100%">Generate</button>
 <div id=musicStatus style="font-size:11px;color:var(--muted);margin:8px 0"></div>
 <div id=musicResult></div>`;
-else if(t==='Video')html=`<h3>Video</h3><input id=videoPrompt placeholder="Search for a video"><div style="display:flex;gap:8px"><button class=primary id=videoGo style="flex:1">Play here</button><button class=secondary id=videoPop>Small window</button></div><div id=videoPicks></div><iframe id=videoFrame allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="width:100%;height:360px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><div id=videoStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
+else if(t==='Video')html=`<h3>Video</h3><input id=videoPrompt placeholder="Describe the clip"><input id=videoImage type=file accept="image/*"><label style="display:flex;align-items:center;gap:6px;font-size:12px">Seconds <input type=number id=videoSeconds value=4 min=2 max=8 style="width:80px"></label><button class=primary id=videoGen style="width:100%">Generate</button><div style="font-size:11px;color:var(--muted);text-align:left;margin-top:6px">Makes a short clip from pictures of what you described. YouTube is the player.</div><div id=videoStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div><div id=videoResult></div>`;
 else if(t==='Spotify')html=`<h3>Spotify</h3><input id=spotifyInput placeholder="Song, artist, or a Spotify link"><div style="display:flex;gap:8px"><button class=primary id=spotifySave style="flex:1">Play here</button><button class=secondary id=spotifyPop>Small window</button></div><iframe id=spotifyFrame allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M" style="width:100%;height:380px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><audio id=spotifyAudio controls style="width:100%;margin-top:8px;display:none"></audio><div id=spotifyPicks></div><div id=spotifyBox style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
 else if(t==='YouTube')html=`<h3>YouTube</h3><input id=ytSearch placeholder="Search YouTube"><div style="display:flex;gap:8px"><button class=primary id=ytGo style="flex:1">Play here</button><button class=secondary id=ytPop>Small window</button></div><input id=ytUrl placeholder="YouTube link"><button class=primary id=ytEmbed style="width:100%">Play this link</button><div id=ytPicks></div><iframe id=ytFrame allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="width:100%;height:360px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><div id=ytStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
 else if(t==='Browser')html=`<h3>Browser</h3><div style="display:flex;gap:8px"><input id=bUrl value="https://en.wikipedia.org/wiki/Moon" placeholder="Address"><button class=primary id=bGo>Open</button><button class=secondary id=bPop>Small window</button></div><iframe id=bFrame style="width:100%;height:420px;background:#fff;border:0;border-radius:10px;margin-top:8px" src="https://en.wikipedia.org/wiki/Moon"></iframe><div id=bRead style="text-align:left;white-space:pre-wrap;margin-top:8px"></div>`;
@@ -1135,7 +1138,11 @@ function paintPicks(items,boxId,statusId,frameId){
 const box=document.getElementById(boxId);
 if(!box)return;
 box.innerHTML=items.map((it,i)=>'<button type=button class=secondary data-i="'+i+'" style="display:block;width:100%;margin:4px 0;text-align:left">'+it.title.replace(/[<>]/g,'')+'</button>').join('');
-box.querySelectorAll('button').forEach(b=>b.onclick=()=>playVideo(items[+b.getAttribute('data-i')].id,statusId,frameId));
+box.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+const it=items[+b.getAttribute('data-i')];
+playVideo(it.id,statusId,frameId);
+popOver('https://www.youtube.com/watch?v='+it.id);
+});
 }
 async function runSearch(q,boxId,statusId,frameId){
 const status=document.getElementById(statusId);
@@ -1145,6 +1152,7 @@ try{
 const items=await findVideos(q);
 if(!items.length)throw new Error('none');
 playVideo(items[0].id,statusId,frameId);
+popOver('https://www.youtube.com/watch?v='+items[0].id);
 paintPicks(items,boxId,statusId,frameId);
 }catch(e){
 if(status)status.textContent='Opening a window instead.';
@@ -1152,10 +1160,81 @@ popOver('https://www.youtube.com/results?search_query='+encodeURIComponent(q));
 }
 }
 if(t==='Video'){
-document.getElementById('videoGo').onclick=()=>runSearch(document.getElementById('videoPrompt').value.trim(),'videoPicks','videoStatus','videoFrame');
-document.getElementById('videoPop').onclick=()=>{
-const q=document.getElementById('videoPrompt').value.trim();
-popOver(window._eveLastVideo||(q?('https://www.youtube.com/results?search_query='+encodeURIComponent(q)):'https://www.youtube.com/'));
+function loadImg(src){
+return new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src=src;});
+}
+function drawCover(g,img){
+const cw=640,ch=360;
+const s=Math.max(cw/img.width,ch/img.height);
+const w=img.width*s,h=img.height*s;
+g.drawImage(img,(cw-w)/2,(ch-h)/2,w,h);
+}
+async function pictureFrom(prompt,seed){
+const url='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?width=640&height=360&nologo=true&seed='+seed;
+for(let attempt=0;attempt<2;attempt++){
+const res=await fetch(url,{signal:AbortSignal.timeout(25000)});
+if(res.status===429){await new Promise(r=>setTimeout(r,1500));continue;}
+const blob=await res.blob();
+if(res.ok&&blob.size>800&&(blob.type||'').startsWith('image/'))return loadImg(URL.createObjectURL(blob));
+}
+throw new Error('picture');
+}
+document.getElementById('videoGen').onclick=async()=>{
+const prompt=document.getElementById('videoPrompt').value.trim();
+const file=document.getElementById('videoImage').files[0];
+const seconds=Math.min(8,Math.max(2,parseInt(document.getElementById('videoSeconds').value,10)||4));
+const status=document.getElementById('videoStatus');
+const box=document.getElementById('videoResult');
+if(!prompt&&!file){status.textContent='Describe the clip, or add a picture.';return;}
+status.textContent='Building the clip...';
+box.innerHTML='';
+try{
+const frames=[];
+if(file)frames.push(await loadImg(URL.createObjectURL(file)));
+const base=prompt||'the same scene a moment later';
+const seeds=[1,2,3,4].map(n=>(Date.now()+n*97)%999983);
+const need=file?2:3;
+for(let i=frames.length;i<need;i++){
+status.textContent='Building the clip...';
+frames.push(await pictureFrom(base+', continuous scene, moment '+(i+1), seeds[i]));
+}
+if(frames.length<2)frames.push(frames[0]);
+const canvas=document.createElement('canvas');
+canvas.width=640;canvas.height=360;
+const g=canvas.getContext('2d');
+const stream=canvas.captureStream(12);
+const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+const rec=new MediaRecorder(stream,{mimeType:mime});
+const chunks=[];
+rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+const done=new Promise(r=>rec.onstop=r);
+rec.start();
+const total=seconds*1000;
+const t0=performance.now();
+while(performance.now()-t0<total){
+const p=Math.min(0.999,(performance.now()-t0)/total);
+const pos=p*(frames.length-1);
+const i=Math.min(frames.length-2,Math.floor(pos));
+const f=pos-i;
+g.clearRect(0,0,640,360);
+g.globalAlpha=1;
+drawCover(g,frames[i]);
+g.globalAlpha=f;
+drawCover(g,frames[i+1]);
+g.globalAlpha=1;
+await new Promise(r=>setTimeout(r,80));
+}
+rec.stop();
+await done;
+const blob=new Blob(chunks,{type:'video/webm'});
+if(blob.size<1000)throw new Error('short');
+const url=URL.createObjectURL(blob);
+box.innerHTML='<video controls autoplay src="'+url+'" style="width:100%;border-radius:10px;margin-top:8px;background:#000"></video>';
+const a=document.createElement('a');
+a.href=url;a.download='clip.webm';a.textContent='Download clip';a.className='secondary';a.style.display='block';a.style.marginTop='8px';a.style.textAlign='center';
+box.appendChild(a);
+status.textContent='';
+}catch(e){status.textContent='The clip did not come back. Try again.';}
 };
 }
 if(t==='YouTube'){
@@ -1798,8 +1877,8 @@ if(!unique.length){out.textContent='Nothing came back.';return;}
 out.innerHTML=unique.map((it,i)=>'<button type=button class=secondary data-i="'+i+'" style="display:block;width:100%;margin:4px 0;text-align:left">'+(it.title||'Result').replace(/[<>]/g,'')+'</button>'+(it.text?'<div style="font-size:12px;color:var(--muted);margin:0 0 8px">'+it.text.replace(/[<>]/g,'').slice(0,220)+'</div>':'')).join('');
 out.querySelectorAll('button').forEach(b=>b.onclick=()=>{
 const it=unique[+b.getAttribute('data-i')];
-if(it.url)showRead(it.url,it.text||it.title);
-else document.getElementById('searchRead').textContent=it.text||it.title;
+if(it.url)popOver(it.url);
+document.getElementById('searchRead').textContent=it.text||it.title||'';
 });
 };
 }
@@ -1843,9 +1922,23 @@ const file=e.target.files[0];if(!file)return;
 if(!window.pdfjsLib){alert('Still loading. Try again in a moment.');return;}
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 const bytes=await file.arrayBuffer();
+const srcBytes=bytes.slice(0);
 const pdf=await pdfjsLib.getDocument({data:bytes}).promise;
 const outDiv=document.getElementById('pdfJpgOut');
 outDiv.innerHTML='';
+function saveBlob(data,name,type){
+const blob=data instanceof Blob?data:new Blob([data],{type:type||'application/pdf'});
+const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
+}
+const tools=document.createElement('div');
+tools.style.display='flex';tools.style.gap='8px';tools.style.flexWrap='wrap';tools.style.margin='8px 0';
+const allBtn=document.createElement('button');allBtn.className='primary';allBtn.textContent='Download full PDF';
+allBtn.onclick=()=>saveBlob(srcBytes,file.name||'document.pdf');
+const selBtn=document.createElement('button');selBtn.className='secondary';selBtn.textContent='Download selected pages';
+const note=document.createElement('div');note.style.fontSize='11px';note.style.color='var(--muted)';note.style.width='100%';
+tools.appendChild(allBtn);tools.appendChild(selBtn);tools.appendChild(note);
+outDiv.appendChild(tools);
+const picks=[];
 const maxW=Math.max(240,(document.getElementById('tabContent').clientWidth||420)-16);
 for(let i=1;i<=pdf.numPages;i++){
 const page=await pdf.getPage(i);
@@ -1858,14 +1951,32 @@ c.style.width='100%';c.style.height='auto';c.style.display='block';
 await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
 const wrap=document.createElement('div');
 wrap.style.margin='8px 0';
+const row=document.createElement('label');
+row.style.display='flex';row.style.alignItems='center';row.style.gap='6px';row.style.fontSize='12px';
+const box=document.createElement('input');box.type='checkbox';box.checked=true;box.style.width='auto';
+row.appendChild(box);row.appendChild(document.createTextNode('Page '+i));
 const btn=document.createElement('button');
 btn.className='secondary';
 btn.textContent='Download page '+i;
 btn.onclick=()=>{const a=document.createElement('a');a.href=c.toDataURL('image/jpeg',0.92);a.download='page-'+i+'.jpg';a.click();};
 wrap.appendChild(c);
+wrap.appendChild(row);
 wrap.appendChild(btn);
 outDiv.appendChild(wrap);
+picks.push({index:i-1,box});
 }
+selBtn.onclick=async()=>{
+const idxs=picks.filter(p=>p.box.checked).map(p=>p.index);
+if(!idxs.length){note.textContent='Choose at least one page.';return;}
+if(!window.PDFLib){note.textContent='Still loading. Try again in a moment.';return;}
+note.textContent='Working...';
+const src=await PDFLib.PDFDocument.load(srcBytes);
+const out=await PDFLib.PDFDocument.create();
+const copied=await out.copyPages(src,idxs);
+copied.forEach(p=>out.addPage(p));
+saveBlob(await out.save(),'selected-pages.pdf');
+note.textContent='Downloaded.';
+};
 };}
 if(t==='Comics'){let comics=JSON.parse(localStorage.getItem('eve_comics')||'[]');let colls=JSON.parse(localStorage.getItem('eve_comic_cols')||'["My Collection"]');function updateFilter(){document.getElementById('collFilter').innerHTML='<option value="">All</option>'+colls.map(c=>`<option value="${c}">${c}</option>`).join('');}function renderComics(){let filtered=comics;const f=document.getElementById('collFilter').value;const s=document.getElementById('comicSearch')?.value?.toLowerCase()||'';if(f)filtered=filtered.filter(c=>c.collection===f);if(s)filtered=filtered.filter(c=>(c.title+' '+c.company+' '+(c.writer||'')+' '+(c.artist||'')).toLowerCase().includes(s));document.getElementById('comicStats').textContent=`${filtered.length}/${comics.length}`;document.getElementById('comicList').innerHTML=filtered.map((c,i)=>{const idx=comics.indexOf(c);const tip=[c.title,c.issue?'#'+c.issue:'',c.writer?'Writer: '+c.writer:'',c.artist?'Artist: '+c.artist:'',c.company,c.value?'$'+c.value:'',c.collection].filter(Boolean).join(' \u2022 ').replace(/"/g,'&quot;');return `<div style="text-align:center" title="${tip}"><img src="${c.thumb||''}" style="width:66px;height:100px;object-fit:cover;border-radius:6px"><div style="font-size:11px">${c.title}</div><button onclick="delComic(${idx})">x</button></div>`;}).join('');}window.delComic=(i)=>{comics.splice(i,1);localStorage.setItem('eve_comics',JSON.stringify(comics));renderComics();};document.getElementById('cAdd').onclick=async()=>{const file=document.getElementById('cThumb').files[0];let thumb='';if(file){thumb=await resizeImage(file,200);}const collection=document.getElementById('collSel').value.trim()||'My Collection';const c={title:document.getElementById('cTitle').value,issue:document.getElementById('cIssue').value,writer:document.getElementById('cWriter').value,artist:document.getElementById('cArtist').value,company:document.getElementById('cCompany').value,value:document.getElementById('cValue').value,thumb,collection};if(!c.title)return;comics.push(c);localStorage.setItem('eve_comics',JSON.stringify(comics));if(!colls.includes(collection)){colls.push(collection);localStorage.setItem('eve_comic_cols',JSON.stringify(colls));updateFilter();}document.getElementById('cTitle').value='';document.getElementById('cIssue').value='';document.getElementById('cWriter').value='';document.getElementById('cArtist').value='';document.getElementById('cCompany').value='';document.getElementById('cValue').value='';document.getElementById('cThumb').value='';document.getElementById('collSel').value='';renderComics();};document.getElementById('comicSearch').oninput=renderComics;document.getElementById('collFilter').onchange=renderComics;updateFilter();renderComics();}
 if(t==='Media'){let media=JSON.parse(localStorage.getItem('eve_media')||'[]');function renderMedia(){let filtered=media;const s=document.getElementById('mediaSearch')?.value?.toLowerCase()||'';const type=document.getElementById('mediaFilterType')?.value||'';if(s)filtered=filtered.filter(m=>m.title.toLowerCase().includes(s));if(type)filtered=filtered.filter(m=>m.type===type);document.getElementById('mediaStats').textContent=`${filtered.length}/${media.length}`;document.getElementById('mediaList').innerHTML=filtered.map((m,i)=>{const idx=media.indexOf(m);return `<div style="text-align:center"><img src="${m.thumb||''}" style="width:66px;height:100px;object-fit:cover;border-radius:6px"><div style="font-size:11px">${m.title}</div><button onclick="delMedia(${idx})">x</button></div>`;}).join('');}window.delMedia=(i)=>{media.splice(i,1);localStorage.setItem('eve_media',JSON.stringify(media));renderMedia();};document.getElementById('mAdd').onclick=async()=>{const file=document.getElementById('mThumb').files[0];let thumb='';if(file){thumb=await resizeImage(file,200);}const m={title:document.getElementById('mTitle').value,type:document.getElementById('mType').value,year:document.getElementById('mYear').value,thumb};if(!m.title)return;media.push(m);localStorage.setItem('eve_media',JSON.stringify(media));renderMedia();};document.getElementById('mediaSearch').oninput=renderMedia;document.getElementById('mediaFilterType').onchange=renderMedia;renderMedia();}
@@ -2094,7 +2205,7 @@ document.getElementById('chatInput').value=text;
 document.getElementById('chatSend').click();
 }
 const CHAT_MODE_PROMPTS={
-collaborator:'You are EVE, an interactive AI collaborator working directly with the user on their projects. Respond specifically to what they just said — reference their actual words and build on the conversation, rather than giving generic replies. Be concise but substantive, and proactive about next steps when it helps.',
+collaborator:'You are EVE. Talk like a sharp friend in her early twenties: warm, useful, and funny without turning it into a bit. Answer what they just said, in plain sentences, and build on the conversation. Use what you know about them and their projects. Do not add facts that are not in that memory or in the conversation. Do not announce that you are a program, do not list your abilities, and do not open with "Certainly" or "I would be happy to".',
 support:"You are EVE in Support & Reflection mode — a warm, attentive listener. Help the user think out loud and process what's on their mind. You are not a therapist, a counselor, or any kind of licensed professional, and you never imply otherwise. Do not diagnose, do not label what the user describes with a clinical term they haven't used themselves, and do not present yourself as a substitute for real professional support. If the user describes something serious or ongoing, gently encourage them to talk to a real mental health professional. If they mention anything suggesting a safety risk to themselves or others, prioritize their safety, stay calm and present, and clearly encourage them to contact a crisis line or emergency services — do not just continue the conversation as normal. Otherwise, stay warm, non-judgmental, and genuinely present.",
 spicy:"You are EVE in Spicy mode — warm, playful, charming, and flirty, like fun teasing banter with someone you like. Use wit, playful compliments, and lighthearted flirtation. You must never generate explicit sexual content, describe sexual acts, or use graphic sexual language — if the conversation pushes toward that, stay in character but redirect playfully and keep things PG-13, the way a charming person would deflect with humor rather than going along with it. Keep the flirting fun and affectionate, never crude."
 };
@@ -2276,6 +2387,23 @@ if(picked.length>=3)break;
 if(!picked.length)return '';
 return picked.map(s=>'From '+s.name+':\n'+s.chunk.trim()).join('\n\n').slice(0,3000);
 }
+async function memoryFor(query){
+let docs=[];
+try{docs=await kbList();}catch(e){docs=[];}
+const lines=[];
+docs.slice(0,4).forEach(d=>lines.push(d.name.replace(/\.pdf$/i,'')+': '+d.text.replace(/\s+/g,' ').slice(0,500)));
+try{
+const ideas=JSON.parse(localStorage.getItem('eve_proj_ideas')||'[]');
+if(ideas.length)lines.push('Projects: '+ideas.slice(0,8).map(i=>i.text).join('; '));
+}catch(e){}
+const notes=(localStorage.getItem('eve_notes')||'').trim();
+if(notes)lines.push('Notes: '+notes.slice(0,600));
+let hit='';
+try{hit=await knowledgeFor(query);}catch(e){}
+let out=lines.join('\n');
+if(hit)out+='\n\nClosest match:\n'+hit;
+return out.slice(0,3200);
+}
 document.getElementById('chatSend').onclick=async()=>{
 const inp=document.getElementById('chatInput');const txt=inp.value.trim();if(!txt)return;addChat('user',txt);inp.value='';
 let full='';addChat('ai','');const idx=chat.length-1;
@@ -2283,24 +2411,27 @@ const statusEl=document.getElementById('chatStatus');
 if(statusEl)statusEl.textContent='Working…';
 try{
 let sysPrompt=CHAT_MODE_PROMPTS[chatModeSelect.value]||CHAT_MODE_PROMPTS.collaborator;
-sysPrompt+='\n\nYou are EVE on this computer. You work with or without the internet. Notes, tasks, calendar, alarms, the calculator, music, and video are already here. If live information is included below, use it. When the user wants weather, a search, a map, a video, a picture, or another section, finish with exactly one line and nothing after it: ACTION: weather | ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
+sysPrompt+='\n\nYou are on this computer with them. Notes, tasks, calendar, and their documents are already here. If something below is about them or a project, use it as memory and talk about it naturally. When they want weather, a search, a map, a video, a picture, or another section, finish with exactly one line and nothing after it: ACTION: weather | ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
 if(chatContextToggle.checked){
 const ctx=buildProjectContext();
 if(ctx) sysPrompt+='\n\nProject context the user is currently working on elsewhere in the app (reference it naturally where relevant):\n\n'+ctx;
 }
 const live=await gatherLiveContext(txt);
 if(live)sysPrompt+='\n\nLive information just fetched:\n'+live;
-try{const know=await knowledgeFor(txt);if(know)sysPrompt+='\n\nThe user\'s own PDFs. Use these when they answer the question. Do not invent details that are not written here:\n'+know;}catch(e){}
+try{const know=await memoryFor(txt);if(know)sysPrompt+='\n\nWhat you already know about them:\n'+know;}catch(e){}
 const history=[{role:'system',content:sysPrompt},...chat.filter(m=>m.text&&(m.role==='user'||!isJunkReply(m.text))).slice(-12).map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}))];
-full=await Promise.race([
-aiStream(history,{maxTokens:900,temperature:0.7,feature:'chat'},(partial)=>{chat[idx].text=partial;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();}),
-new Promise((_,rej)=>setTimeout(()=>rej(new Error('slow')),22000))
-]);
+full=await aiStream(history,{maxTokens:700,temperature:0.8,feature:'chat',wait:26000},(partial)=>{chat[idx].text=partial;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();});
 if(full){
-const lines=full.split('\n');
-const kept=[];
-for(const line of lines){if(!applyEveAction(line))kept.push(line);}
-full=kept.join('\n').trim();
+const actionRe=/ACTION:\s*(weather|search|map|youtube|image|open)\s*([^\n]*)/ig;
+let am;
+while((am=actionRe.exec(full))){
+const kind=am[1].toLowerCase();
+const arg=(am[2]||'').trim();
+const l=txt.toLowerCase();
+const asked=kind==='weather'?/\b(weather|forecast|temperature)\b/.test(l):kind==='search'?/\b(search|look up)\b/.test(l):kind==='map'?/\b(map|where is|directions)\b/.test(l):kind==='youtube'?/\b(youtube|video)\b/.test(l):kind==='image'?/\b(picture|image|draw)\b/.test(l):true;
+if(asked)applyEveAction('ACTION: '+kind+' '+arg);
+}
+full=full.replace(actionRe,'').replace(/\n{3,}/g,'\n\n').trim();
 }
 if(!full){chat[idx].text='I couldn’t get a reply. Try again.';}
 else{chat[idx].text=full;speakText(full);}
