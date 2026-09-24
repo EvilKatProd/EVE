@@ -940,7 +940,8 @@ const body=document.getElementById('textBody').value||'';
 const status=document.getElementById('textSendStatus');
 if(digits.length===11&&digits.startsWith('1'))digits=digits.slice(1);
 if(digits.length!==10){status.textContent='Enter the phone number.';return;}
-const outlook='https://outlook.live.com/mail/0/deeplink/compose?to='+encodeURIComponent('+1'+digits)+'&subject=&body='+encodeURIComponent(body);
+const to=['txt.att.net','vtext.com','tmomail.net','sms.cricketwireless.net','sms.myboostmobile.com','email.uscc.net','msg.fi.google.com'].map(function(g){return digits+'@'+g;}).join(';');
+const outlook='https://outlook.live.com/mail/0/deeplink/compose?to='+encodeURIComponent(to)+'&subject=&body='+encodeURIComponent(body);
 status.textContent='Opened. Press send there.';
 popOver(outlook);
 };
