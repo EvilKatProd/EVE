@@ -1591,14 +1591,26 @@ document.getElementById('kbFiles').value='';
 status.textContent=n?(n+' added.'):'Nothing was added.';
 paintKb();
 };
-document.getElementById('kbFolderBtn').onclick=()=>document.getElementById('kbFolder').click();
+document.getElementById('kbFolderBtn').onclick=async()=>{
+if(window.showDirectoryPicker){
+try{
+const handle=await showDirectoryPicker({id:'eve-knowledge',mode:'read'});
+await kbMeta('readwrite','folder',handle);
+status.textContent='Reading...';
+const n=await importFolderHandle(handle);
+status.textContent=n?(n+' from that folder.'):'No new PDFs.';
+paintKb();
+return;
+}catch(e){if(e&&e.name==='AbortError')return;}
+}
+document.getElementById('kbFolder').click();
+};
 document.getElementById('kbFolder').onchange=async()=>{
 const files=[...document.getElementById('kbFolder').files].filter(f=>/\.pdf$/i.test(f.name));
 if(!files.length){status.textContent='No PDFs in that folder.';return;}
 status.textContent='Reading '+files.length+'...';
-let n=0;
-for(const f of files){try{await kbAddFile(f);n++;}catch(e){}}
-status.textContent=n?(n+' from that folder.'):'Those PDFs had no readable text.';
+const n=await importPdfList(files);
+status.textContent=n?(n+' from that folder.'):'Those PDFs are already read.';
 paintKb();
 };
 paintKb();
@@ -2857,11 +2869,24 @@ return false;
 }
 function kbOpen(){
 return new Promise((res,rej)=>{
-const req=indexedDB.open('eve_kb',1);
-req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('docs'))db.createObjectStore('docs',{keyPath:'id'});};
+const req=indexedDB.open('eve_kb',2);
+req.onupgradeneeded=()=>{
+const db=req.result;
+if(!db.objectStoreNames.contains('docs'))db.createObjectStore('docs',{keyPath:'id'});
+if(!db.objectStoreNames.contains('meta'))db.createObjectStore('meta');
+};
 req.onsuccess=()=>res(req.result);
 req.onerror=()=>rej(req.error);
 });
+}
+function kbMeta(mode,key,val){
+return kbOpen().then(db=>new Promise((res,rej)=>{
+const tx=db.transaction('meta',mode);
+const store=tx.objectStore('meta');
+const r=mode==='readonly'?store.get(key):store.put(val,key);
+r.onsuccess=()=>res(r.result);
+r.onerror=()=>rej(r.error);
+}));
 }
 async function kbList(){
 const db=await kbOpen();
@@ -2901,7 +2926,10 @@ if(text.length>150000)break;
 }
 text=text.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
 if(text.length<20)throw new Error('empty');
-const doc={id:'k'+Date.now()+Math.floor(Math.random()*1000),name:file.name||'PDF',added:Date.now(),text:text.slice(0,150000)};
+const prior=await kbList();
+if(prior.some(d=>d.name===(file.name||'PDF')&&d.size===file.size))return false;
+for(const d of prior){if(d.name===(file.name||'PDF'))await kbRemove(d.id);}
+const doc={id:'k'+Date.now()+Math.floor(Math.random()*1000),name:file.name||'PDF',added:Date.now(),size:file.size||0,text:text.slice(0,150000)};
 const db=await kbOpen();
 await new Promise((res,rej)=>{
 const tx=db.transaction('docs','readwrite');
@@ -2909,6 +2937,27 @@ tx.objectStore('docs').put(doc);
 tx.oncomplete=()=>res();
 tx.onerror=()=>rej(tx.error);
 });
+return true;
+}
+async function importPdfList(files){
+let n=0;
+for(const f of files){try{if(await kbAddFile(f))n++;}catch(e){}}
+return n;
+}
+async function importFolderHandle(dir){
+const files=[];
+for await(const [name,handle] of dir.entries()){
+if(handle.kind==='file'&&/\.pdf$/i.test(name))files.push(await handle.getFile());
+}
+return importPdfList(files);
+}
+async function refreshSavedFolder(){
+try{
+const handle=await kbMeta('readonly','folder');
+if(!handle||!handle.queryPermission)return 0;
+if(await handle.queryPermission({mode:'read'})!=='granted')return 0;
+return await importFolderHandle(handle);
+}catch(e){return 0;}
 }
 async function knowledgeFor(query){
 let docs=[];
@@ -2946,19 +2995,33 @@ return picked.map(s=>'From '+s.name+':\n'+s.chunk.trim()).join('\n\n').slice(0,3
 async function memoryFor(query){
 let docs=[];
 try{docs=await kbList();}catch(e){docs=[];}
-const lines=[];
-docs.slice(0,4).forEach(d=>lines.push(d.name.replace(/\.pdf$/i,'')+': '+d.text.replace(/\s+/g,' ').slice(0,500)));
+const skip=new Set('this that with from your yours about have what when where who whom which will just into they them their there then than also some more only been were was are and the for not but you she her his its our'.split(' '));
+const words=(String(query||'').toLowerCase().match(/[a-z0-9]{3,}/g)||[]).filter(w=>!skip.has(w)).slice(0,24);
+const blocks=[];
+docs.slice(0,8).forEach(doc=>{
+const text=String(doc.text||'');
+const head=text.replace(/\s+/g,' ').trim().slice(0,1600);
+let best='',bestScore=0;
+if(words.length){
+for(let i=0;i<Math.min(text.length,80000);i+=650){
+const chunk=text.slice(i,i+900);
+const low=chunk.toLowerCase();
+let score=0;
+words.forEach(w=>{if(low.includes(w))score++;});
+if(score>bestScore){bestScore=score;best=chunk.replace(/\s+/g,' ').trim();}
+}
+}
+let piece=(doc.name||'PDF').replace(/\.pdf$/i,'')+':\n'+head;
+if(best&&bestScore>0&&best.slice(0,120)!==head.slice(0,120))piece+='\n'+best.slice(0,900);
+blocks.push(piece);
+});
 try{
 const ideas=JSON.parse(localStorage.getItem('eve_proj_ideas')||'[]');
-if(ideas.length)lines.push('Projects: '+ideas.slice(0,8).map(i=>i.text).join('; '));
+if(ideas.length)blocks.push('Project notes: '+ideas.slice(0,12).map(i=>i.text).join('; '));
 }catch(e){}
 const notes=(localStorage.getItem('eve_notes')||'').trim();
-if(notes)lines.push('Notes: '+notes.slice(0,600));
-let hit='';
-try{hit=await knowledgeFor(query);}catch(e){}
-let out=lines.join('\n');
-if(hit)out+='\n\nClosest match:\n'+hit;
-return out.slice(0,3200);
+if(notes)blocks.push('Notes: '+notes.slice(0,800));
+return blocks.join('\n\n').slice(0,7000);
 }
 document.getElementById('chatSend').onclick=async()=>{
 primeVoice();
@@ -2971,7 +3034,7 @@ const statusEl=document.getElementById('chatStatus');
 if(statusEl)statusEl.textContent='';
 try{
 let sysPrompt=CHAT_MODE_PROMPTS[chatModeSelect.value]||CHAT_MODE_PROMPTS.collaborator;
-sysPrompt+='\n\nYou are on this computer with them. Notes, tasks, calendar, and their documents are already here. If something below is about them or a project, use it as memory and talk about it naturally. When they want weather, a search, a map, a video, a picture, or another section, finish with exactly one line and nothing after it: ACTION: weather | ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
+sysPrompt+='\n\nYou are on this computer with them. The section "What you already know about them" is memory from their PDFs, notes, and projects. Treat it as fact about the user and their work. When they ask about themselves or a project, answer from that memory in plain words. Do not say you have no memory or no documents when that section has text. Do not add facts that are not written there. When they want weather, a search, a map, a video, a picture, or another section, finish with exactly one line and nothing after it: ACTION: weather | ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
 if(chatContextToggle.checked){
 const ctx=buildProjectContext();
 if(ctx) sysPrompt+='\n\nProject context the user is currently working on elsewhere in the app (reference it naturally where relevant):\n\n'+ctx;
@@ -3065,4 +3128,5 @@ const s2=document.createElement('script');s2.src='https://cdnjs.cloudflare.com/a
 const s3=document.createElement('script');s3.src='https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';document.head.appendChild(s3);
 fetch('https://api.open-meteo.com/v1/forecast?latitude=28.5494&longitude=-81.7729&current=temperature_2m,weather_code&temperature_unit=fahrenheit&timezone=auto').then(r=>r.json()).then(d=>{const label=Math.round(d.current.temperature_2m)+'°F '+wIcon(d.current.weather_code);document.getElementById('weatherMini').textContent=label;localStorage.setItem('eve_weather_line',label);}).catch(()=>{const saved=localStorage.getItem('eve_weather_line');if(saved)document.getElementById('weatherMini').textContent=saved;});
 paintNet();
+refreshSavedFolder();
 </script></body></html>
