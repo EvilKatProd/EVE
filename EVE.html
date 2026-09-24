@@ -706,7 +706,6 @@ else if(t==='Email')html=`<h3>Email</h3>
 <div id=emailSendStatus style="font-size:11px;color:var(--muted);margin-top:6px;text-align:left"></div>`;
 else if(t==='Text')html=`<h3>Text</h3>
 <input id=textPhone placeholder="Phone number">
-<select id=textCarrier><option value="txt.att.net">AT&T</option><option value="vtext.com">Verizon</option><option value="tmomail.net">T-Mobile</option><option value="sms.cricketwireless.net">Cricket</option><option value="sms.myboostmobile.com">Boost</option><option value="email.uscc.net">US Cellular</option><option value="msg.fi.google.com">Google Fi</option></select>
 <textarea id=textBody rows=4 placeholder="Message"></textarea>
 <button class=primary id=textSendBtn style="width:100%">Send Text</button>
 <div id=textSendStatus style="font-size:11px;color:var(--muted);margin-top:6px;text-align:left"></div>`;
@@ -940,10 +939,8 @@ let digits=document.getElementById('textPhone').value.replace(/\D/g,'');
 const body=document.getElementById('textBody').value||'';
 const status=document.getElementById('textSendStatus');
 if(digits.length===11&&digits.startsWith('1'))digits=digits.slice(1);
-const carrier=document.getElementById('textCarrier').value;
 if(digits.length!==10){status.textContent='Enter the phone number.';return;}
-const to=digits+'@'+carrier;
-const outlook='https://outlook.live.com/mail/0/deeplink/compose?to='+encodeURIComponent(to)+'&subject=&body='+encodeURIComponent(body);
+const outlook='https://outlook.live.com/mail/0/deeplink/compose?to='+encodeURIComponent('+1'+digits)+'&subject=&body='+encodeURIComponent(body);
 status.textContent='Opened. Press send there.';
 popOver(outlook);
 };
