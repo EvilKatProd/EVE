@@ -2311,29 +2311,186 @@ document.getElementById('wakeWordToggle').onchange=(e)=>{setVoiceMode(e.target.c
 document.getElementById('voiceOutputToggle').checked=true;
 localStorage.setItem('eve_voice_output','1');
 document.getElementById('voiceOutputToggle').onchange=(e)=>localStorage.setItem('eve_voice_output',e.target.checked?'1':'0');
-function handleVoiceCommand(text){
-const lower=text.toLowerCase().trim();
-const navMatch=lower.match(/^(?:open|go to|switch to|show)\s+(?:the\s+)?(.+?)\s*(?:tab)?$/);
-if(navMatch){
-const target=navMatch[1].trim();
-const found=TABS.find(t=>t.toLowerCase()===target)||TABS.find(t=>t.toLowerCase().includes(target)||target.includes(t.toLowerCase()));
-if(found){switchTab(found);speakText('Opening '+found);return;}
+function say(msg){try{speakText(msg);}catch(e){}}
+function onTab(tab,fn){switchTab(tab);setTimeout(()=>{try{fn();}catch(e){}},180);}
+function setVal(id,val){const el=document.getElementById(id);if(el&&val!=null){el.value=val;el.dispatchEvent(new Event('input',{bubbles:true}));}return el;}
+function press(id){const el=document.getElementById(id);if(el)el.click();return !!el;}
+function wordsToMath(s){return String(s||'').toLowerCase().replace(/\bplus\b/g,'+').replace(/\bminus\b/g,'-').replace(/\btimes\b|\bmultiplied by\b/g,'*').replace(/\bdivided by\b/g,'/').replace(/[^0-9+\-*/().\s]/g,'').replace(/\s+/g,'');}
+function clockToInput(spoken){
+let s=String(spoken||'').toLowerCase().replace(/\./g,'').trim();
+const ap=/(am|pm)/.exec(s);
+s=s.replace(/\s*(am|pm)\s*/g,' ');
+let h,m=0;
+const hm=s.match(/(\d{1,2})\s*[: ]\s*(\d{2})/);
+const only=s.match(/(\d{1,2})/);
+if(hm){h=+hm[1];m=+hm[2];}
+else if(only){h=+only[1];}
+else return '';
+if(ap){if(ap[1]==='pm'&&h<12)h+=12;if(ap[1]==='am'&&h===12)h=0;}
+if(h>23||m>59)return '';
+return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
 }
-const mediaMatch=lower.match(/^(play|pause|stop|resume|next|skip|previous)\b/);
-if(mediaMatch){
-const cmd=mediaMatch[1];
-if(activeTab==='YouTube'){
-const q=document.getElementById('ytSearch')&&document.getElementById('ytSearch').value.trim();
-if(q){const go=document.getElementById('ytGo');if(go)go.click();}
-return;
+function matchTab(spoken){
+const s=String(spoken||'').toLowerCase().replace(/\s+tab$/,'').trim();
+const aliases={'text':'Text','texts':'Text','texting':'Text','email':'Email','mail':'Email','picture':'Image','pictures':'Image','photo':'Image','photos':'Image','image':'Image','song':'Music','songs':'Music','music':'Music','video':'Video','videos':'Video','call':'Call','video call':'Call','video chat':'Call','recipe':'Recipes','recipes':'Recipes','cookbook':'Recipes','map':'Maps','maps':'Maps','to do':'To Do','todo':'To Do','to-do':'To Do','tasks':'To Do','task':'To Do','note':'Notes','notes':'Notes','code':'Code Lab','code lab':'Code Lab','coding':'Code Lab','calculator':'Calculator','calc':'Calculator','math':'Calculator','youtube':'YouTube','spotify':'Spotify','browser':'Browser','web':'Browser','weather':'Weather','forecast':'Weather','alarm':'Alarms','alarms':'Alarms','story':'Stories','stories':'Stories','health':'Health','legal':'Legal','focus':'Focus','timer':'Focus','calendar':'Calendar','search':'Search','apps':'Apps','knowledge':'Knowledge','projects':'Projects','rpg':'RPG','game':'RPG','brain':'Brain','tools':'Tools','comics':'Comics','comic':'Comics','media':'Media','movies':'Media'};
+if(aliases[s])return aliases[s];
+return TABS.find(t=>t.toLowerCase()===s)||TABS.find(t=>s&&(t.toLowerCase().includes(s)||s.includes(t.toLowerCase())));
 }
-if(activeTab==='Spotify'){
-const btn=document.getElementById('spotifySave');
+function voiceAct(lower,raw){
+if(/\be-?mail\b/.test(lower)&&/@/.test(raw)){
+const em=raw.match(/[\w.+-]+@[\w.-]+\.\w+/);
+if(em){
+const subj=(raw.match(/\bsubject\s+(.+?)(?=\s+(?:saying|message|that)\s+|$)/i)||[])[1]||'';
+const body=(raw.match(/\b(?:saying|message|that)\s+(.+)$/i)||[])[1]||subj;
+onTab('Email',()=>{setVal('emailTo',em[0]);setVal('emailSubject',subj.trim());setVal('emailBody',body.trim());press('emailSendBtn');});
+say('Opening email.');
+return true;
+}
+}
+const textCmd=lower.match(/^(?:send\s+)?(?:a\s+)?text(?:\s+message)?\s+(?:to\s+)?(.+)$/);
+if(textCmd){
+const nums=textCmd[1].match(/(\+?\d[\d\s().-]{6,}\d)/);
+const said=(raw.match(/\b(?:saying|that|message)\s+(.+)$/i)||[])[1]||'';
+if(nums){
+onTab('Text',()=>{setVal('textPhone',nums[1]);setVal('textBody',said.trim());if(said.trim())press('textSendBtn');});
+say(said.trim()?'Opening the text.':'What should it say?');
+return true;
+}
+onTab('Text',()=>{});
+say('What number?');
+return true;
+}
+const rec=lower.match(/^(?:make|create|write|cook)\s+(?:me\s+)?(?:an?\s+)?(?:allium[- ]free\s+)?recipe(?:\s+for)?\s*(.*)$/);
+if(rec){
+const want=rec[1].replace(/^(?:a|an|some)\s+/,'').trim();
+onTab('Recipes',()=>{if(want)setVal('recipeWant',want);press('recipeMake');});
+say('Writing a recipe.');
+return true;
+}
+if(/^save (?:this |the )?recipe$/.test(lower)){onTab('Recipes',()=>press('recipeSave'));say('Saving it.');return true;}
+const startCall=lower.match(/^(?:start|begin|make)\s+(?:a\s+)?(?:video\s+)?(?:call|video chat)(?:\s+(?:named|called)\s+(.+))?$/);
+if(startCall){onTab('Call',()=>{if(startCall[1])setVal('callName',startCall[1]);press('callStart');});say('Starting the call.');return true;}
+if(/^copy (?:the )?call link$/.test(lower)){onTab('Call',()=>press('callCopy'));return true;}
+const joinCall=lower.match(/^join (?:the )?call\s+(.+)$/);
+if(joinCall){onTab('Call',()=>{setVal('callJoin',joinCall[1]);press('callJoinBtn');});say('Joining.');return true;}
+const pic=lower.match(/^(?:make|create|generate|draw)\s+(?:me\s+)?(?:a\s+)?(?:picture|image|photo)\s+(?:of\s+)?(.+)$/);
+if(pic){onTab('Image',()=>{setVal('imgPrompt',pic[1]);press('genFree');});say('Making that picture.');return true;}
+const song=lower.match(/^(?:make|create|compose|generate)\s+(?:me\s+)?(?:a\s+)?(?:song|track|piece of music)(?:\s+(?:about|of|for)\s+)?(.*)$/);
+if(song){
+const sec=(lower.match(/(\d+)\s+seconds?/)||[])[1];
+onTab('Music',()=>{if(song[1])setVal('musicPrompt',song[1]);if(sec)setVal('musicDuration',sec);press('musicGenBtn');});
+say('Composing.');
+return true;
+}
+const vid=lower.match(/^(?:make|create|generate)\s+(?:me\s+)?(?:a\s+)?video\s+(?:of|about\s+)?(.*)$/);
+if(vid&&!/\b(call|chat)\b/.test(lower)){
+const sec=(lower.match(/(\d+)\s+seconds?/)||[])[1];
+onTab('Video',()=>{if(vid[1])setVal('videoPrompt',vid[1]);if(sec)setVal('videoSeconds',sec);press('videoGen');});
+say('Making that video.');
+return true;
+}
+if(/^(?:open\s+)?youtube\.com$/.test(lower)){onTab('YouTube',()=>press('ytSite'));say('Opening YouTube.');return true;}
+const yt=lower.match(/^play\s+(.+?)\s+on\s+youtube$/)||lower.match(/^(?:search\s+)?(?:on\s+)?youtube(?:\s+for)?\s+(.+)$/);
+if(yt){const q=yt[1].replace(/^for\s+/,'');onTab('YouTube',()=>{setVal('ytSearch',q);press('ytGo');});say('Searching YouTube.');return true;}
+if(/^open spotify(?:\.com)?$/.test(lower)){onTab('Spotify',()=>press('spotifyPop'));say('Opening Spotify.');return true;}
+const sp=lower.match(/^(?:play|search)\s+(.+?)\s+on\s+spotify$/);
+if(sp){onTab('Spotify',()=>{setVal('spotifyInput',sp[1]);press('spotifySave');});say('Opening Spotify.');return true;}
+const web=lower.match(/^(?:browse|open (?:the )?(?:site|website|page))\s+(.+)$/);
+if(web){
+let url=web[1].trim();
+if(!/^https?:\/\//i.test(url))url='https://'+url.replace(/\s+/g,'');
+onTab('Browser',()=>{setVal('bUrl',url);press('bGo');});
+say('Opening that page.');
+return true;
+}
+const search=lower.match(/^(?:search|look up)\s+(?:on\s+)?(google|bing|wikipedia|wiki|duckduckgo|duck duck go)?\s*(?:for\s+)?(.+)$/);
+if(search&&search[2]){
+const engine=search[1]||'';
+const btn=engine.startsWith('google')?'searchGoogle':engine.startsWith('bing')?'searchBing':engine.startsWith('wiki')?'searchWiki':'searchDDG';
+onTab('Search',()=>{setVal('searchQ',search[2]);press(btn);});
+say('Searching.');
+return true;
+}
+const map=lower.match(/^(?:show\s+(?:me\s+)?)?(?:a\s+)?map\s+(?:of\s+|for\s+)?(.+)$/)||lower.match(/^directions\s+to\s+(.+)$/);
+if(map){onTab('Maps',()=>{setVal('mapSearch',map[1]);press('mapGo');});say('Opening the map.');return true;}
+if(/^(?:show|open|check|get)\s+(?:the\s+)?(?:weather|forecast)$/.test(lower)||/^what'?s the weather\b/.test(lower)){onTab('Weather',()=>{});say('Here is the weather.');return true;}
+const calc=lower.match(/^(?:calculate|compute|what is|what's)\s+(.+)$/);
+if(calc&&/\d/.test(calc[1])&&/(?:\b(?:plus|minus|times|divided|over)\b|\d\s*[-+*/x]\s*\d)/.test(calc[1])){
+const expr=wordsToMath(calc[1]);
+onTab('Calculator',()=>{window.cv=expr;if(typeof window.ce==='function')window.ce();});
+say('Here you go.');
+return true;
+}
+const alarm=lower.match(/^(?:set|add|create)\s+(?:an?\s+)?alarm\s+(?:for\s+)?(.+)$/);
+if(alarm){
+const tm=clockToInput(alarm[1]);
+const label=(raw.match(/\b(?:called|named|labeled)\s+(.+)$/i)||[])[1]||'Alarm';
+if(tm){onTab('Alarms',()=>{setVal('alarmTime',tm);setVal('alarmLabel',label);press('alarmAdd');});say('Alarm set.');return true;}
+}
+const todo=raw.match(/^(?:add|new|create)\s+(?:a\s+)?(?:to-?do|to do|task)\s+(?:to\s+)?(.+)$/i)||raw.match(/^remind me to\s+(.+)$/i);
+if(todo){onTab('To Do',()=>{setVal('todoInput',todo[1]);press('todoAdd');});say('Added.');return true;}
+const note=lower.match(/^(?:add|write|take|jot)\s+(?:a\s+)?note\s+(?:that\s+|saying\s+)?(.+)$/);
+if(note){
+onTab('Notes',()=>{const area=document.getElementById('notesArea');if(!area)return;area.value=(area.value?area.value.replace(/\s+$/,'')+'\n':'')+note[1];area.dispatchEvent(new Event('input',{bubbles:true}));});
+say('Noted.');
+return true;
+}
+const legal=lower.match(/^(?:ask\s+)?legal\s+(?:about\s+)?(.+)$/);
+if(legal){onTab('Legal',()=>{setVal('legalInput',legal[1]);press('legalSend');});say('Looking that up.');return true;}
+const health=lower.match(/^(?:ask\s+)?health\s+(?:about\s+)?(.+)$/);
+if(health){onTab('Health',()=>{setVal('healthInput',health[1]);press('healthSend');});say('Looking that up.');return true;}
+if(/^stop (?:the )?(?:focus|timer|pomodoro)$/.test(lower)){onTab('Focus',()=>press('focusStop'));say('Stopped.');return true;}
+const focus=lower.match(/^(?:start|begin)\s+(?:a\s+)?(?:(\d+)\s+minute\s+)?(?:focus|timer|pomodoro)$/);
+if(focus){onTab('Focus',()=>{if(focus[1])setVal('focusMin',focus[1]);press('focusStart');});say('Starting.');return true;}
+const ev=lower.match(/^(?:add|create|put)\s+(?:an?\s+)?(?:calendar\s+)?event\s+(.+)$/);
+if(ev){
+const at=(ev[1].match(/\bat\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i)||[])[1];
+const title=ev[1].replace(/\s+at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?/i,'').trim();
+onTab('Calendar',()=>{setVal('calTitle',title);if(at){const tm=clockToInput(at);if(tm)setVal('calTime',tm);}press('calAdd');});
+say('Added to the calendar.');
+return true;
+}
+const story=lower.match(/^(?:write|start|create)\s+(?:a\s+)?(?:new\s+)?story(?:\s+(?:about|called|titled))?\s+(.+)$/);
+if(story){
+onTab('Stories',()=>{const form=document.getElementById('storyNewForm');if(form)form.style.display='block';setVal('storyTitle',story[1].slice(0,80));setVal('storyPremise',story[1]);press('storyCreateBtn');});
+say('Starting that story.');
+return true;
+}
+if(/^(?:write\s+)?(?:the\s+)?next chapter$/.test(lower)){onTab('Stories',()=>press('storyNextBtn'));say('Writing the next chapter.');return true;}
+if(/^(?:export|save)\s+(?:the\s+)?story(?:\s+as\s+a\s+pdf)?$/.test(lower)){onTab('Stories',()=>press('storyPdfBtn'));say('Saving the story.');return true;}
+const code=lower.match(/^(?:write|make|generate)\s+(?:some\s+)?(?:python\s+|javascript\s+|html\s+)?code\s+(?:for|to|that)\s+(.+)$/);
+if(code){onTab('Code Lab',()=>{setVal('codePrompt',code[1]);press('genCode');});say('Writing that.');return true;}
+if(/^run (?:the )?code$/.test(lower)){onTab('Code Lab',()=>press('runCode'));say('Running it.');return true;}
+const dice=lower.match(/^roll\s+(?:a\s+)?d(\d+)$/);
+if(dice){onTab('RPG',()=>{if(typeof window.quickRoll==='function')window.quickRoll(+dice[1]);});say('Rolling.');return true;}
+const rpg=lower.match(/^(?:in the game|rpg)\s+(.+)$/);
+if(rpg){onTab('RPG',()=>{setVal('rpgAction',rpg[1]);press('rpgAct');});return true;}
+const app=lower.match(/^open (?:the )?app\s+(.+)$/);
+if(app){
+onTab('Apps',()=>{
+const want=app[1].toLowerCase();
+const hit=[...document.querySelectorAll('#appsList .card')].find(c=>(c.textContent||'').toLowerCase().includes(want));
+const btn=hit&&hit.querySelector('[data-open]');
 if(btn)btn.click();
-return;
+});
+say('Opening it.');
+return true;
 }
+const pin=lower.match(/^(?:set|change)\s+(?:my\s+)?pin\s+(?:to\s+)?(\d{4,8})$/);
+if(pin){onTab('Brain',()=>{setVal('newPinInput',pin[1]);press('setPinBtn');});say('Pin saved.');return true;}
+if(/^use (?:the )?internet$/.test(lower)||/^brain online$/.test(lower)){onTab('Brain',()=>{const el=document.getElementById('brainMode');if(el){el.value='online';el.dispatchEvent(new Event('change',{bubbles:true}));}});say('Using the internet.');return true;}
+if(/^this computer only$/.test(lower)||/^brain offline$/.test(lower)){onTab('Brain',()=>{const el=document.getElementById('brainMode');if(el){el.value='ollama';el.dispatchEvent(new Event('change',{bubbles:true}));}});say('Using this computer.');return true;}
+if(/^(?:pause|stop playing)$/.test(lower)){document.querySelectorAll('audio,video').forEach(a=>{try{a.pause();}catch(e){}});say('Paused.');return true;}
+const nav=lower.match(/^(?:open|go to|switch to|show|show me)\s+(?:the\s+)?(.+?)(?:\s+tab)?$/);
+if(nav){const found=matchTab(nav[1]);if(found){switchTab(found);say(found);return true;}}
+return false;
 }
-document.getElementById('chatInput').value=text;
+function handleVoiceCommand(text){
+const raw=String(text||'').trim();
+const lower=raw.toLowerCase().replace(/[?.!]+$/g,'').trim();
+if(!lower)return;
+if(voiceAct(lower,raw))return;
+document.getElementById('chatInput').value=raw;
 document.getElementById('chatSend').click();
 }
 const CHAT_MODE_PROMPTS={
