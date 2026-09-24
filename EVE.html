@@ -86,7 +86,7 @@ button.secondary{background:var(--input-bg);color:var(--text);padding:8px 12px;b
 </div>
 <script>
 const DEFAULT_AVATAR="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQ0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEwYjIwIi8+PHRleHQgeD0iNTAlIiB5PSI0NSUiIGZpbGw9IiM0ZjQ2ZTUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjY0IiBmb250LXdlaWdodD0iOTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5FVkU8L3RleHQ+PC9zdmc+";
-const TABS=["Brain","Email","Text","Apps","Code Lab","Calculator","Image","Music","Video","Spotify","YouTube","Browser","RPG","Stories","Maps","Weather","Alarms","To Do","Notes","Knowledge","Projects","Legal","Health","Calendar","Focus","Search","Tools","Comics","Media"];
+const TABS=["Brain","Email","Text","Apps","Code Lab","Calculator","Image","Music","Video","Spotify","YouTube","Browser","RPG","Stories","Maps","Weather","Alarms","To Do","Notes","Knowledge","Projects","Legal","Health","Recipes","Call","Calendar","Focus","Search","Tools","Comics","Media"];
 const CHAT_FEATURES=[{id:'chat',label:'Chat'},{id:'codelab',label:'Code Lab'},{id:'rpg',label:'RPG'},{id:'stories',label:'Stories'},{id:'legal',label:'Legal'},{id:'health',label:'Health'}];
 let avatars=[];let hero=localStorage.getItem('eve_hero')||'';
 let chat=JSON.parse(localStorage.getItem('eve_chat')||'[]');
@@ -401,7 +401,7 @@ opts=opts||{};
 const maxTokens=opts.maxTokens||1024;
 const temperature=opts.temperature!=null?opts.temperature:0.7;
 const pref=(opts.feature&&getEnginePrefs()[opts.feature])||'auto';
-const creative=opts.feature==='stories'||opts.feature==='legal'||opts.feature==='health'||opts.feature==='rpg'||opts.feature==='codelab';
+const creative=opts.feature==='stories'||opts.feature==='legal'||opts.feature==='health'||opts.feature==='rpg'||opts.feature==='codelab'||opts.feature==='recipes';
 const emit=(t)=>{if(t&&!isJunkReply(t))onDelta(t);};
 let triedWeb=false;
 async function fromWeb(){
@@ -825,6 +825,24 @@ else if(t==='Health')html=`<h3>Health</h3>
 <div id=healthLog class=noscroll style="text-align:left;white-space:pre-wrap;background:var(--input-bg);padding:12px;border-radius:10px;min-height:220px;max-height:400px;overflow:auto"></div>
 <div style="display:flex;gap:8px;margin-top:8px"><input id=healthInput placeholder="Ask a general health question..."><button class=primary id=healthSend>Ask</button></div>
 <div id=healthStatus style="font-size:11px;color:var(--muted);margin-top:4px;text-align:left"></div>`;
+else if(t==='Recipes')html=`<h3>Recipes</h3>
+<div style="font-size:12px;color:var(--muted);text-align:left;margin-bottom:6px">Every recipe is made without onion, garlic, or any other allium.</div>
+<input id=recipeWant placeholder="What do you want to cook?">
+<input id=recipeServings placeholder="Servings (optional)">
+<button class=primary id=recipeMake style="width:100%">Make a recipe</button>
+<div id=recipeStatus style="font-size:11px;color:var(--muted);margin-top:6px;text-align:left"></div>
+<div id=recipeOut style="text-align:left;white-space:pre-wrap;background:var(--input-bg);padding:12px;border-radius:10px;min-height:80px;max-height:320px;overflow:auto;margin-top:8px"></div>
+<button class=primary id=recipeSave style="width:100%;margin-top:8px">Save to Cookbook</button>
+<h4 style="text-align:left;margin:16px 0 6px">Cookbook</h4>
+<div id=cookbookList style="text-align:left"></div>`;
+else if(t==='Call')html=`<h3>Call</h3>
+<input id=callName placeholder="Name this call (optional)">
+<button class=primary id=callStart style="width:100%">Start call</button>
+<div id=callLink style="font-size:12px;text-align:left;word-break:break-all;margin-top:8px"></div>
+<button class=secondary id=callCopy style="width:100%;margin-top:6px">Copy link</button>
+<input id=callJoin placeholder="Or paste a call link" style="margin-top:12px">
+<button class=primary id=callJoinBtn style="width:100%">Join</button>
+<div id=callStatus style="font-size:11px;color:var(--muted);margin-top:6px;text-align:left"></div>`;
 else if(t==='Calendar')html=`<h3>Calendar</h3><div style="display:flex;justify-content:space-between;align-items:center"><button class=secondary id=calPrev>←</button><h4 id=calMonthLabel style="margin:0"></h4><button class=secondary id=calNext>→</button></div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:11px;color:var(--muted);margin:6px 0"><div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div></div><div id=calGrid class=calGrid></div><div style="text-align:left;margin-top:10px"><div id=calSelDate style="font-size:12px;color:var(--muted)"></div><div style="display:flex;gap:8px"><input id=calTitle placeholder="Event"><input type=time id=calTime style="width:110px"><button class=primary id=calAdd>Add</button></div><div id=calList></div></div>`;
 else if(t==='Focus')html=`<h3>Focus</h3><div style="display:flex;gap:8px;justify-content:center"><input type=number id=focusMin value=25 style="width:70px"><button class=primary id=focusStart>Start</button><button class=secondary id=focusStop>Stop</button></div><div id=focusDisplay style="font-size:56px;font-weight:800;text-align:center;margin:16px">25:00</div><div id=focusStats style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:10px"></div><div id=focusHistory style="text-align:left;font-size:12px"></div>`;
 else if(t==='Search')html=`<h3>Search</h3><input id=searchQ placeholder="Search"><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px"><button class=primary id=searchDDG>DuckDuckGo</button><button class=primary id=searchGoogle>Google</button><button class=primary id=searchBing>Bing</button><button class=primary id=searchWiki>Wikipedia</button></div>`;
@@ -1635,6 +1653,87 @@ log[idx].text=(full&&!isJunkReply(full))?full.trim():'No answer came back. Try a
 localStorage.setItem('eve_health_log',JSON.stringify(log.slice(-100)));
 status.textContent='';renderHealthLog();
 }catch(e){log[idx].text='No answer came back. Try again.';status.textContent='';renderHealthLog();}
+};
+}
+if(t==='Recipes'){
+let book=[];try{book=JSON.parse(localStorage.getItem('eve_cookbook')||'[]');}catch(e){book=[];}
+if(!Array.isArray(book))book=[];
+let ready='';
+function hasAllium(text){
+let t=String(text||'');
+t=t.replace(/\b(no|without|free of|not|zero|omit|avoid)\s+(any\s+)?(garlics?|onions?|leeks?|shallots?|chives?|scallions?|ramps?|alliums?|green onions?|spring onions?)\b/gi,'');
+t=t.replace(/\b(garlic|onion|allium|leek|shallot|chive|scallion)[-\s]?free\b/gi,'');
+return /\b(garlics?|garlic\s*(powder|salt|oil)|onions?|onion\s*(powder|salt|flakes)|leeks?|shallots?|chives?|scallions?|green\s*onions?|spring\s*onions?|ramps?|alliums?)\b/i.test(t);
+}
+function renderBook(){
+const box=document.getElementById('cookbookList');
+box.innerHTML=book.length?book.map((r,i)=>`<div class=card><b>${String(r.title||'Recipe').replace(/[&<>]/g,c=>({'&':'&','<':'<','>':'>'}[c]))}</b><div style="margin-top:4px"><button class=secondary data-open="${i}">Open</button> <button class=secondary data-del="${i}">Remove</button></div></div>`).join(''):'<div style="color:var(--muted)">Nothing saved yet.</div>';
+box.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{const r=book[+b.getAttribute('data-open')];if(!r)return;ready='';document.getElementById('recipeOut').textContent=r.body||'';document.getElementById('recipeStatus').textContent='From your cookbook.';});
+box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{book.splice(+b.getAttribute('data-del'),1);localStorage.setItem('eve_cookbook',JSON.stringify(book));renderBook();});
+}
+renderBook();
+document.getElementById('recipeSave').onclick=()=>{
+if(!ready||hasAllium(ready)){document.getElementById('recipeStatus').textContent='Nothing safe to save yet.';return;}
+const title=(ready.split('\n').map(s=>s.trim()).find(Boolean)||'Recipe').replace(/^title:\s*/i,'').slice(0,80);
+book.unshift({title,body:ready,at:Date.now()});
+book=book.slice(0,80);
+localStorage.setItem('eve_cookbook',JSON.stringify(book));
+document.getElementById('recipeStatus').textContent='Saved.';
+renderBook();
+};
+document.getElementById('recipeMake').onclick=async()=>{
+const status=document.getElementById('recipeStatus');
+const out=document.getElementById('recipeOut');
+const want=document.getElementById('recipeWant').value.trim();
+const servings=document.getElementById('recipeServings').value.trim();
+const ban='Never use garlic, onion, leek, shallot, chive, scallion, green onion, spring onion, ramp, or any allium. That includes powders, salts, flakes, and oils made from them. Do not list them as optional.';
+status.textContent='Writing…';out.textContent='';ready='';
+const ask=async(extra)=>{
+const user='Write one allium-free recipe.'+(want?(' They want: '+want+'.'):' Choose a simple dinner.')+(servings?(' Servings: '+servings+'.'):'')+(extra||'');
+return aiStream([{role:'system',content:'You are EVE. Write one complete cooking recipe that is strictly allium-free. '+ban+' Change the seasoning instead. Start with the recipe title on the first line, then servings, ingredients with amounts, and numbered steps.'},{role:'user',content:user}],{maxTokens:900,temperature:0.6,feature:'recipes',wait:26000},()=>{});
+};
+try{
+let full=await ask('');
+if(hasAllium(full)){
+status.textContent='That one was not safe. Trying again…';
+full=await ask(' The previous draft used a forbidden ingredient. Rewrite the whole recipe with none of those foods.');
+}
+if(!full||hasAllium(full)){ready='';out.textContent='';status.textContent='Could not make a safe recipe. Try a different idea.';return;}
+ready=String(full).trim();
+out.textContent=ready;
+status.textContent='Ready. This one has no allium.';
+}catch(e){ready='';out.textContent='';status.textContent='Could not write that. Try again.';}
+};
+}
+if(t==='Call'){
+function openCall(raw){
+let url=String(raw||'').trim();
+if(!url)return '';
+if(/^https:\/\//i.test(url))return url;
+const name=url.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40);
+if(!name)return '';
+return 'https://meet.jit.si/'+name;
+}
+document.getElementById('callStart').onclick=()=>{
+const typed=document.getElementById('callName').value.trim();
+const room=typed||('eve-'+Math.random().toString(36).slice(2,8));
+const url=openCall(room);
+document.getElementById('callLink').textContent=url;
+document.getElementById('callStatus').textContent='Opened. Send that link to the other person.';
+popOver(url);
+};
+document.getElementById('callCopy').onclick=async()=>{
+const url=document.getElementById('callLink').textContent.trim();
+if(!url){document.getElementById('callStatus').textContent='Start a call first.';return;}
+try{await navigator.clipboard.writeText(url);document.getElementById('callStatus').textContent='Link copied.';}
+catch(e){document.getElementById('callStatus').textContent=url;}
+};
+document.getElementById('callJoinBtn').onclick=()=>{
+const url=openCall(document.getElementById('callJoin').value);
+if(!url){document.getElementById('callStatus').textContent='Paste a link first.';return;}
+document.getElementById('callLink').textContent=url;
+document.getElementById('callStatus').textContent='Opened.';
+popOver(url);
 };
 }
 if(t==='Stories'){
