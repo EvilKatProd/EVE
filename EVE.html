@@ -2486,6 +2486,27 @@ if(aliases[s])return aliases[s];
 return TABS.find(t=>normTalk(t)===s)||null;
 }
 function voiceAct(lower,raw){
+const flat=String(lower||'').replace(/[^a-z0-9'#]+/g,' ').replace(/\s+/g,' ').trim();
+const editC=flat.match(/\b(?:edit|change|update|modify)\s+(?:a\s+|the\s+|my\s+)?contacts?(?:\s+(?:named|called|for))?\s*(.*)$/);
+if(editC){
+const who=(editC[1]||'').replace(/^(?:named|called|for)\s+/,'').trim();
+const person=who?findContact(who):null;
+if(person){
+switchTab('Contacts');
+let tries=0;
+const openIt=()=>{
+const b=document.querySelector('[data-edit="'+person.id+'"]');
+if(b){b.click();return;}
+if(++tries<8)setTimeout(openIt,150);
+};
+setTimeout(openIt,200);
+say('Editing '+person.name+'.');
+}else{
+switchTab('Contacts');
+say('No contact with that name exists.');
+}
+return true;
+}
 const addContact=raw.match(/^(?:add|save)\s+contact\s+(.+)$/i);
 if(addContact){
 const rest=addContact[1];
@@ -2664,25 +2685,6 @@ const dice=lower.match(/^roll\s+(?:a\s+)?d(\d+)$/);
 if(dice){onTab('RPG',()=>{if(typeof window.quickRoll==='function')window.quickRoll(+dice[1]);});say('Rolling.');return true;}
 const rpg=lower.match(/^(?:in the game|rpg)\s+(.+)$/);
 if(rpg){onTab('RPG',()=>{setVal('rpgAction',rpg[1]);press('rpgAct');});return true;}
-const editC=lower.match(/\b(?:edit|change|update)\s+(?:the\s+|my\s+)?contact\s+(.+)$/);
-if(editC){
-const person=findContact(editC[1]);
-if(person){
-switchTab('Contacts');
-let tries=0;
-const openIt=()=>{
-const b=document.querySelector('[data-edit="'+person.id+'"]');
-if(b){b.click();return;}
-if(++tries<8)setTimeout(openIt,150);
-};
-setTimeout(openIt,200);
-say('Editing '+person.name+'.');
-}else{
-switchTab('Contacts');
-say('I do not have that contact.');
-}
-return true;
-}
 const remC=lower.match(/\b(?:remove|delete)\s+(?:the\s+|my\s+)?contact\s+(.+)$/);
 if(remC){
 const person=findContact(remC[1]);
