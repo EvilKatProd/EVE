@@ -86,7 +86,7 @@ button.secondary{background:var(--input-bg);color:var(--text);padding:8px 12px;b
 </div>
 <script>
 const DEFAULT_AVATAR="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQ0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEwYjIwIi8+PHRleHQgeD0iNTAlIiB5PSI0NSUiIGZpbGw9IiM0ZjQ2ZTUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjY0IiBmb250LXdlaWdodD0iOTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5FVkU8L3RleHQ+PC9zdmc+";
-const TABS=["Brain","Email","Text","Apps","Code Lab","Calculator","Image","Music","Video","Spotify","YouTube","Browser","RPG","Stories","Maps","Weather","Alarms","To Do","Notes","Knowledge","Projects","Legal","Health","Recipes","Call","Calendar","Focus","Search","Tools","Comics","Media"];
+const TABS=["Brain","Email","Text","Contacts","Apps","Code Lab","Calculator","Image","Music","Video","Spotify","YouTube","Browser","RPG","Stories","Maps","Weather","Alarms","To Do","Notes","Knowledge","Projects","Legal","Health","Recipes","Call","Calendar","Focus","Search","Tools","Comics","Media"];
 const CHAT_FEATURES=[{id:'chat',label:'Chat'},{id:'codelab',label:'Code Lab'},{id:'rpg',label:'RPG'},{id:'stories',label:'Stories'},{id:'legal',label:'Legal'},{id:'health',label:'Health'}];
 let avatars=[];let hero=localStorage.getItem('eve_hero')||'';
 let chat=JSON.parse(localStorage.getItem('eve_chat')||'[]');
@@ -699,16 +699,24 @@ if(t==='Brain')html=`<h3>Brain</h3>
 <div style="display:flex;gap:8px;flex-wrap:wrap"><button class=secondary id=exportData>Save a copy</button><input type=file id=importFile accept="application/json" style="display:none"><button class=secondary id=importDataBtn>Bring a copy back</button></div>
 <div style="font-size:11px;color:var(--muted);margin-top:4px;text-align:left">Bringing a copy back replaces what is here now.</div>`;
 else if(t==='Email')html=`<h3>Email</h3>
+<select id=emailContact></select>
 <input id=emailTo placeholder="To">
 <input id=emailSubject placeholder="Subject">
 <textarea id=emailBody rows=8 placeholder="Message"></textarea>
 <button class=primary id=emailSendBtn style="width:100%">Send</button>
 <div id=emailSendStatus style="font-size:11px;color:var(--muted);margin-top:6px;text-align:left"></div>`;
 else if(t==='Text')html=`<h3>Text</h3>
+<select id=textContact></select>
 <input id=textPhone placeholder="Phone number">
 <textarea id=textBody rows=4 placeholder="Message"></textarea>
 <button class=primary id=textSendBtn style="width:100%">Send Text</button>
 <div id=textSendStatus style="font-size:11px;color:var(--muted);margin-top:6px;text-align:left"></div>`;
+else if(t==='Contacts')html=`<h3>Contacts</h3>
+<input id=contactName placeholder="Name">
+<input id=contactPhone placeholder="Phone">
+<input id=contactEmail placeholder="Email">
+<button class=primary id=contactSave style="width:100%">Save contact</button>
+<div id=contactList style="text-align:left;margin-top:10px"></div>`;
 else if(t==='Apps')html=`<h3>Apps</h3>
 <div style="text-align:left;font-size:11px;color:var(--muted);margin-bottom:6px">Save a name and an address, then open it.</div>
 <input id=appName placeholder="Name">
@@ -741,7 +749,7 @@ else if(t==='Music')html=`<h3>Music Generation</h3>
 <button class=primary id=musicGenBtn style="width:100%">Generate</button>
 <div id=musicStatus style="font-size:11px;color:var(--muted);margin:8px 0"></div>
 <div id=musicResult></div>`;
-else if(t==='Video')html=`<h3>Video</h3><input id=videoPrompt placeholder="Describe the clip"><input id=videoImage type=file accept="image/*"><label style="display:flex;align-items:center;gap:6px;font-size:12px">Seconds <input type=number id=videoSeconds value=4 min=2 max=8 style="width:80px"></label><button class=primary id=videoGen style="width:100%">Generate</button><div id=videoStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div><div id=videoResult></div>`;
+else if(t==='Video')html=`<h3>Video</h3><select id=videoContact></select><button class=secondary id=videoCallBtn style="width:100%">Video call</button><input id=videoPrompt placeholder="Describe the clip"><input id=videoImage type=file accept="image/*"><label style="display:flex;align-items:center;gap:6px;font-size:12px">Seconds <input type=number id=videoSeconds value=4 min=2 max=8 style="width:80px"></label><button class=primary id=videoGen style="width:100%">Generate</button><div id=videoStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div><div id=videoResult></div>`;
 else if(t==='Spotify')html=`<h3>Spotify</h3><input id=spotifyInput placeholder="Song, artist, or a Spotify link"><div style="display:flex;gap:8px"><button class=primary id=spotifySave style="flex:1">Play here</button><button class=secondary id=spotifyPop>Small window</button></div><iframe id=spotifyFrame allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M" style="width:100%;height:380px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><audio id=spotifyAudio controls style="width:100%;margin-top:8px;display:none"></audio><div id=spotifyPicks></div><div id=spotifyBox style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
 else if(t==='YouTube')html=`<h3>YouTube</h3><input id=ytSearch placeholder="Search YouTube"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class=primary id=ytGo style="flex:1">Play here</button><button class=secondary id=ytPop>Small window</button><button class=secondary id=ytSite>YouTube.com</button></div><input id=ytUrl placeholder="YouTube link"><button class=primary id=ytEmbed style="width:100%">Play this link</button><div id=ytPicks></div><iframe id=ytFrame allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="width:100%;height:360px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><div id=ytStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
 else if(t==='Browser')html=`<h3>Browser</h3><div style="display:flex;gap:8px"><input id=bUrl value="https://en.wikipedia.org/wiki/Moon" placeholder="Address"><button class=primary id=bGo>Open</button><button class=secondary id=bPop>Small window</button></div><iframe id=bFrame style="width:100%;height:420px;background:#fff;border:0;border-radius:10px;margin-top:8px" src="https://en.wikipedia.org/wiki/Moon"></iframe><div id=bRead style="text-align:left;white-space:pre-wrap;margin-top:8px"></div>`;
@@ -836,6 +844,7 @@ else if(t==='Recipes')html=`<h3>Recipes</h3>
 <h4 style="text-align:left;margin:16px 0 6px">Cookbook</h4>
 <div id=cookbookList style="text-align:left"></div>`;
 else if(t==='Call')html=`<h3>Call</h3>
+<select id=callContact></select>
 <input id=callName placeholder="Name this call (optional)">
 <button class=primary id=callStart style="width:100%">Start call</button>
 <div id=callLink style="font-size:12px;text-align:left;word-break:break-all;margin-top:8px"></div>
@@ -936,6 +945,8 @@ e.target.value='';
 };
 }
 if(t==='Email'){
+fillContactSelect('emailContact');
+document.getElementById('emailContact').onchange=()=>{const c=contactById(document.getElementById('emailContact').value);if(c&&c.email)document.getElementById('emailTo').value=c.email;};
 document.getElementById('emailSendBtn').onclick=()=>{
 const to=document.getElementById('emailTo').value.trim();
 const subject=document.getElementById('emailSubject').value.trim();
@@ -952,20 +963,38 @@ popOver(url);
 };
 }
 if(t==='Text'){
+fillContactSelect('textContact');
+document.getElementById('textContact').onchange=()=>{const c=contactById(document.getElementById('textContact').value);if(c&&c.phone)document.getElementById('textPhone').value=c.phone;};
 document.getElementById('textSendBtn').onclick=()=>{
 let digits=document.getElementById('textPhone').value.replace(/\D/g,'');
 const body=document.getElementById('textBody').value||'';
 const status=document.getElementById('textSendStatus');
 if(digits.length===10)digits='1'+digits;
 if(digits.length<11){status.textContent='Enter the phone number.';return;}
-const url='https://web.whatsapp.com/send?phone='+digits+'&text='+encodeURIComponent(body)+'&type=phone_number&app_absent=1';
-const w=Math.min(1280, Math.max(900, (screen.availWidth||1200)-40));
-const h=Math.min(920, Math.max(700, (screen.availHeight||900)-40));
-const left=Math.max(0, Math.round(((screen.availWidth||w)-w)/2));
-const top=Math.max(0, Math.round(((screen.availHeight||h)-h)/2));
-const win=window.open(url,'eveText','width='+w+',height='+h+',left='+left+',top='+top);
+const url='https://wa.me/'+digits+'?text='+encodeURIComponent(body);
+const win=window.open(url,'_blank');
 if(win)win.focus();
-status.textContent='Press send there. It has not gone through until it shows as delivered.';
+status.textContent=win?'The words are only filled in. Press the send arrow in WhatsApp.':'The window was blocked.';
+};
+}
+if(t==='Contacts'){
+let list=loadContacts();
+function renderContacts(){
+document.getElementById('contactList').innerHTML=list.map(c=>`<div class=card><b>${escContact(c.name)}</b><div style="font-size:12px">${escContact(c.phone||'')}${c.phone&&c.email?' · ':''}${escContact(c.email||'')}</div><button class=secondary data-del="${escContact(c.id)}">Remove</button></div>`).join('')||'<div style="color:var(--muted)">No contacts yet.</div>';
+document.getElementById('contactList').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{list=list.filter(c=>c.id!==b.getAttribute('data-del'));saveContacts(list);renderContacts();});
+}
+renderContacts();
+document.getElementById('contactSave').onclick=()=>{
+const name=document.getElementById('contactName').value.trim();
+const phone=document.getElementById('contactPhone').value.trim();
+const email=document.getElementById('contactEmail').value.trim();
+if(!name)return;
+const existing=list.find(c=>c.name.toLowerCase()===name.toLowerCase());
+if(existing){if(phone)existing.phone=phone;if(email)existing.email=email;}
+else list.unshift({id:'c'+Date.now(),name,phone,email});
+saveContacts(list);list=loadContacts();
+['contactName','contactPhone','contactEmail'].forEach(id=>document.getElementById(id).value='');
+renderContacts();
 };
 }
 if(t==='Apps'){
@@ -1190,6 +1219,15 @@ popOver('https://www.youtube.com/results?search_query='+encodeURIComponent(q));
 }
 }
 if(t==='Video'){
+fillContactSelect('videoContact');
+document.getElementById('videoCallBtn').onclick=()=>{
+const c=contactById(document.getElementById('videoContact').value);
+const status=document.getElementById('videoStatus');
+if(!c){status.textContent='Choose a contact.';return;}
+const name=c.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'eve-call';
+popOver('https://meet.jit.si/'+name);
+status.textContent='Opened. Send that link to '+c.name+'.';
+};
 document.getElementById('videoGen').onclick=async()=>{
 const prompt=document.getElementById('videoPrompt').value.trim();
 const file=document.getElementById('videoImage').files[0];
@@ -1711,6 +1749,8 @@ status.textContent='Ready. This one has no allium.';
 };
 }
 if(t==='Call'){
+fillContactSelect('callContact');
+document.getElementById('callContact').onchange=()=>{const c=contactById(document.getElementById('callContact').value);if(c)document.getElementById('callName').value=c.name;};
 function openCall(raw){
 let url=String(raw||'').trim();
 if(!url)return '';
@@ -2335,34 +2375,68 @@ if(ap){if(ap[1]==='pm'&&h<12)h+=12;if(ap[1]==='am'&&h===12)h=0;}
 if(h>23||m>59)return '';
 return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
 }
+function loadContacts(){try{const l=JSON.parse(localStorage.getItem('eve_contacts')||'[]');return Array.isArray(l)?l:[];}catch(e){return [];}}
+function saveContacts(list){localStorage.setItem('eve_contacts',JSON.stringify(list.slice(0,200)));}
+function contactById(id){return loadContacts().find(c=>c.id===id)||null;}
+function findContact(name){
+const q=String(name||'').toLowerCase().replace(/[?.!,]+$/g,'').trim();
+if(!q)return null;
+const list=loadContacts();
+return list.find(c=>c.name.toLowerCase()===q)||list.find(c=>q===c.name.toLowerCase().split(' ')[0])||list.find(c=>c.name.toLowerCase().includes(q))||null;
+}
+function escContact(s){return String(s||'').replace(/[&<>"]/g,ch=>({'&':'&','<':'<','>':'>','"':'"'}[ch]));}
+function fillContactSelect(id){const el=document.getElementById(id);if(!el)return;el.innerHTML='<option value="">Contact</option>'+loadContacts().map(c=>'<option value="'+escContact(c.id)+'">'+escContact(c.name)+'</option>').join('');}
 function matchTab(spoken){
 const s=String(spoken||'').toLowerCase().replace(/\s+tab$/,'').trim();
-const aliases={'text':'Text','texts':'Text','texting':'Text','email':'Email','mail':'Email','picture':'Image','pictures':'Image','photo':'Image','photos':'Image','image':'Image','song':'Music','songs':'Music','music':'Music','video':'Video','videos':'Video','call':'Call','video call':'Call','video chat':'Call','recipe':'Recipes','recipes':'Recipes','cookbook':'Recipes','map':'Maps','maps':'Maps','to do':'To Do','todo':'To Do','to-do':'To Do','tasks':'To Do','task':'To Do','note':'Notes','notes':'Notes','code':'Code Lab','code lab':'Code Lab','coding':'Code Lab','calculator':'Calculator','calc':'Calculator','math':'Calculator','youtube':'YouTube','spotify':'Spotify','browser':'Browser','web':'Browser','weather':'Weather','forecast':'Weather','alarm':'Alarms','alarms':'Alarms','story':'Stories','stories':'Stories','health':'Health','legal':'Legal','focus':'Focus','timer':'Focus','calendar':'Calendar','search':'Search','apps':'Apps','knowledge':'Knowledge','projects':'Projects','rpg':'RPG','game':'RPG','brain':'Brain','tools':'Tools','comics':'Comics','comic':'Comics','media':'Media','movies':'Media'};
+const aliases={'text':'Text','texts':'Text','texting':'Text','email':'Email','mail':'Email','contacts':'Contacts','contact':'Contacts','picture':'Image','pictures':'Image','photo':'Image','photos':'Image','image':'Image','song':'Music','songs':'Music','music':'Music','video':'Video','videos':'Video','call':'Call','video call':'Call','video chat':'Call','recipe':'Recipes','recipes':'Recipes','cookbook':'Recipes','map':'Maps','maps':'Maps','to do':'To Do','todo':'To Do','to-do':'To Do','tasks':'To Do','task':'To Do','note':'Notes','notes':'Notes','code':'Code Lab','code lab':'Code Lab','coding':'Code Lab','calculator':'Calculator','calc':'Calculator','math':'Calculator','youtube':'YouTube','spotify':'Spotify','browser':'Browser','web':'Browser','weather':'Weather','forecast':'Weather','alarm':'Alarms','alarms':'Alarms','story':'Stories','stories':'Stories','health':'Health','legal':'Legal','focus':'Focus','timer':'Focus','calendar':'Calendar','search':'Search','apps':'Apps','knowledge':'Knowledge','projects':'Projects','rpg':'RPG','game':'RPG','brain':'Brain','tools':'Tools','comics':'Comics','comic':'Comics','media':'Media','movies':'Media'};
 if(aliases[s])return aliases[s];
 return TABS.find(t=>t.toLowerCase()===s)||TABS.find(t=>s&&(t.toLowerCase().includes(s)||s.includes(t.toLowerCase())));
 }
 function voiceAct(lower,raw){
-if(/\be-?mail\b/.test(lower)&&/@/.test(raw)){
+const addContact=raw.match(/^(?:add|save)\s+contact\s+(.+)$/i);
+if(addContact){
+const rest=addContact[1];
+const email=(rest.match(/\bemail\s+(\S+@\S+)/i)||[])[1]||'';
+const phone=(rest.match(/\bphone\s+([+\d][\d\s().-]{6,}\d)/i)||[])[1]||'';
+const name=rest.replace(/\b(?:phone|email)\s+\S[\s\S]*?(?=\s+(?:phone|email)\b|$)/gi,'').replace(/\s+/g,' ').trim();
+if(name){
+const list=loadContacts();
+const existing=list.find(c=>c.name.toLowerCase()===name.toLowerCase());
+if(existing){if(phone)existing.phone=phone;if(email)existing.email=email;}
+else list.unshift({id:'c'+Date.now(),name,phone,email});
+saveContacts(list);
+switchTab('Contacts');
+say('Saved '+name+'.');
+return true;
+}
+}
+if(/\be-?mail\b/.test(lower)&&!/^(?:open|go to|switch to|show)\b/.test(lower)){
 const em=raw.match(/[\w.+-]+@[\w.-]+\.\w+/);
-if(em){
+const who=(raw.match(/\be-?mail\s+(?:to\s+)?(.+?)(?=\s+(?:subject|saying|message|that|about)\b|$)/i)||[])[1]||'';
+const person=em?null:findContact(who);
+const to=em?em[0]:(person&&person.email)||'';
+if(to){
 const subj=(raw.match(/\bsubject\s+(.+?)(?=\s+(?:saying|message|that)\s+|$)/i)||[])[1]||'';
 const body=(raw.match(/\b(?:saying|message|that)\s+(.+)$/i)||[])[1]||subj;
-onTab('Email',()=>{setVal('emailTo',em[0]);setVal('emailSubject',subj.trim());setVal('emailBody',body.trim());press('emailSendBtn');});
+onTab('Email',()=>{setVal('emailTo',to);setVal('emailSubject',subj.trim());setVal('emailBody',body.trim());press('emailSendBtn');});
 say('Opening email.');
 return true;
 }
 }
 const textCmd=lower.match(/^(?:send\s+)?(?:a\s+)?text(?:\s+message)?\s+(?:to\s+)?(.+)$/);
 if(textCmd){
-const nums=textCmd[1].match(/(\+?\d[\d\s().-]{6,}\d)/);
 const said=(raw.match(/\b(?:saying|that|message)\s+(.+)$/i)||[])[1]||'';
-if(nums){
-onTab('Text',()=>{setVal('textPhone',nums[1]);setVal('textBody',said.trim());if(said.trim())press('textSendBtn');});
-say(said.trim()?'Opening the text.':'What should it say?');
+const who=textCmd[1].replace(/\s+(?:saying|that|message)\b[\s\S]*$/,'').trim();
+const nums=who.match(/(\+?\d[\d\s().-]{6,}\d)/);
+const person=nums?null:findContact(who);
+const phone=nums?nums[1]:(person&&person.phone)||'';
+if(phone){
+onTab('Text',()=>{setVal('textPhone',phone);setVal('textBody',said.trim());if(said.trim())press('textSendBtn');});
+say(said.trim()?'The words are filled in. Press the send arrow in WhatsApp.':'What should it say?');
 return true;
 }
 onTab('Text',()=>{});
-say('What number?');
+say('I do not have a number for that.');
 return true;
 }
 const rec=lower.match(/^(?:make|create|write|cook)\s+(?:me\s+)?(?:an?\s+)?(?:allium[- ]free\s+)?recipe(?:\s+for)?\s*(.*)$/);
@@ -2373,8 +2447,14 @@ say('Writing a recipe.');
 return true;
 }
 if(/^save (?:this |the )?recipe$/.test(lower)){onTab('Recipes',()=>press('recipeSave'));say('Saving it.');return true;}
-const startCall=lower.match(/^(?:start|begin|make)\s+(?:a\s+)?(?:video\s+)?(?:call|video chat)(?:\s+(?:named|called)\s+(.+))?$/);
-if(startCall){onTab('Call',()=>{if(startCall[1])setVal('callName',startCall[1]);press('callStart');});say('Starting the call.');return true;}
+const startCall=lower.match(/^(?:start|begin|make)\s+(?:a\s+)?(?:video\s+)?(?:call|video chat)(?:\s+(?:with|named|called)\s+(.+))?$/);
+if(startCall){
+const person=startCall[1]?findContact(startCall[1]):null;
+const name=person?person.name:(startCall[1]||'');
+onTab('Call',()=>{if(name)setVal('callName',name);press('callStart');});
+say('Starting the call.');
+return true;
+}
 if(/^copy (?:the )?call link$/.test(lower)){onTab('Call',()=>press('callCopy'));return true;}
 const joinCall=lower.match(/^join (?:the )?call\s+(.+)$/);
 if(joinCall){onTab('Call',()=>{setVal('callJoin',joinCall[1]);press('callJoinBtn');});say('Joining.');return true;}
