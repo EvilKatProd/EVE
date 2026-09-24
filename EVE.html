@@ -958,9 +958,14 @@ const body=document.getElementById('textBody').value||'';
 const status=document.getElementById('textSendStatus');
 if(digits.length===10)digits='1'+digits;
 if(digits.length<11){status.textContent='Enter the phone number.';return;}
-const url='https://web.whatsapp.com/send?phone='+digits+'&text='+encodeURIComponent(body);
-status.textContent='Opened. Press send there.';
-popOver(url);
+const url='https://web.whatsapp.com/send?phone='+digits+'&text='+encodeURIComponent(body)+'&type=phone_number&app_absent=1';
+const w=Math.min(1280, Math.max(900, (screen.availWidth||1200)-40));
+const h=Math.min(920, Math.max(700, (screen.availHeight||900)-40));
+const left=Math.max(0, Math.round(((screen.availWidth||w)-w)/2));
+const top=Math.max(0, Math.round(((screen.availHeight||h)-h)/2));
+const win=window.open(url,'eveText','width='+w+',height='+h+',left='+left+',top='+top);
+if(win)win.focus();
+status.textContent='Press send there. It has not gone through until it shows as delivered.';
 };
 }
 if(t==='Apps'){
