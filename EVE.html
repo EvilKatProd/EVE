@@ -944,12 +944,17 @@ document.getElementById('textSendBtn').onclick=()=>{
 let digits=document.getElementById('textPhone').value.replace(/\D/g,'');
 const body=document.getElementById('textBody').value||'';
 const status=document.getElementById('textSendStatus');
-if(digits.length===10)digits='1'+digits;
+if(digits.length===11&&digits.startsWith('1'))digits=digits.slice(1);
 const carrier=document.getElementById('textCarrier').value;
-if(digits.length<11){status.textContent='Enter the phone number.';return;}
+if(digits.length!==10){status.textContent='Enter the phone number.';return;}
 const to=digits+'@'+carrier;
 const outlook='https://outlook.live.com/mail/0/deeplink/compose?to='+encodeURIComponent(to)+'&subject=&body='+encodeURIComponent(body);
-if(!popOver(outlook)) handOff('mailto:'+to+'?body='+encodeURIComponent(body));
+const w=Math.min(980, Math.max(420, (screen.availWidth||1000)-80));
+const h=Math.min(760, Math.max(420, (screen.availHeight||800)-80));
+const left=Math.max(0, Math.round(((screen.availWidth||w)-w)/2));
+const top=Math.max(0, Math.round(((screen.availHeight||h)-h)/2));
+const win=window.open(outlook,'eveText','popup=yes,width='+w+',height='+h+',left='+left+',top='+top);
+if(!win) handOff('mailto:'+to+'?subject=&body='+encodeURIComponent(body));
 status.textContent='Opened. Press send there.';
 };
 }
@@ -1091,9 +1096,13 @@ btn.disabled=true;status.textContent='Composing…';document.getElementById('mus
 try{
 const style=document.getElementById('musicModelSize').value;
 const hint=style==='melody'?' with a clear melody':style==='large'?' long and full':style==='small'?' short':'';
-const made=await gradioCall('https://facebook-musicgen.hf.space','predict_batched',[prompt+hint+' , about '+duration+' seconds', null]);
-const audio=made&&made[0]||{};
-const url=audio.url||(audio.path?('https://facebook-musicgen.hf.space/gradio_api/file='+audio.path):'');
+const dur=Math.min(30,Math.max(4,duration));
+let url='';
+try{
+url=await queuedAudio('https://artificialguybr-stable-audio-open-zero.hf.space',2,[prompt+hint,dur,12,7]);
+}catch(e){
+url=await queuedAudio('https://facebook-musicgen.hf.space',0,[prompt+hint,null]);
+}
 if(!url)throw new Error('none');
 status.textContent='Done.';
 document.getElementById('musicResult').innerHTML=`<audio controls autoplay style="width:100%;margin-top:8px" src="${url}"></audio>`;
@@ -1918,6 +1927,35 @@ parts.push(`RPG Adventure in progress — genre: ${adv.genre}, character: ${adv.
 }
 }catch{}
 return parts.join('\n\n');
+}
+async function queuedAudio(base,fn,data){
+const sid=Math.random().toString(16).slice(2)+Date.now().toString(16);
+const start=await fetch(base+'/gradio_api/queue/join',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({data:data,fn_index:fn,session_hash:sid,trigger_id:fn}),signal:AbortSignal.timeout(20000)});
+if(!start.ok)throw new Error('start');
+const res=await fetch(base+'/gradio_api/queue/data?session_hash='+sid);
+if(!res.ok||!res.body)throw new Error('wait');
+const reader=res.body.getReader();
+const dec=new TextDecoder();
+let buf='';
+const deadline=Date.now()+180000;
+while(Date.now()<deadline){
+const {value,done}=await reader.read();
+if(value)buf+=dec.decode(value,{stream:true});
+let hit=null;
+for(const m of buf.matchAll(/data:\s*(\{.*\})/g)){
+try{const o=JSON.parse(m[1]); if(o.msg==='process_completed')hit=o;}catch(e){}
+}
+if(hit){
+try{reader.cancel();}catch(e){}
+if(!hit.success)throw new Error('fail');
+const item=hit.output&&hit.output.data&&hit.output.data[0];
+const url=item&&(item.url||(item.path?base+'/gradio_api/file='+item.path:''));
+if(!url)throw new Error('none');
+return url;
+}
+if(done)break;
+}
+throw new Error('empty');
 }
 async function gradioCall(base,api,data){
 const start=await fetch(base+'/gradio_api/call/'+api,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({data}),signal:AbortSignal.timeout(20000)});
