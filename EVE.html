@@ -2780,7 +2780,7 @@ support:"You are EVE in Support & Reflection mode. You are a warm, attentive lis
 spicy:"You are EVE in Spicy mode. You are warm, playful, and flirty, like teasing banter with someone you like. Use wit and light compliments. You must never generate explicit sexual content, describe sexual acts, or use graphic sexual language. If they push that way, stay in character and deflect with humor, keeping it PG-13. Never crude. Do not turn the chat into a work meeting unless they ask."
 };
 function chatModeInstructions(mode){
-const memory='The section "What you already know about them" is memory from their PDFs, notes, and projects. Treat it as fact about the user and their work. Use it when it answers what they just said. Do not say you have no memory or no documents when that section has text. Do not add facts that are not written there.';
+const memory='The section "What you already know about them" is memory from their PDFs, notes, and projects. Treat it as fact about the user and their work. When a full PDF is included, read that whole document and answer from any part of it, not only the beginning. Use it when it answers what they just said. Do not say you have no memory or no documents when that section has text. Do not add facts that are not written there.';
 if(mode==='support')return memory+' Stay in this conversation. Do not open another part of the app and do not add an ACTION line.';
 if(mode==='spicy')return memory+' Stay playful. Do not add an ACTION line unless they clearly ask you to open something.';
 return memory+' When they want weather, a search, a map, a video, a picture, or another section, finish with exactly one line and nothing after it: ACTION: weather | ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
@@ -2925,19 +2925,21 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
 const data=await file.arrayBuffer();
 const pdf=await pdfjsLib.getDocument({data}).promise;
 let text='';
-const pages=Math.min(pdf.numPages,40);
+let cut=false;
+const pages=pdf.numPages;
 for(let i=1;i<=pages;i++){
 const page=await pdf.getPage(i);
 const content=await page.getTextContent();
 text+=content.items.map(it=>it.str).join(' ')+'\n';
-if(text.length>150000)break;
+if(text.length>250000){cut=true;break;}
 }
 text=text.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
 if(text.length<20)throw new Error('empty');
 const prior=await kbList();
-if(prior.some(d=>d.name===(file.name||'PDF')&&d.size===file.size))return false;
-for(const d of prior){if(d.name===(file.name||'PDF'))await kbRemove(d.id);}
-const doc={id:'k'+Date.now()+Math.floor(Math.random()*1000),name:file.name||'PDF',added:Date.now(),size:file.size||0,text:text.slice(0,150000),page:memoryPage(file.name||'PDF',text)};
+const docName=file.name||'PDF';
+if(prior.some(d=>d.name===docName&&d.size===file.size&&d.complete))return false;
+for(const d of prior){if(d.name===docName)await kbRemove(d.id);}
+const doc={id:'k'+Date.now()+Math.floor(Math.random()*1000),name:docName,added:Date.now(),size:file.size||0,pages,complete:!cut,text:text.slice(0,250000),page:memoryPage(docName,text)};
 const db=await kbOpen();
 await new Promise((res,rej)=>{
 const tx=db.transaction('docs','readwrite');
@@ -2970,43 +2972,37 @@ return await importFolderHandle(handle);
 async function knowledgeFor(query){
 let docs=[];
 try{docs=await kbList();}catch(e){return '';}
-if(!docs.length)return '';
-const q=String(query||'');
-const words=(q.toLowerCase().match(/[a-z0-9]{4,}/g)||[]).slice(0,24);
-const scored=[];
-docs.forEach(doc=>{
-const bare=doc.name.replace(/\.pdf$/i,'').toLowerCase();
-if(bare && q.toLowerCase().includes(bare))scored.push({score:50,name:doc.name,chunk:doc.text.slice(0,900)});
-const text=doc.text;
-const step=700;
-for(let i=0;i<text.length && i<20000;i+=step){
-const chunk=text.slice(i,i+900);
-const low=chunk.toLowerCase();
+const related=relatedDocs(docs,query);
+if(!related.length)return '';
+return related.map(r=>'Full text of '+r.name+':\n'+r.text).join('\n\n').slice(0,250000);
+}
+function queryWords(query){
+const skip=new Set('this that with from your yours about have what when where who whom which will just into they them their there then than also some more only been were was are and the for not but you she her his its our tell something anything please'.split(' '));
+return (String(query||'').toLowerCase().match(/[a-z0-9]{3,}/g)||[]).filter(w=>!skip.has(w)).slice(0,32);
+}
+function relatedDocs(docs,query){
+const words=queryWords(query);
+const q=String(query||'').toLowerCase();
+if(!words.length)return [];
+const need=words.length===1?1:2;
+const ranked=docs.map(doc=>{
+const name=(doc.name||'').replace(/\.pdf$/i,'').toLowerCase();
+const low=String(doc.text||'').toLowerCase();
 let score=0;
-words.forEach(w=>{if(low.includes(w))score++;});
-if(score)scored.push({score,name:doc.name,chunk});
-}
-});
-scored.sort((a,b)=>b.score-a.score);
-const seen=new Set();
-const picked=[];
-for(const s of scored){
-const key=s.name+s.chunk.slice(0,80);
-if(seen.has(key))continue;
-seen.add(key);
-picked.push(s);
-if(picked.length>=3)break;
-}
-if(!picked.length)return '';
-return picked.map(s=>'From '+s.name+':\n'+s.chunk.trim()).join('\n\n').slice(0,3000);
+if(name.length>2&&q.includes(name))score+=20;
+words.forEach(w=>{if(low.includes(w))score++;if(w.length>=4&&name.includes(w))score+=5;});
+return {doc,score};
+}).filter(x=>x.score>=need).sort((a,b)=>b.score-a.score);
+return ranked.map(x=>x.doc);
 }
 async function memoryFor(query){
 let docs=[];
 try{docs=await kbList();}catch(e){docs=[];}
-const skip=new Set('this that with from your yours about have what when where who whom which will just into they them their there then than also some more only been were was are and the for not but you she her his its our'.split(' '));
-const words=(String(query||'').toLowerCase().match(/[a-z0-9]{3,}/g)||[]).filter(w=>!skip.has(w)).slice(0,24);
+const related=relatedDocs(docs,query);
+const relatedIds=new Set(related.map(d=>d.id));
 const blocks=[];
-for(const doc of docs.slice(0,8)){
+for(const doc of docs){
+if(relatedIds.has(doc.id))continue;
 let page=doc.page||'';
 if(!page&&doc.text){
 page=memoryPage(doc.name,doc.text);
@@ -3014,26 +3010,17 @@ doc.page=page;
 kbOpen().then(db=>new Promise(res=>{const tx=db.transaction('docs','readwrite');tx.objectStore('docs').put(doc);tx.oncomplete=res;tx.onerror=res;})).catch(()=>{});
 }
 if(page)blocks.push(page);
-const text=String(doc.text||'');
-let best='',bestScore=0;
-if(words.length){
-for(let i=0;i<Math.min(text.length,80000);i+=650){
-const chunk=text.slice(i,i+900);
-const low=chunk.toLowerCase();
-let score=0;
-words.forEach(w=>{if(low.includes(w))score++;});
-if(score>bestScore){bestScore=score;best=chunk.replace(/\s+/g,' ').trim();}
 }
-}
-if(best&&bestScore>0&&page.indexOf(best.slice(0,80))<0)blocks.push((doc.name||'PDF').replace(/\.pdf$/i,'')+' — more:\n'+best.slice(0,700));
-}
+related.forEach(doc=>{
+blocks.push('Full text of '+(doc.name||'PDF')+':\n'+String(doc.text||''));
+});
 try{
 const ideas=JSON.parse(localStorage.getItem('eve_proj_ideas')||'[]');
 if(ideas.length)blocks.push('Project notes: '+ideas.slice(0,12).map(i=>i.text).join('; '));
 }catch(e){}
 const notes=(localStorage.getItem('eve_notes')||'').trim();
 if(notes)blocks.push('Notes: '+notes.slice(0,800));
-return blocks.join('\n\n').slice(0,7000);
+return blocks.join('\n\n').slice(0,250000);
 }
 function memoryPage(name,text){
 const clean=String(text||'').replace(/\s+/g,' ').trim();
