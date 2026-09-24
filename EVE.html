@@ -2434,12 +2434,26 @@ function contactById(id){return loadContacts().find(c=>c.id===id)||null;}
 function escContact(s){return String(s||'').replace(/&/g,'&'+'amp;').replace(/</g,'&'+'lt;').replace(/>/g,'&'+'gt;').replace(/"/g,'&'+'quot;');}
 function normTalk(s){return String(s||'').toLowerCase().replace(/[^a-z0-9+#]+/g,' ').replace(/\s+/g,' ').trim();}
 function findContact(name){
-let q=normTalk(name).replace(/^(?:the|my|a|an)\s+/,'').replace(/^(?:contact|person)\s+/,'').replace(/\s+(?:contact|person)$/,'').trim();
+let q=normTalk(name).replace(/^(?:the|my|a|an|our)\s+/,'').replace(/^(?:contact|person)\s+/,'').replace(/\b(?:please|thanks|thank you)\b/g,'').replace(/\s+/g,' ').trim();
 if(!q)return null;
 const list=loadContacts();
 const nameOf=c=>normTalk(c.name);
-const first=c=>nameOf(c).split(' ')[0]||'';
-return list.find(c=>nameOf(c)===q)||list.find(c=>first(c)===q)||list.find(c=>q.length>=3&&(nameOf(c).startsWith(q+' ')||first(c).startsWith(q)))||null;
+const words=c=>nameOf(c).split(' ').filter(Boolean);
+const qWords=q.split(' ').filter(Boolean);
+const exact=list.find(c=>nameOf(c)===q);
+if(exact)return exact;
+const byFirst=list.find(c=>words(c)[0]===q);
+if(byFirst)return byFirst;
+const byWords=list.filter(c=>{
+const nw=words(c);
+return qWords.length&&qWords.every(w=>nw.some(n=>n===w||(w.length>=3&&(n.startsWith(w)||w.startsWith(n)))));
+});
+if(byWords.length===1)return byWords[0];
+if(q.length>=3){
+const starts=list.filter(c=>nameOf(c).startsWith(q)||words(c).some(n=>n.startsWith(q)));
+if(starts.length===1)return starts[0];
+}
+return null;
 }
 function fillContactSelect(id){const el=document.getElementById(id);if(!el)return;el.innerHTML='<option value="">Contact</option>'+loadContacts().map(c=>'<option value="'+escContact(c.id)+'">'+escContact(c.name)+'</option>').join('');}
 function findApp(spoken){
@@ -2650,21 +2664,38 @@ const dice=lower.match(/^roll\s+(?:a\s+)?d(\d+)$/);
 if(dice){onTab('RPG',()=>{if(typeof window.quickRoll==='function')window.quickRoll(+dice[1]);});say('Rolling.');return true;}
 const rpg=lower.match(/^(?:in the game|rpg)\s+(.+)$/);
 if(rpg){onTab('RPG',()=>{setVal('rpgAction',rpg[1]);press('rpgAct');});return true;}
-const editC=lower.match(/^edit\s+contact\s+(.+)$/);
+const editC=lower.match(/\b(?:edit|change|update)\s+(?:the\s+|my\s+)?contact\s+(.+)$/);
 if(editC){
 const person=findContact(editC[1]);
-if(person){onTab('Contacts',()=>{const b=document.querySelector('[data-edit="'+person.id+'"]');if(b)b.click();});say('Editing '+person.name+'.');return true;}
+if(person){
+switchTab('Contacts');
+let tries=0;
+const openIt=()=>{
+const b=document.querySelector('[data-edit="'+person.id+'"]');
+if(b){b.click();return;}
+if(++tries<8)setTimeout(openIt,150);
+};
+setTimeout(openIt,200);
+say('Editing '+person.name+'.');
+}else{
+switchTab('Contacts');
+say('I do not have that contact.');
 }
-const remC=lower.match(/^(?:remove|delete)\s+contact\s+(.+)$/);
+return true;
+}
+const remC=lower.match(/\b(?:remove|delete)\s+(?:the\s+|my\s+)?contact\s+(.+)$/);
 if(remC){
 const person=findContact(remC[1]);
 if(person){
 const list=loadContacts().filter(c=>c.id!==person.id);
 saveContacts(list);
-onTab('Contacts',()=>{});
+switchTab('Contacts');
 say('Removed '+person.name+'.');
-return true;
+}else{
+switchTab('Contacts');
+say('I do not have that contact.');
 }
+return true;
 }
 const addApp=raw.match(/^(?:add|save)\s+(?:an?\s+)?app\s+(.+?)\s+(?:at|address)\s+(\S+)$/i);
 if(addApp){
@@ -2720,7 +2751,7 @@ if(bare){switchTab(bare);say(bare);return true;}
 return false;
 }
 function handleVoiceCommand(text){
-const raw=String(text||'').trim();
+const raw=String(text||'').replace(/^(?:hey[, ]*eve[, ]*)/i,'').trim();
 const lower=raw.toLowerCase().replace(/[?.!]+$/g,'').trim();
 if(!lower)return;
 if(voiceAct(lower,raw))return;
@@ -2929,7 +2960,10 @@ return out.slice(0,3200);
 }
 document.getElementById('chatSend').onclick=async()=>{
 primeVoice();
-const inp=document.getElementById('chatInput');const txt=inp.value.trim();if(!txt)return;addChat('user',txt);inp.value='';
+const inp=document.getElementById('chatInput');const txt=inp.value.trim();if(!txt)return;
+const cmd=txt.toLowerCase().replace(/[?.!]+$/g,'').replace(/^(?:hey[, ]*eve[, ]*)/i,'').trim();
+if(voiceAct(cmd,txt)){inp.value='';return;}
+addChat('user',txt);inp.value='';
 let full='';addChat('ai','');const idx=chat.length-1;
 const statusEl=document.getElementById('chatStatus');
 if(statusEl)statusEl.textContent='';
