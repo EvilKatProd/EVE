@@ -2396,7 +2396,7 @@ document.getElementById('voiceOutputToggle').checked=true;
 localStorage.setItem('eve_voice_output','1');
 document.getElementById('voiceOutputToggle').onchange=(e)=>localStorage.setItem('eve_voice_output',e.target.checked?'1':'0');
 function say(msg){try{speakText(msg);}catch(e){}}
-function onTab(tab,fn){switchTab(tab);setTimeout(()=>{try{fn();}catch(e){}},180);}
+function onTab(tab,fn){switchTab(tab);setTimeout(()=>{try{fn();}catch(e){}},300);}
 function setVal(id,val){const el=document.getElementById(id);if(el&&val!=null){el.value=val;el.dispatchEvent(new Event('input',{bubbles:true}));}return el;}
 function press(id){const el=document.getElementById(id);if(el)el.click();return !!el;}
 function wordsToMath(s){return String(s||'').toLowerCase().replace(/\bplus\b/g,'+').replace(/\bminus\b/g,'-').replace(/\btimes\b|\bmultiplied by\b/g,'*').replace(/\bdivided by\b/g,'/').replace(/[^0-9+\-*/().\s]/g,'').replace(/\s+/g,'');}
@@ -2419,19 +2419,45 @@ function shrinkIcon(file){return new Promise(resolve=>{const reader=new FileRead
 function loadContacts(){try{const l=JSON.parse(localStorage.getItem('eve_contacts')||'[]');return Array.isArray(l)?l:[];}catch(e){return [];}}
 function saveContacts(list){localStorage.setItem('eve_contacts',JSON.stringify(list.slice(0,200)));}
 function contactById(id){return loadContacts().find(c=>c.id===id)||null;}
+function escContact(s){return String(s||'').replace(/&/g,'&'+'amp;').replace(/</g,'&'+'lt;').replace(/>/g,'&'+'gt;').replace(/"/g,'&'+'quot;');}
+function normTalk(s){return String(s||'').toLowerCase().replace(/[^a-z0-9+#]+/g,' ').replace(/\s+/g,' ').trim();}
 function findContact(name){
-const q=String(name||'').toLowerCase().replace(/[?.!,]+$/g,'').trim();
+let q=normTalk(name).replace(/^(?:the|my|a|an)\s+/,'').replace(/^(?:contact|person)\s+/,'').replace(/\s+(?:contact|person)$/,'').trim();
 if(!q)return null;
 const list=loadContacts();
-return list.find(c=>c.name.toLowerCase()===q)||list.find(c=>q===c.name.toLowerCase().split(' ')[0])||list.find(c=>c.name.toLowerCase().includes(q))||null;
+const nameOf=c=>normTalk(c.name);
+const first=c=>nameOf(c).split(' ')[0]||'';
+return list.find(c=>nameOf(c)===q)||list.find(c=>first(c)===q)||list.find(c=>q.length>=3&&(nameOf(c).startsWith(q+' ')||first(c).startsWith(q)))||null;
 }
-function escContact(s){return String(s||'').replace(/[&<>"]/g,ch=>({'&':'&','<':'<','>':'>','"':'"'}[ch]));}
 function fillContactSelect(id){const el=document.getElementById(id);if(!el)return;el.innerHTML='<option value="">Contact</option>'+loadContacts().map(c=>'<option value="'+escContact(c.id)+'">'+escContact(c.name)+'</option>').join('');}
+function findApp(spoken){
+const q=normTalk(spoken).replace(/^(?:the|my|app)\s+/,'');
+let list=[];try{list=JSON.parse(localStorage.getItem('eve_web_apps')||'[]');}catch(e){list=[];}
+if(!Array.isArray(list)||!q)return null;
+return list.find(a=>normTalk(a.name)===q)||list.find(a=>q.length>2&&normTalk(a.name).startsWith(q))||null;
+}
+function launchApp(item){
+if(!item)return;
+let url=String(item.path||'');
+if(!/^https?:\/\//i.test(url))url='https://'+url;
+switchTab('Apps');
+window.open(url,'_blank','noopener');
+say('Opening '+item.name+'.');
+}
+function pickOption(id,spoken){
+const el=document.getElementById(id);if(!el)return false;
+const q=normTalk(spoken);
+const opt=[...el.options].find(o=>normTalk(o.value+' '+o.textContent)===q||normTalk(o.textContent).includes(q)||normTalk(o.value)===q);
+if(!opt)return false;
+el.value=opt.value;
+el.dispatchEvent(new Event('change',{bubbles:true}));
+return true;
+}
 function matchTab(spoken){
-const s=String(spoken||'').toLowerCase().replace(/\s+tab$/,'').trim();
-const aliases={'text':'Text','texts':'Text','texting':'Text','email':'Email','mail':'Email','contacts':'Contacts','contact':'Contacts','picture':'Image','pictures':'Image','photo':'Image','photos':'Image','image':'Image','song':'Music','songs':'Music','music':'Music','video':'Video','videos':'Video','call':'Call','video call':'Call','video chat':'Call','recipe':'Recipes','recipes':'Recipes','cookbook':'Recipes','map':'Maps','maps':'Maps','to do':'To Do','todo':'To Do','to-do':'To Do','tasks':'To Do','task':'To Do','note':'Notes','notes':'Notes','code':'Code Lab','code lab':'Code Lab','coding':'Code Lab','calculator':'Calculator','calc':'Calculator','math':'Calculator','youtube':'YouTube','spotify':'Spotify','browser':'Browser','web':'Browser','weather':'Weather','forecast':'Weather','alarm':'Alarms','alarms':'Alarms','story':'Stories','stories':'Stories','health':'Health','legal':'Legal','focus':'Focus','timer':'Focus','calendar':'Calendar','search':'Search','apps':'Apps','knowledge':'Knowledge','projects':'Projects','rpg':'RPG','game':'RPG','brain':'Brain','tools':'Tools','comics':'Comics','comic':'Comics','media':'Media','movies':'Media'};
+let s=normTalk(spoken).replace(/^(?:the|my)\s+/,'').replace(/\s+tab$/,'');
+const aliases={'text':'Text','texts':'Text','texting':'Text','sms':'Text','email':'Email','mail':'Email','contacts':'Contacts','contact':'Contacts','apps':'Apps','app list':'Apps','picture':'Image','pictures':'Image','photo':'Image','photos':'Image','image':'Image','images':'Image','song':'Music','songs':'Music','music':'Music','video':'Video','videos':'Video','call':'Call','video call':'Call','video chat':'Call','recipe':'Recipes','recipes':'Recipes','cookbook':'Recipes','map':'Maps','maps':'Maps','to do':'To Do','todo':'To Do','to dos':'To Do','tasks':'To Do','task':'To Do','note':'Notes','notes':'Notes','code':'Code Lab','code lab':'Code Lab','codelab':'Code Lab','code-lab':'Code Lab','coding':'Code Lab','calculator':'Calculator','calc':'Calculator','math':'Calculator','youtube':'YouTube','spotify':'Spotify','browser':'Browser','web':'Browser','weather':'Weather','forecast':'Weather','alarm':'Alarms','alarms':'Alarms','story':'Stories','stories':'Stories','health':'Health','legal':'Legal','focus':'Focus','timer':'Focus','calendar':'Calendar','search':'Search','knowledge':'Knowledge','projects':'Projects','project':'Projects','rpg':'RPG','game':'RPG','adventure':'RPG','brain':'Brain','tools':'Tools','comics':'Comics','comic':'Comics','media':'Media','movies':'Media'};
 if(aliases[s])return aliases[s];
-return TABS.find(t=>t.toLowerCase()===s)||TABS.find(t=>s&&(t.toLowerCase().includes(s)||s.includes(t.toLowerCase())));
+return TABS.find(t=>normTalk(t)===s)||null;
 }
 function voiceAct(lower,raw){
 const addContact=raw.match(/^(?:add|save)\s+contact\s+(.+)$/i);
@@ -2451,34 +2477,43 @@ say('Saved '+name+'.');
 return true;
 }
 }
-if(/\be-?mail\b/.test(lower)&&!/^(?:open|go to|switch to|show)\b/.test(lower)){
+if(/\be-?mail\b/.test(lower)&&!/^(?:open|go to|switch to|show|launch)\b/.test(lower)){
 const em=raw.match(/[\w.+-]+@[\w.-]+\.\w+/);
 const who=(raw.match(/\be-?mail\s+(?:to\s+)?(.+?)(?=\s+(?:subject|saying|message|that|about)\b|$)/i)||[])[1]||'';
 const person=em?null:findContact(who);
 const to=em?em[0]:(person&&person.email)||'';
-if(to){
 const subj=(raw.match(/\bsubject\s+(.+?)(?=\s+(?:saying|message|that)\s+|$)/i)||[])[1]||'';
 const body=(raw.match(/\b(?:saying|message|that)\s+(.+)$/i)||[])[1]||subj;
-onTab('Email',()=>{setVal('emailTo',to);setVal('emailSubject',subj.trim());setVal('emailBody',body.trim());press('emailSendBtn');});
-say('Opening email.');
+if(person||to){
+onTab('Email',()=>{
+if(person){const sel=document.getElementById('emailContact');if(sel)sel.value=person.id;showContactIcon('emailContactIcon',person);}
+if(to)setVal('emailTo',to);
+setVal('emailSubject',subj.trim());
+setVal('emailBody',(body||'').trim());
+if(to)press('emailSendBtn');
+});
+say(to?'Opening email for '+(person?person.name:to)+'.':(person?person.name+' has no email saved.':'Opening email.'));
 return true;
 }
 }
-const textCmd=lower.match(/^(?:send\s+)?(?:a\s+)?text(?:\s+message)?\s+(?:to\s+)?(.+)$/);
+const textCmd=lower.match(/^(?:send\s+)?(?:a\s+)?(?:text|sms)(?:\s+message)?\s+(?:to\s+)?(.+)$/)||lower.match(/^message\s+(?:to\s+)?(.+)$/);
 if(textCmd){
 const said=(raw.match(/\b(?:saying|that|message)\s+(.+)$/i)||[])[1]||'';
 const who=textCmd[1].replace(/\s+(?:saying|that|message)\b[\s\S]*$/,'').trim();
 const nums=who.match(/(\+?\d[\d\s().-]{6,}\d)/);
 const person=nums?null:findContact(who);
 const phone=nums?nums[1]:(person&&person.phone)||'';
-if(phone){
-onTab('Text',()=>{setVal('textPhone',phone);setVal('textBody',said.trim());if(said.trim())press('textSendBtn');});
-say(said.trim()?'The words are filled in. Press the send arrow in WhatsApp.':'What should it say?');
+if(!person&&!phone&&/^message\b/.test(lower)){}
+else{
+onTab('Text',()=>{
+if(person){const sel=document.getElementById('textContact');if(sel)sel.value=person.id;showContactIcon('textContactIcon',person);}
+if(phone)setVal('textPhone',phone);
+if(said.trim())setVal('textBody',said.trim());
+if(phone&&said.trim())press('textSendBtn');
+});
+say(phone?(said.trim()?'Filled in for '+(person?person.name:phone)+'. Press the send arrow.':(person?person.name+' is ready.': 'Number ready.')):(person?person.name+' has no number saved.':'I do not have a number for that.'));
 return true;
 }
-onTab('Text',()=>{});
-say('I do not have a number for that.');
-return true;
 }
 const rec=lower.match(/^(?:make|create|write|cook)\s+(?:me\s+)?(?:an?\s+)?(?:allium[- ]free\s+)?recipe(?:\s+for)?\s*(.*)$/);
 if(rec){
@@ -2488,17 +2523,23 @@ say('Writing a recipe.');
 return true;
 }
 if(/^save (?:this |the )?recipe$/.test(lower)){onTab('Recipes',()=>press('recipeSave'));say('Saving it.');return true;}
-const startCall=lower.match(/^(?:start|begin|make)\s+(?:a\s+)?(?:video\s+)?(?:call|video chat)(?:\s+(?:with|named|called)\s+(.+))?$/);
-if(startCall){
-const person=startCall[1]?findContact(startCall[1]):null;
-const name=person?person.name:(startCall[1]||'');
-onTab('Call',()=>{if(name)setVal('callName',name);press('callStart');});
-say('Starting the call.');
-return true;
-}
 if(/^copy (?:the )?call link$/.test(lower)){onTab('Call',()=>press('callCopy'));return true;}
 const joinCall=lower.match(/^join (?:the )?call\s+(.+)$/);
 if(joinCall){onTab('Call',()=>{setVal('callJoin',joinCall[1]);press('callJoinBtn');});say('Joining.');return true;}
+const startCall=lower.match(/^(?:please\s+)?(?:start|begin|make\s+)?(?:a\s+)?(?:video\s*chat|video\s*call|call)\s+(?:with|to|named|called)?\s*(.+)$/);
+if(startCall&&!/^call\s+(?:me|you|it|this|that)\b/.test(lower)){
+const person=findContact(startCall[1]);
+const name=person?person.name:startCall[1];
+if(person||/\bvideo\b/.test(lower)||/^call\s+with\b/.test(lower)||/^(?:start|begin|make)\b/.test(lower)){
+onTab('Call',()=>{
+if(person){const sel=document.getElementById('callContact');if(sel)sel.value=person.id;showContactIcon('callContactIcon',person);}
+if(name)setVal('callName',name);
+press('callStart');
+});
+say('Starting a video chat'+(person?' with '+person.name:'')+'.');
+return true;
+}
+}
 const pic=lower.match(/^(?:make|create|generate|draw)\s+(?:me\s+)?(?:a\s+)?(?:picture|image|photo)\s+(?:of\s+)?(.+)$/);
 if(pic){onTab('Image',()=>{setVal('imgPrompt',pic[1]);press('genFree');});say('Making that picture.');return true;}
 const song=lower.match(/^(?:make|create|compose|generate)\s+(?:me\s+)?(?:a\s+)?(?:song|track|piece of music)(?:\s+(?:about|of|for)\s+)?(.*)$/);
@@ -2584,31 +2625,86 @@ return true;
 }
 if(/^(?:write\s+)?(?:the\s+)?next chapter$/.test(lower)){onTab('Stories',()=>press('storyNextBtn'));say('Writing the next chapter.');return true;}
 if(/^(?:export|save)\s+(?:the\s+)?story(?:\s+as\s+a\s+pdf)?$/.test(lower)){onTab('Stories',()=>press('storyPdfBtn'));say('Saving the story.');return true;}
+const codeLang=lower.match(/^(?:set\s+)?(?:code\s*lab\s+)?language\s+(?:to\s+)?(.+)$/);
+if(codeLang){onTab('Code Lab',()=>{pickOption('codeLang',codeLang[1]);});say('Language set.');return true;}
+const codeMode=lower.match(/^(?:set\s+)?code\s*lab\s+(?:mode\s+)?(?:to\s+)?(generate|explain|fix|convert)$/);
+if(codeMode){onTab('Code Lab',()=>{pickOption('codeMode',codeMode[1]);});say(codeMode[1]);return true;}
 const code=lower.match(/^(?:write|make|generate)\s+(?:some\s+)?(?:python\s+|javascript\s+|html\s+)?code\s+(?:for|to|that)\s+(.+)$/);
 if(code){onTab('Code Lab',()=>{setVal('codePrompt',code[1]);press('genCode');});say('Writing that.');return true;}
 if(/^run (?:the )?code$/.test(lower)){onTab('Code Lab',()=>press('runCode'));say('Running it.');return true;}
+if(/^copy (?:the )?code$/.test(lower)){onTab('Code Lab',()=>press('copyCode'));say('Copied.');return true;}
+if(/^download (?:the )?code$/.test(lower)){onTab('Code Lab',()=>press('downloadCode'));say('Downloading.');return true;}
 const dice=lower.match(/^roll\s+(?:a\s+)?d(\d+)$/);
 if(dice){onTab('RPG',()=>{if(typeof window.quickRoll==='function')window.quickRoll(+dice[1]);});say('Rolling.');return true;}
 const rpg=lower.match(/^(?:in the game|rpg)\s+(.+)$/);
 if(rpg){onTab('RPG',()=>{setVal('rpgAction',rpg[1]);press('rpgAct');});return true;}
-const app=lower.match(/^open (?:the )?app\s+(.+)$/);
-if(app){
-onTab('Apps',()=>{
-const want=app[1].toLowerCase();
-const hit=[...document.querySelectorAll('#appsList .card')].find(c=>(c.textContent||'').toLowerCase().includes(want));
-const btn=hit&&hit.querySelector('[data-open]');
-if(btn)btn.click();
-});
-say('Opening it.');
+const editC=lower.match(/^edit\s+contact\s+(.+)$/);
+if(editC){
+const person=findContact(editC[1]);
+if(person){onTab('Contacts',()=>{const b=document.querySelector('[data-edit="'+person.id+'"]');if(b)b.click();});say('Editing '+person.name+'.');return true;}
+}
+const remC=lower.match(/^(?:remove|delete)\s+contact\s+(.+)$/);
+if(remC){
+const person=findContact(remC[1]);
+if(person){
+const list=loadContacts().filter(c=>c.id!==person.id);
+saveContacts(list);
+onTab('Contacts',()=>{});
+say('Removed '+person.name+'.');
 return true;
 }
+}
+const addApp=raw.match(/^(?:add|save)\s+(?:an?\s+)?app\s+(.+?)\s+(?:at|address)\s+(\S+)$/i);
+if(addApp){
+const list=(()=>{try{return JSON.parse(localStorage.getItem('eve_web_apps')||'[]');}catch(e){return [];}})();
+list.push({name:addApp[1].trim(),path:addApp[2].trim()});
+localStorage.setItem('eve_web_apps',JSON.stringify(list));
+onTab('Apps',()=>{});
+say('Saved '+addApp[1].trim()+'.');
+return true;
+}
+const namedApp=lower.match(/^(?:open|launch|start)\s+(?:the\s+)?(?:app\s+)?(.+)$/);
+if(namedApp){
+const said=namedApp[1];
+const tabHit=matchTab(said);
+const appHit=findApp(said);
+if(appHit&&(!tabHit||normTalk(appHit.name)===normTalk(said))){launchApp(appHit);return true;}
+if(tabHit){switchTab(tabHit);say(tabHit);return true;}
+}
+const mlen=lower.match(/^(?:set\s+)?music\s+(?:length|style)\s+(?:to\s+)?(short|medium|long|tune|melody)$/);
+if(mlen){const word=mlen[1]==='tune'||mlen[1]==='melody'?'melody':mlen[1]==='long'?'large':mlen[1]==='medium'?'medium':'small';onTab('Music',()=>{pickOption('musicModelSize',word);});say('Set.');return true;}
+const proj=lower.match(/^(?:open\s+)?(?:the\s+)?(idea sorter|workflow(?: mapper)?|priority(?: matrix)?|decision log|checklists?|timeline(?: planner)?|resources?(?: tracker)?)$/);
+if(proj){
+const key=proj[1];
+const sub=/idea/.test(key)?'ideaSorter':/workflow/.test(key)?'workflowMapper':/priority/.test(key)?'priorityMatrix':/decision/.test(key)?'decisionLog':/check/.test(key)?'checklistBuilder':/timeline/.test(key)?'timelinePlanner':'resourceTracker';
+onTab('Projects',()=>{const b=document.querySelector('.projSubBtn[data-sub="'+sub+'"]');if(b)b.click();});
+say('Opened.');
+return true;
+}
+if(/^(?:calendar\s+)?(?:next|previous|last)\s+month$/.test(lower)){onTab('Calendar',()=>press(/\bnext\b/.test(lower)?'calNext':'calPrev'));return true;}
+const adv=lower.match(/^(?:begin|start)\s+(?:an?\s+)?([a-z0-9 -]+?\s+)?adventure(?:\s+as\s+(.+?))?(?:\s+in\s+(.+))?$/);
+if(adv){
+onTab('RPG',()=>{
+if(adv[1])pickOption('rpgGenre',adv[1]);
+if(adv[2])setVal('rpgChar',adv[2]);
+if(adv[3])setVal('rpgLoc',adv[3]);
+press('rpgBegin');
+});
+say('Starting the adventure.');
+return true;
+}
+if(/^try (?:a )?reply$/.test(lower)||/^brain test$/.test(lower)){onTab('Brain',()=>press('brainTest'));say('Trying.');return true;}
+if(/^export(?: my)? data$/.test(lower)){onTab('Brain',()=>press('exportData'));say('Exporting.');return true;}
 const pin=lower.match(/^(?:set|change)\s+(?:my\s+)?pin\s+(?:to\s+)?(\d{4,8})$/);
 if(pin){onTab('Brain',()=>{setVal('newPinInput',pin[1]);press('setPinBtn');});say('Pin saved.');return true;}
 if(/^use (?:the )?internet$/.test(lower)||/^brain online$/.test(lower)){onTab('Brain',()=>{const el=document.getElementById('brainMode');if(el){el.value='online';el.dispatchEvent(new Event('change',{bubbles:true}));}});say('Using the internet.');return true;}
 if(/^this computer only$/.test(lower)||/^brain offline$/.test(lower)){onTab('Brain',()=>{const el=document.getElementById('brainMode');if(el){el.value='ollama';el.dispatchEvent(new Event('change',{bubbles:true}));}});say('Using this computer.');return true;}
 if(/^(?:pause|stop playing)$/.test(lower)){document.querySelectorAll('audio,video').forEach(a=>{try{a.pause();}catch(e){}});say('Paused.');return true;}
-const nav=lower.match(/^(?:open|go to|switch to|show|show me)\s+(?:the\s+)?(.+?)(?:\s+tab)?$/);
-if(nav){const found=matchTab(nav[1]);if(found){switchTab(found);say(found);return true;}}
+if(/^youtube small window$/.test(lower)||/^open youtube\.com$/.test(lower)){onTab('YouTube',()=>press(lower.includes('small')?'ytPop':'ytSite'));return true;}
+if(/^browser small window$/.test(lower)){onTab('Browser',()=>press('bPop'));return true;}
+if(/^spotify small window$/.test(lower)){onTab('Spotify',()=>press('spotifyPop'));return true;}
+const bare=matchTab(lower);
+if(bare){switchTab(bare);say(bare);return true;}
 return false;
 }
 function handleVoiceCommand(text){
