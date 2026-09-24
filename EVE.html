@@ -2335,15 +2335,16 @@ if(w)w.checked=(voiceMode==='wake');
 }
 let micStream=null;
 function setVoiceMode(mode){
-if(window._eveRec){try{window._eveRec.onend=null;window._eveRec.onerror=null;window._eveRec.stop();}catch(e){}window._eveRec=null;}
+if(window._eveRec){try{window._eveRec.onend=null;window._eveRec.onerror=null;window._eveRec.onstart=null;window._eveRec.stop();}catch(e){}window._eveRec=null;}
+if(micStream){try{micStream.getTracks().forEach(t=>t.stop());}catch(e){}micStream=null;}
 if(mode==='off'){voiceMode='off';updateMicButton();return;}
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 if(!SR){voiceMode='off';updateMicButton();return;}
-const arm=()=>{
 const rec=new SR();
 rec.continuous=true;
 rec.interimResults=true;
 rec.lang='en-US';
+let heardStart=false,startedAt=0,starting=false,restarts=0,restartWindow=Date.now();
 rec.onresult=(ev)=>{
 let interim='',final='';
 for(let i=ev.resultIndex;i<ev.results.length;i++){
@@ -2365,30 +2366,41 @@ handleVoiceCommand(said);
 };
 rec.onerror=(e)=>{
 const err=e&&e.error;
-if(err==='not-allowed'||err==='audio-capture'||err==='service-not-allowed'){
+if(err==='not-allowed'||err==='audio-capture'||err==='service-not-allowed'||err==='aborted'){
 voiceMode='off';
 if(window._eveRec===rec)window._eveRec=null;
 updateMicButton();
 }
 };
+rec.onstart=()=>{starting=false;heardStart=true;startedAt=Date.now();};
 rec.onend=()=>{
+starting=false;
 if(voiceMode==='off'||window._eveRec!==rec)return;
+if(!heardStart||Date.now()-startedAt<1500){
+voiceMode='off';
+window._eveRec=null;
+updateMicButton();
+return;
+}
+if(Date.now()-restartWindow>20000){restarts=0;restartWindow=Date.now();}
+if(++restarts>1){
+voiceMode='off';
+window._eveRec=null;
+updateMicButton();
+return;
+}
+heardStart=false;
 setTimeout(()=>{
-if(voiceMode==='off'||window._eveRec!==rec)return;
-try{rec.start();}catch(err){}
-},500);
+if(voiceMode==='off'||window._eveRec!==rec||starting)return;
+starting=true;
+try{rec.start();}catch(err){starting=false;voiceMode='off';window._eveRec=null;updateMicButton();}
+},800);
 };
 window._eveRec=rec;
 voiceMode=mode;
-try{rec.start();}catch(e){voiceMode='off';window._eveRec=null;}
 updateMicButton();
-};
-const go=()=>arm();
-if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
-const live=micStream&&micStream.getAudioTracks().some(t=>t.readyState==='live');
-if(live){go();return;}
-navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{micStream=stream;go();}).catch(()=>{voiceMode='off';updateMicButton();});
-}else go();
+starting=true;
+try{rec.start();}catch(e){starting=false;voiceMode='off';window._eveRec=null;updateMicButton();}
 }
 document.getElementById('micBtn').onclick=()=>{setVoiceMode(voiceMode==='manual'?'off':'manual');};
 document.getElementById('wakeWordToggle').onchange=(e)=>{setVoiceMode(e.target.checked?'wake':'off');};
