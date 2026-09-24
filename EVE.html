@@ -699,14 +699,14 @@ if(t==='Brain')html=`<h3>Brain</h3>
 <div style="display:flex;gap:8px;flex-wrap:wrap"><button class=secondary id=exportData>Save a copy</button><input type=file id=importFile accept="application/json" style="display:none"><button class=secondary id=importDataBtn>Bring a copy back</button></div>
 <div style="font-size:11px;color:var(--muted);margin-top:4px;text-align:left">Bringing a copy back replaces what is here now.</div>`;
 else if(t==='Email')html=`<h3>Email</h3>
-<select id=emailContact></select>
+<div style="display:flex;gap:8px;align-items:center"><select id=emailContact style="flex:1"></select><img id=emailContactIcon alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;display:none"></div>
 <input id=emailTo placeholder="To">
 <input id=emailSubject placeholder="Subject">
 <textarea id=emailBody rows=8 placeholder="Message"></textarea>
 <button class=primary id=emailSendBtn style="width:100%">Send</button>
 <div id=emailSendStatus style="font-size:11px;color:var(--muted);margin-top:6px;text-align:left"></div>`;
 else if(t==='Text')html=`<h3>Text</h3>
-<select id=textContact></select>
+<div style="display:flex;gap:8px;align-items:center"><select id=textContact style="flex:1"></select><img id=textContactIcon alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;display:none"></div>
 <input id=textPhone placeholder="Phone number">
 <textarea id=textBody rows=4 placeholder="Message"></textarea>
 <button class=primary id=textSendBtn style="width:100%">Send Text</button>
@@ -715,6 +715,7 @@ else if(t==='Contacts')html=`<h3>Contacts</h3>
 <input id=contactName placeholder="Name">
 <input id=contactPhone placeholder="Phone">
 <input id=contactEmail placeholder="Email">
+<input id=contactIcon type=file accept="image/*">
 <button class=primary id=contactSave style="width:100%">Save contact</button>
 <div id=contactList style="text-align:left;margin-top:10px"></div>`;
 else if(t==='Apps')html=`<h3>Apps</h3>
@@ -749,7 +750,7 @@ else if(t==='Music')html=`<h3>Music Generation</h3>
 <button class=primary id=musicGenBtn style="width:100%">Generate</button>
 <div id=musicStatus style="font-size:11px;color:var(--muted);margin:8px 0"></div>
 <div id=musicResult></div>`;
-else if(t==='Video')html=`<h3>Video</h3><select id=videoContact></select><button class=secondary id=videoCallBtn style="width:100%">Video call</button><input id=videoPrompt placeholder="Describe the clip"><input id=videoImage type=file accept="image/*"><label style="display:flex;align-items:center;gap:6px;font-size:12px">Seconds <input type=number id=videoSeconds value=4 min=2 max=8 style="width:80px"></label><button class=primary id=videoGen style="width:100%">Generate</button><div id=videoStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div><div id=videoResult></div>`;
+else if(t==='Video')html=`<h3>Video</h3><div style="display:flex;gap:8px;align-items:center"><select id=videoContact style="flex:1"></select><img id=videoContactIcon alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;display:none"></div><button class=secondary id=videoCallBtn style="width:100%">Video call</button><input id=videoPrompt placeholder="Describe the clip"><input id=videoImage type=file accept="image/*"><label style="display:flex;align-items:center;gap:6px;font-size:12px">Seconds <input type=number id=videoSeconds value=4 min=2 max=8 style="width:80px"></label><button class=primary id=videoGen style="width:100%">Generate</button><div id=videoStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div><div id=videoResult></div>`;
 else if(t==='Spotify')html=`<h3>Spotify</h3><input id=spotifyInput placeholder="Song, artist, or a Spotify link"><div style="display:flex;gap:8px"><button class=primary id=spotifySave style="flex:1">Play here</button><button class=secondary id=spotifyPop>Small window</button></div><iframe id=spotifyFrame allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M" style="width:100%;height:380px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><audio id=spotifyAudio controls style="width:100%;margin-top:8px;display:none"></audio><div id=spotifyPicks></div><div id=spotifyBox style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
 else if(t==='YouTube')html=`<h3>YouTube</h3><input id=ytSearch placeholder="Search YouTube"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class=primary id=ytGo style="flex:1">Play here</button><button class=secondary id=ytPop>Small window</button><button class=secondary id=ytSite>YouTube.com</button></div><input id=ytUrl placeholder="YouTube link"><button class=primary id=ytEmbed style="width:100%">Play this link</button><div id=ytPicks></div><iframe id=ytFrame allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="width:100%;height:360px;border:0;border-radius:10px;margin-top:8px;background:#111"></iframe><div id=ytStatus style="font-size:11px;color:var(--muted);margin-top:6px"></div>`;
 else if(t==='Browser')html=`<h3>Browser</h3><div style="display:flex;gap:8px"><input id=bUrl value="https://en.wikipedia.org/wiki/Moon" placeholder="Address"><button class=primary id=bGo>Open</button><button class=secondary id=bPop>Small window</button></div><iframe id=bFrame style="width:100%;height:420px;background:#fff;border:0;border-radius:10px;margin-top:8px" src="https://en.wikipedia.org/wiki/Moon"></iframe><div id=bRead style="text-align:left;white-space:pre-wrap;margin-top:8px"></div>`;
@@ -844,7 +845,7 @@ else if(t==='Recipes')html=`<h3>Recipes</h3>
 <h4 style="text-align:left;margin:16px 0 6px">Cookbook</h4>
 <div id=cookbookList style="text-align:left"></div>`;
 else if(t==='Call')html=`<h3>Call</h3>
-<select id=callContact></select>
+<div style="display:flex;gap:8px;align-items:center"><select id=callContact style="flex:1"></select><img id=callContactIcon alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;display:none"></div>
 <input id=callName placeholder="Name this call (optional)">
 <button class=primary id=callStart style="width:100%">Start call</button>
 <div id=callLink style="font-size:12px;text-align:left;word-break:break-all;margin-top:8px"></div>
@@ -946,7 +947,7 @@ e.target.value='';
 }
 if(t==='Email'){
 fillContactSelect('emailContact');
-document.getElementById('emailContact').onchange=()=>{const c=contactById(document.getElementById('emailContact').value);if(c&&c.email)document.getElementById('emailTo').value=c.email;};
+document.getElementById('emailContact').onchange=()=>{const c=contactById(document.getElementById('emailContact').value);if(c&&c.email)document.getElementById('emailTo').value=c.email;showContactIcon('emailContactIcon',c);};
 document.getElementById('emailSendBtn').onclick=()=>{
 const to=document.getElementById('emailTo').value.trim();
 const subject=document.getElementById('emailSubject').value.trim();
@@ -964,36 +965,43 @@ popOver(url);
 }
 if(t==='Text'){
 fillContactSelect('textContact');
-document.getElementById('textContact').onchange=()=>{const c=contactById(document.getElementById('textContact').value);if(c&&c.phone)document.getElementById('textPhone').value=c.phone;};
+document.getElementById('textContact').onchange=()=>{const c=contactById(document.getElementById('textContact').value);if(c&&c.phone)document.getElementById('textPhone').value=c.phone;showContactIcon('textContactIcon',c);};
 document.getElementById('textSendBtn').onclick=()=>{
 let digits=document.getElementById('textPhone').value.replace(/\D/g,'');
 const body=document.getElementById('textBody').value||'';
 const status=document.getElementById('textSendStatus');
 if(digits.length===10)digits='1'+digits;
 if(digits.length<11){status.textContent='Enter the phone number.';return;}
-const url='https://wa.me/'+digits+'?text='+encodeURIComponent(body);
-const win=window.open(url,'_blank');
+const url='https://web.whatsapp.com/send?phone='+digits+'&text='+encodeURIComponent(body)+'&type=phone_number&app_absent=1';
+const win=window.open(url,'eveText');
 if(win)win.focus();
-status.textContent=win?'The words are only filled in. Press the send arrow in WhatsApp.':'The window was blocked.';
+status.textContent=win?'Press the send arrow in WhatsApp.':'The window was blocked.';
 };
 }
 if(t==='Contacts'){
 let list=loadContacts();
 function renderContacts(){
-document.getElementById('contactList').innerHTML=list.map(c=>`<div class=card><b>${escContact(c.name)}</b><div style="font-size:12px">${escContact(c.phone||'')}${c.phone&&c.email?' · ':''}${escContact(c.email||'')}</div><button class=secondary data-del="${escContact(c.id)}">Remove</button></div>`).join('')||'<div style="color:var(--muted)">No contacts yet.</div>';
+document.getElementById('contactList').innerHTML=list.map(c=>{
+const pic=/^data:image\//.test(c.icon||'')?'<img src="'+c.icon+'" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;margin-right:8px;vertical-align:middle">':'';
+return `<div class=card>${pic}<b>${escContact(c.name)}</b><div style="font-size:12px">${escContact(c.phone||'')}${c.phone&&c.email?' · ':''}${escContact(c.email||'')}</div><button class=secondary data-del="${escContact(c.id)}">Remove</button></div>`;
+}).join('')||'<div style="color:var(--muted)">No contacts yet.</div>';
 document.getElementById('contactList').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{list=list.filter(c=>c.id!==b.getAttribute('data-del'));saveContacts(list);renderContacts();});
 }
 renderContacts();
-document.getElementById('contactSave').onclick=()=>{
+document.getElementById('contactSave').onclick=async()=>{
 const name=document.getElementById('contactName').value.trim();
 const phone=document.getElementById('contactPhone').value.trim();
 const email=document.getElementById('contactEmail').value.trim();
+const file=document.getElementById('contactIcon').files[0];
 if(!name)return;
+let icon='';
+if(file)icon=await shrinkIcon(file);
 const existing=list.find(c=>c.name.toLowerCase()===name.toLowerCase());
-if(existing){if(phone)existing.phone=phone;if(email)existing.email=email;}
-else list.unshift({id:'c'+Date.now(),name,phone,email});
+if(existing){if(phone)existing.phone=phone;if(email)existing.email=email;if(icon)existing.icon=icon;}
+else list.unshift({id:'c'+Date.now(),name,phone,email,icon});
 saveContacts(list);list=loadContacts();
 ['contactName','contactPhone','contactEmail'].forEach(id=>document.getElementById(id).value='');
+document.getElementById('contactIcon').value='';
 renderContacts();
 };
 }
@@ -1220,6 +1228,7 @@ popOver('https://www.youtube.com/results?search_query='+encodeURIComponent(q));
 }
 if(t==='Video'){
 fillContactSelect('videoContact');
+document.getElementById('videoContact').onchange=()=>{const c=contactById(document.getElementById('videoContact').value);showContactIcon('videoContactIcon',c);};
 document.getElementById('videoCallBtn').onclick=()=>{
 const c=contactById(document.getElementById('videoContact').value);
 const status=document.getElementById('videoStatus');
@@ -1750,7 +1759,7 @@ status.textContent='Ready. This one has no allium.';
 }
 if(t==='Call'){
 fillContactSelect('callContact');
-document.getElementById('callContact').onchange=()=>{const c=contactById(document.getElementById('callContact').value);if(c)document.getElementById('callName').value=c.name;};
+document.getElementById('callContact').onchange=()=>{const c=contactById(document.getElementById('callContact').value);if(c)document.getElementById('callName').value=c.name;showContactIcon('callContactIcon',c);};
 function openCall(raw){
 let url=String(raw||'').trim();
 if(!url)return '';
@@ -2375,6 +2384,8 @@ if(ap){if(ap[1]==='pm'&&h<12)h+=12;if(ap[1]==='am'&&h===12)h=0;}
 if(h>23||m>59)return '';
 return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
 }
+function showContactIcon(imgId,c){const img=document.getElementById(imgId);if(!img)return;if(c&&/^data:image\//.test(c.icon||'')){img.src=c.icon;img.style.display='block';}else{img.removeAttribute('src');img.style.display='none';}}
+function shrinkIcon(file){return new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>{const im=new Image();im.onload=()=>{const canvas=document.createElement('canvas');canvas.width=64;canvas.height=64;const s=Math.min(im.width,im.height);canvas.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,64,64);resolve(canvas.toDataURL('image/jpeg',0.7));};im.onerror=()=>resolve('');im.src=reader.result;};reader.onerror=()=>resolve('');reader.readAsDataURL(file);});}
 function loadContacts(){try{const l=JSON.parse(localStorage.getItem('eve_contacts')||'[]');return Array.isArray(l)?l:[];}catch(e){return [];}}
 function saveContacts(list){localStorage.setItem('eve_contacts',JSON.stringify(list.slice(0,200)));}
 function contactById(id){return loadContacts().find(c=>c.id===id)||null;}
