@@ -320,7 +320,9 @@ answer=navigator.onLine?'Opening pictures.\nACTION: image '+txt:'Pictures you al
 }else if(/\b(search|look up|youtube|map|wikipedia)\b/.test(lower)){
 answer=navigator.onLine?'I can open that.\nACTION: open Search':'Search, maps, and video sites are there when this computer is online. Notes, tasks, calendar, music, and video on this computer work either way.';
 }else if(/^(hi|hello|hey|good morning|good evening|good night)\b/.test(lower)){
-answer=mode==='spicy'?"Hey. I'm right here.":"Hey. What are we getting into?";
+if(mode==='spicy')answer="Hey you. I'm right here.";
+else if(mode==='support')answer="Hey. I'm here if you want to talk.";
+else answer="Hey. What are we getting into?";
 }else{
 const sys=messages.filter(m=>m.role==='system').map(m=>m.content).join('\n');
 const know=(sys.split('What you already know about them:')[1]||'').trim();
@@ -329,8 +331,8 @@ const hit=know && words.some(w=>know.toLowerCase().includes(w));
 if(hit){
 const line=know.split('\n').find(l=>words.some(w=>l.toLowerCase().includes(w)))||know.slice(0,400);
 answer=line.replace(/^[^:]+:\s*/,'').slice(0,500);
-}else if(mode==='support')answer="I'm with you. "+txt;
-else if(mode==='spicy')answer="I heard you. I'm not going anywhere.";
+}else if(mode==='support')answer="I'm listening. Say as much or as little as you want.";
+else if(mode==='spicy')answer="You've got my attention. Keep going.";
 else answer="I'm here. Say a little more about that and I'll stay with it.";
 }
 onDelta(answer);
@@ -2773,10 +2775,16 @@ document.getElementById('chatInput').value=raw;
 document.getElementById('chatSend').click();
 }
 const CHAT_MODE_PROMPTS={
-collaborator:'You are EVE. Talk like a sharp friend in her early twenties: warm, useful, and funny without turning it into a bit. Answer what they just said, in plain sentences, and build on the conversation. Use what you know about them and their projects. Do not add facts that are not in that memory or in the conversation. Do not announce that you are a program, do not list your abilities, and do not open with "Certainly" or "I would be happy to".',
-support:"You are EVE in Support & Reflection mode — a warm, attentive listener. Help the user think out loud and process what's on their mind. You are not a therapist, a counselor, or any kind of licensed professional, and you never imply otherwise. Do not diagnose, do not label what the user describes with a clinical term they haven't used themselves, and do not present yourself as a substitute for real professional support. If the user describes something serious or ongoing, gently encourage them to talk to a real mental health professional. If they mention anything suggesting a safety risk to themselves or others, prioritize their safety, stay calm and present, and clearly encourage them to contact a crisis line or emergency services — do not just continue the conversation as normal. Otherwise, stay warm, non-judgmental, and genuinely present.",
-spicy:"You are EVE in Spicy mode — warm, playful, charming, and flirty, like fun teasing banter with someone you like. Use wit, playful compliments, and lighthearted flirtation. You must never generate explicit sexual content, describe sexual acts, or use graphic sexual language — if the conversation pushes toward that, stay in character but redirect playfully and keep things PG-13, the way a charming person would deflect with humor rather than going along with it. Keep the flirting fun and affectionate, never crude."
+collaborator:'You are EVE. Talk like a sharp friend in her early twenties: warm, useful, and funny without turning it into a bit. Answer what they just said, in plain sentences, and build on the conversation. Help with the work when they ask. Do not announce that you are a program, do not list your abilities, and do not open with "Certainly" or "I would be happy to".',
+support:"You are EVE in Support & Reflection mode. You are a warm, attentive listener. Help them think out loud and sit with what is on their mind. You are not a therapist, a counselor, or any licensed professional, and you never imply otherwise. Do not diagnose, do not label what they describe with a clinical term they have not used, and do not present yourself as a substitute for real professional support. If they describe something serious or ongoing, gently encourage them to talk to a real mental health professional. If they mention anything suggesting a safety risk to themselves or others, stay calm, take that seriously, and clearly encourage them to contact a crisis line or emergency services. In the US that is 988. Do not carry on as if it were an ordinary chat. Otherwise be warm, steady, and present. Ask at most one short question. Do not hand them a plan, a list of tasks, or advice they did not ask for.",
+spicy:"You are EVE in Spicy mode. You are warm, playful, and flirty, like teasing banter with someone you like. Use wit and light compliments. You must never generate explicit sexual content, describe sexual acts, or use graphic sexual language. If they push that way, stay in character and deflect with humor, keeping it PG-13. Never crude. Do not turn the chat into a work meeting unless they ask."
 };
+function chatModeInstructions(mode){
+const memory='The section "What you already know about them" is memory from their PDFs, notes, and projects. Treat it as fact about the user and their work. Use it when it answers what they just said. Do not say you have no memory or no documents when that section has text. Do not add facts that are not written there.';
+if(mode==='support')return memory+' Stay in this conversation. Do not open another part of the app and do not add an ACTION line.';
+if(mode==='spicy')return memory+' Stay playful. Do not add an ACTION line unless they clearly ask you to open something.';
+return memory+' When they want weather, a search, a map, a video, a picture, or another section, finish with exactly one line and nothing after it: ACTION: weather | ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
+}
 const chatModeSelect=document.getElementById('chatModeSelect');
 chatModeSelect.value=localStorage.getItem('eve_chat_mode')||'collaborator';
 function updateChatModeNote(){
@@ -2929,7 +2937,7 @@ if(text.length<20)throw new Error('empty');
 const prior=await kbList();
 if(prior.some(d=>d.name===(file.name||'PDF')&&d.size===file.size))return false;
 for(const d of prior){if(d.name===(file.name||'PDF'))await kbRemove(d.id);}
-const doc={id:'k'+Date.now()+Math.floor(Math.random()*1000),name:file.name||'PDF',added:Date.now(),size:file.size||0,text:text.slice(0,150000)};
+const doc={id:'k'+Date.now()+Math.floor(Math.random()*1000),name:file.name||'PDF',added:Date.now(),size:file.size||0,text:text.slice(0,150000),page:memoryPage(file.name||'PDF',text)};
 const db=await kbOpen();
 await new Promise((res,rej)=>{
 const tx=db.transaction('docs','readwrite');
@@ -2998,9 +3006,15 @@ try{docs=await kbList();}catch(e){docs=[];}
 const skip=new Set('this that with from your yours about have what when where who whom which will just into they them their there then than also some more only been were was are and the for not but you she her his its our'.split(' '));
 const words=(String(query||'').toLowerCase().match(/[a-z0-9]{3,}/g)||[]).filter(w=>!skip.has(w)).slice(0,24);
 const blocks=[];
-docs.slice(0,8).forEach(doc=>{
+for(const doc of docs.slice(0,8)){
+let page=doc.page||'';
+if(!page&&doc.text){
+page=memoryPage(doc.name,doc.text);
+doc.page=page;
+kbOpen().then(db=>new Promise(res=>{const tx=db.transaction('docs','readwrite');tx.objectStore('docs').put(doc);tx.oncomplete=res;tx.onerror=res;})).catch(()=>{});
+}
+if(page)blocks.push(page);
 const text=String(doc.text||'');
-const head=text.replace(/\s+/g,' ').trim().slice(0,1600);
 let best='',bestScore=0;
 if(words.length){
 for(let i=0;i<Math.min(text.length,80000);i+=650){
@@ -3011,10 +3025,8 @@ words.forEach(w=>{if(low.includes(w))score++;});
 if(score>bestScore){bestScore=score;best=chunk.replace(/\s+/g,' ').trim();}
 }
 }
-let piece=(doc.name||'PDF').replace(/\.pdf$/i,'')+':\n'+head;
-if(best&&bestScore>0&&best.slice(0,120)!==head.slice(0,120))piece+='\n'+best.slice(0,900);
-blocks.push(piece);
-});
+if(best&&bestScore>0&&page.indexOf(best.slice(0,80))<0)blocks.push((doc.name||'PDF').replace(/\.pdf$/i,'')+' — more:\n'+best.slice(0,700));
+}
 try{
 const ideas=JSON.parse(localStorage.getItem('eve_proj_ideas')||'[]');
 if(ideas.length)blocks.push('Project notes: '+ideas.slice(0,12).map(i=>i.text).join('; '));
@@ -3022,6 +3034,23 @@ if(ideas.length)blocks.push('Project notes: '+ideas.slice(0,12).map(i=>i.text).j
 const notes=(localStorage.getItem('eve_notes')||'').trim();
 if(notes)blocks.push('Notes: '+notes.slice(0,800));
 return blocks.join('\n\n').slice(0,7000);
+}
+function memoryPage(name,text){
+const clean=String(text||'').replace(/\s+/g,' ').trim();
+const bits=clean.split(/(?<=[.!?])\s+/).map(s=>s.trim()).filter(s=>s.length>18&&s.length<420);
+const whoRe=/\b(i am|i'm|my name|lives|lived|phone|e-?mail|about me|birthday|family|wife|husband|partner|daughter|son|user)\b/i;
+const projRe=/\b(project|goal|plan|build|design|budget|story|character|chapter|app|feature|deadline|client|working on)\b/i;
+const who=[],proj=[];
+bits.forEach(s=>{
+if(whoRe.test(s)&&who.length<6)who.push(s);
+else if(projRe.test(s)&&proj.length<6)proj.push(s);
+});
+const title=String(name||'PDF').replace(/\.pdf$/i,'');
+const lines=[title];
+if(who.length)lines.push('Who: '+who.join(' '));
+if(proj.length)lines.push('Project: '+proj.join(' '));
+if(!who.length&&!proj.length)lines.push(clean.slice(0,900));
+return lines.join('\n').slice(0,1400);
 }
 document.getElementById('chatSend').onclick=async()=>{
 primeVoice();
@@ -3034,18 +3063,21 @@ const statusEl=document.getElementById('chatStatus');
 if(statusEl)statusEl.textContent='';
 try{
 let sysPrompt=CHAT_MODE_PROMPTS[chatModeSelect.value]||CHAT_MODE_PROMPTS.collaborator;
-sysPrompt+='\n\nYou are on this computer with them. The section "What you already know about them" is memory from their PDFs, notes, and projects. Treat it as fact about the user and their work. When they ask about themselves or a project, answer from that memory in plain words. Do not say you have no memory or no documents when that section has text. Do not add facts that are not written there. When they want weather, a search, a map, a video, a picture, or another section, finish with exactly one line and nothing after it: ACTION: weather | ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
-if(chatContextToggle.checked){
+const mode=chatModeSelect.value||'collaborator';
+sysPrompt+='\n\n'+chatModeInstructions(mode);
+if(mode==='collaborator'&&chatContextToggle.checked){
 const ctx=buildProjectContext();
 if(ctx) sysPrompt+='\n\nProject context the user is currently working on elsewhere in the app (reference it naturally where relevant):\n\n'+ctx;
 }
 const live=await gatherLiveContext(txt);
-if(live)sysPrompt+='\n\nLive information just fetched:\n'+live;
+if(live&&mode==='collaborator')sysPrompt+='\n\nLive information just fetched:\n'+live;
 try{const know=await memoryFor(txt);if(know)sysPrompt+='\n\nWhat you already know about them:\n'+know;}catch(e){}
 const history=[{role:'system',content:sysPrompt},...chat.filter(m=>m.text&&(m.role==='user'||!isJunkReply(m.text))).slice(-12).map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}))];
-full=await aiStream(history,{maxTokens:700,temperature:0.8,feature:'chat',wait:26000},(partial)=>{chat[idx].text=partial;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();});
+const temp=mode==='support'?0.55:mode==='spicy'?0.95:0.7;
+full=await aiStream(history,{maxTokens:700,temperature:temp,feature:'chat',wait:26000},(partial)=>{chat[idx].text=partial;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();});
 if(full){
 const actionRe=/ACTION:\s*(weather|search|map|youtube|image|open)\s*([^\n]*)/ig;
+if(mode==='collaborator'){
 let am;
 while((am=actionRe.exec(full))){
 const kind=am[1].toLowerCase();
@@ -3053,6 +3085,7 @@ const arg=(am[2]||'').trim();
 const l=txt.toLowerCase();
 const asked=kind==='weather'?/\b(weather|forecast|temperature)\b/.test(l):kind==='search'?/\b(search|look up)\b/.test(l):kind==='map'?/\b(map|where is|directions)\b/.test(l):kind==='youtube'?/\b(youtube|video)\b/.test(l):kind==='image'?/\b(picture|image|draw)\b/.test(l):true;
 if(asked)applyEveAction('ACTION: '+kind+' '+arg);
+}
 }
 full=full.replace(actionRe,'').replace(/\n{3,}/g,'\n\n').trim();
 }
