@@ -86,7 +86,7 @@ button.secondary{background:var(--input-bg);color:var(--text);padding:8px 12px;b
 </div>
 <script>
 const DEFAULT_AVATAR="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQ0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEwYjIwIi8+PHRleHQgeD0iNTAlIiB5PSI0NSUiIGZpbGw9IiM0ZjQ2ZTUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjY0IiBmb250LXdlaWdodD0iOTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5FVkU8L3RleHQ+PC9zdmc+";
-const TABS=["Brain","Email","Apps","Code Lab","Calculator","Image","Music","Video","Spotify","YouTube","Browser","RPG","Stories","Maps","Weather","Alarms","To Do","Notes","Knowledge","Projects","Legal","Health","Calendar","Focus","Search","Tools","Comics","Media"];
+const TABS=["Brain","Email","Text","Apps","Code Lab","Calculator","Image","Music","Video","Spotify","YouTube","Browser","RPG","Stories","Maps","Weather","Alarms","To Do","Notes","Knowledge","Projects","Legal","Health","Calendar","Focus","Search","Tools","Comics","Media"];
 const CHAT_FEATURES=[{id:'chat',label:'Chat'},{id:'codelab',label:'Code Lab'},{id:'rpg',label:'RPG'},{id:'stories',label:'Stories'},{id:'legal',label:'Legal'},{id:'health',label:'Health'}];
 let avatars=[];let hero=localStorage.getItem('eve_hero')||'';
 let chat=JSON.parse(localStorage.getItem('eve_chat')||'[]');
@@ -703,10 +703,11 @@ else if(t==='Email')html=`<h3>Email</h3>
 <input id=emailSubject placeholder="Subject">
 <textarea id=emailBody rows=8 placeholder="Message"></textarea>
 <button class=primary id=emailSendBtn style="width:100%">Send</button>
-<div id=emailSendStatus style="font-size:11px;color:var(--muted);margin-top:6px;text-align:left"></div>
-<h4 style="text-align:left;margin:16px 0 4px">Text a phone</h4>
+<div id=emailSendStatus style="font-size:11px;color:var(--muted);margin-top:6px;text-align:left"></div>`;
+else if(t==='Text')html=`<h3>Text</h3>
 <input id=textPhone placeholder="Phone number">
-<textarea id=textBody rows=3 placeholder="Message"></textarea>
+<select id=textCarrier><option value="txt.att.net">AT&T</option><option value="vtext.com">Verizon</option><option value="tmomail.net">T-Mobile</option><option value="sms.cricketwireless.net">Cricket</option><option value="sms.myboostmobile.com">Boost</option><option value="email.uscc.net">US Cellular</option><option value="msg.fi.google.com">Google Fi</option></select>
+<textarea id=textBody rows=4 placeholder="Message"></textarea>
 <button class=primary id=textSendBtn style="width:100%">Send Text</button>
 <div id=textSendStatus style="font-size:11px;color:var(--muted);margin-top:6px;text-align:left"></div>`;
 else if(t==='Apps')html=`<h3>Apps</h3>
@@ -918,15 +919,6 @@ e.target.value='';
 };
 }
 if(t==='Email'){
-function handOff(url){
-const a=document.createElement('a');
-a.href=url;
-a.target='_blank';
-a.rel='noopener';
-document.body.appendChild(a);
-a.click();
-setTimeout(()=>a.remove(),400);
-}
 document.getElementById('emailSendBtn').onclick=()=>{
 const to=document.getElementById('emailTo').value.trim();
 const subject=document.getElementById('emailSubject').value.trim();
@@ -941,17 +933,19 @@ if(navigator.clipboard&&body)navigator.clipboard.writeText(body).catch(()=>{});
 status.textContent='Opened. Press send there.';
 popOver(url);
 };
+}
+if(t==='Text'){
 document.getElementById('textSendBtn').onclick=()=>{
 let digits=document.getElementById('textPhone').value.replace(/\D/g,'');
 const body=document.getElementById('textBody').value||'';
 const status=document.getElementById('textSendStatus');
-if(digits.length===10)digits='1'+digits;
-if(digits.length<10){status.textContent='Enter the phone number.';return;}
-const mac=/Mac|iPhone|iPad/.test(navigator.userAgent);
-const msg=encodeURIComponent(body);
-const sms=mac?('sms:+'+digits+'&body='+msg):('sms:+'+digits+'?&body='+msg);
-status.textContent='Your texting app is open. Press send there.';
-handOff(sms);
+if(digits.length===11&&digits.startsWith('1'))digits=digits.slice(1);
+const carrier=document.getElementById('textCarrier').value;
+if(digits.length!==10){status.textContent='Enter the phone number.';return;}
+const to=digits+'@'+carrier;
+const outlook='https://outlook.live.com/mail/0/deeplink/compose?to='+encodeURIComponent(to)+'&subject=&body='+encodeURIComponent(body);
+status.textContent='Opened. Press send there.';
+popOver(outlook);
 };
 }
 if(t==='Apps'){
