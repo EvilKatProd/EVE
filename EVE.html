@@ -716,7 +716,9 @@ else if(t==='Contacts')html=`<h3>Contacts</h3>
 <input id=contactPhone placeholder="Phone">
 <input id=contactEmail placeholder="Email">
 <input id=contactIcon type=file accept="image/*">
+<img id=contactIconPreview alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;display:none;margin:6px auto">
 <button class=primary id=contactSave style="width:100%">Save contact</button>
+<button class=secondary id=contactCancel style="width:100%;display:none">Cancel</button>
 <div id=contactList style="text-align:left;margin-top:10px"></div>`;
 else if(t==='Apps')html=`<h3>Apps</h3>
 <div style="text-align:left;font-size:11px;color:var(--muted);margin-bottom:6px">Save a name and an address, then open it.</div>
@@ -980,14 +982,39 @@ status.textContent=win?'Press the send arrow in WhatsApp.':'The window was block
 }
 if(t==='Contacts'){
 let list=loadContacts();
+let editingId='';
+function clearContactForm(){
+editingId='';
+['contactName','contactPhone','contactEmail'].forEach(id=>document.getElementById(id).value='');
+document.getElementById('contactIcon').value='';
+const prev=document.getElementById('contactIconPreview');
+prev.removeAttribute('src');prev.style.display='none';
+document.getElementById('contactSave').textContent='Save contact';
+document.getElementById('contactCancel').style.display='none';
+}
 function renderContacts(){
 document.getElementById('contactList').innerHTML=list.map(c=>{
 const pic=/^data:image\//.test(c.icon||'')?'<img src="'+c.icon+'" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;margin-right:8px;vertical-align:middle">':'';
-return `<div class=card>${pic}<b>${escContact(c.name)}</b><div style="font-size:12px">${escContact(c.phone||'')}${c.phone&&c.email?' · ':''}${escContact(c.email||'')}</div><button class=secondary data-del="${escContact(c.id)}">Remove</button></div>`;
+return `<div class=card>${pic}<b>${escContact(c.name)}</b><div style="font-size:12px">${escContact(c.phone||'')}${c.phone&&c.email?' · ':''}${escContact(c.email||'')}</div><div style="margin-top:4px"><button class=secondary data-edit="${escContact(c.id)}">Edit</button> <button class=secondary data-del="${escContact(c.id)}">Remove</button></div></div>`;
 }).join('')||'<div style="color:var(--muted)">No contacts yet.</div>';
-document.getElementById('contactList').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{list=list.filter(c=>c.id!==b.getAttribute('data-del'));saveContacts(list);renderContacts();});
+document.getElementById('contactList').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{list=list.filter(c=>c.id!==b.getAttribute('data-del'));if(editingId===b.getAttribute('data-del'))clearContactForm();saveContacts(list);renderContacts();});
+document.getElementById('contactList').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{
+const c=list.find(x=>x.id===b.getAttribute('data-edit'));
+if(!c)return;
+editingId=c.id;
+document.getElementById('contactName').value=c.name||'';
+document.getElementById('contactPhone').value=c.phone||'';
+document.getElementById('contactEmail').value=c.email||'';
+document.getElementById('contactIcon').value='';
+const prev=document.getElementById('contactIconPreview');
+if(/^data:image\//.test(c.icon||'')){prev.src=c.icon;prev.style.display='block';}else{prev.removeAttribute('src');prev.style.display='none';}
+document.getElementById('contactSave').textContent='Save changes';
+document.getElementById('contactCancel').style.display='block';
+document.getElementById('contactName').focus();
+});
 }
 renderContacts();
+document.getElementById('contactCancel').onclick=()=>clearContactForm();
 document.getElementById('contactSave').onclick=async()=>{
 const name=document.getElementById('contactName').value.trim();
 const phone=document.getElementById('contactPhone').value.trim();
@@ -996,12 +1023,15 @@ const file=document.getElementById('contactIcon').files[0];
 if(!name)return;
 let icon='';
 if(file)icon=await shrinkIcon(file);
-const existing=list.find(c=>c.name.toLowerCase()===name.toLowerCase());
-if(existing){if(phone)existing.phone=phone;if(email)existing.email=email;if(icon)existing.icon=icon;}
-else list.unshift({id:'c'+Date.now(),name,phone,email,icon});
+const existing=editingId?list.find(c=>c.id===editingId):list.find(c=>c.name.toLowerCase()===name.toLowerCase());
+if(existing){
+existing.name=name;
+if(editingId){existing.phone=phone;existing.email=email;}
+else{if(phone)existing.phone=phone;if(email)existing.email=email;}
+if(icon)existing.icon=icon;
+}else list.unshift({id:'c'+Date.now(),name,phone,email,icon});
 saveContacts(list);list=loadContacts();
-['contactName','contactPhone','contactEmail'].forEach(id=>document.getElementById(id).value='');
-document.getElementById('contactIcon').value='';
+clearContactForm();
 renderContacts();
 };
 }
