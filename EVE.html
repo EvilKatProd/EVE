@@ -259,6 +259,8 @@ const t=String(text||'').trim();
 if(!t)return true;
 if(/^(?:i['’]?m (?:right )?here|i am here|i['’]?m listening|i['’]?m with you|i hear you|you['’]?ve got my attention|say (?:a little )?more|keep going|what are we getting into|what(?:'s| is) on your mind)\b/i.test(t))return true;
 if(/^(?:that sounds|i understand|thanks for sharing|i appreciate you)\b/i.test(t)&&t.length<180)return true;
+if(/\b(?:i(?:'d| would) be happy|certainly|great question|feel free to|let me know if|how can i assist|happy to assist|i can help you with|as an ai|language model)\b/i.test(t))return true;
+if(/^(?:i (?:do not|don't) have (?:that|this|enough|any)|i(?:'m| am) not sure|i cannot|i can't help with that)\b/i.test(t)&&t.length<220)return true;
 return false;
 }
 async function deviceStream(messages,onDelta){
@@ -385,7 +387,7 @@ try{text=await ask(slim,16000);}catch(e){
 try{text=await once('https://text.pollinations.ai/openai',{model:'openai',messages:slim,stream:false,temperature:temp},null,12000);}catch(e2){text='';}
 }
 if(opts.feature==='chat'&&isHollowChat(text,userText)){
-const retry=slim.concat([{role:'user',content:'Do the actual request. Use the facts you were given. If a fact is missing, say so. Do not add filler.'}]);
+const retry=slim.concat([{role:'user',content:'Answer the question in the first sentence. Use the detail I asked about. No stock phrases.'}]);
 try{
 const again=await ask(retry,12000);
 if(again&&!isHollowChat(again,userText))text=again;
@@ -2808,15 +2810,23 @@ document.getElementById('chatInput').value=raw;
 document.getElementById('chatSend').click();
 }
 const CHAT_MODE_PROMPTS={
-collaborator:'You are EVE, the assistant on this computer. Do the job they asked. Answer from their notes, tasks, calendar, and the memory section, and use only facts written there. If a fact is not there, say you do not have it. Keep it short and specific. Do not roleplay, do not flirt, and do not ask a follow-up unless a missing detail stops the task. Do not say you are here, listening, or ready to help. Do not announce that you are a program.',
+collaborator:'You are EVE, working with them on the question they just asked. The first sentence is the actual answer or a clear recommendation. The next sentences use a detail from their message and say why. If their notes or PDFs contain a fact that changes the answer, use that fact and do not invent other facts about them. If those files do not cover the question, still answer it from what they asked. Do not say you do not have the information unless they asked for a stored fact that is not there. Do not open with Certainly, Great question, or I would be happy to. Do not offer to help in general. Do not list your abilities.',
 support:"You are EVE in Support & Reflection mode. You are sitting in a real conversation. Reflect the specific thing they just said, in their words, before you add anything. Stay with that, not with a general feeling. You are not a therapist, a counselor, or any licensed professional, and you never imply otherwise. Do not diagnose, do not label what they describe with a clinical term they have not used, and do not present yourself as a substitute for real professional support. If they describe something serious or ongoing, gently encourage them to talk to a real mental health professional. If they mention anything suggesting a safety risk to themselves or others, stay calm, take that seriously, and clearly encourage them to contact a crisis line or emergency services. In the US that is 988. Do not carry on as if it were an ordinary chat. Otherwise ask one question about the detail they actually brought up. Never reply with only that you are here or that you are listening. Do not hand them a plan or a list.",
 spicy:"You are EVE in Spicy mode, flirting with someone you like. React to the actual thing they just said and tease that, not a generic compliment. Stay warm and PG-13. Never describe a sexual act or use graphic sexual language. If they push that way, deflect with humor. Use a detail from their message. Ask one playful question about that detail. Do not turn it into a work meeting unless they ask. Do not say you are here for them."
 };
+function answerFromRecord(question,memory){
+const words=queryWords(question);
+if(!memory||!words.length)return '';
+const parts=String(memory).split(/(?<=[.!?])\s+|\n+/).map(s=>s.trim()).filter(s=>s.length>35&&!/^full text of /i.test(s)&&!/^(who|project):/i.test(s));
+const hits=parts.filter(s=>words.filter(w=>s.toLowerCase().includes(w)).length>=Math.min(2,words.length));
+if(!hits.length)return '';
+return hits.slice(0,6).join('\n');
+}
 function chatModeInstructions(mode){
 const memory='The section "What you already know about them" is memory from their PDFs, notes, and projects. Treat it as fact about the user and their work. When a full PDF is included, read that whole document and answer from any part of it, not only the beginning. Use it when it answers what they just said. Do not say you have no memory or no documents when that section has text. Do not add facts that are not written there.';
 if(mode==='support')return memory+' Stay in this conversation. Do not open another part of the app and do not add an ACTION line.';
 if(mode==='spicy')return memory+' Stay playful. Do not add an ACTION line unless they clearly ask you to open something.';
-return memory+' When they want weather, a search, a map, a video, a picture, or another section, finish with exactly one line and nothing after it: ACTION: weather | ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
+return 'Their notes and PDFs are included below when they match. Use a fact from them when it changes the answer, and do not invent other facts about the person. For a work question, answer the question itself. When they want weather, a search, a map, a video, a picture, or another section, finish with exactly one line and nothing after it: ACTION: weather | ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
 }
 const chatModeSelect=document.getElementById('chatModeSelect');
 chatModeSelect.value=localStorage.getItem('eve_chat_mode')||'collaborator';
@@ -3224,6 +3234,9 @@ const history=[{role:'system',content:sysPrompt},...chat.filter(m=>m.text&&(m.ro
 const temp=mode==='support'?0.7:mode==='spicy'?0.95:0.85;
 full=await aiStream(history,{maxTokens:520,temperature:temp,feature:'chat',wait:36000},(partial)=>{chat[idx].text=partial;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();});
 if(full&&isHollowChat(full,txt))full='';
+if(!full&&mode==='collaborator'){
+try{const rec=answerFromRecord(txt,await memoryFor(txt));if(rec)full=rec;}catch(e){}
+}
 if(full){
 const actionRe=/ACTION:\s*(weather|search|map|youtube|image|open)\s*([^\n]*)/ig;
 if(mode==='collaborator'){
@@ -3241,7 +3254,13 @@ full=full.replace(actionRe,'').replace(/\n{3,}/g,'\n\n').trim();
 if(!full){chat[idx].text='I couldn’t get a reply. Try again.';}
 else{chat[idx].text=full;speakText(full);}
 localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();
-}catch(e){chat[idx].text='I couldn’t get a reply. Try again.';localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();}
+}catch(e){
+let fallback='I couldn’t get a reply. Try again.';
+if((chatModeSelect.value||'collaborator')==='collaborator'){
+try{const rec=answerFromRecord(txt,await memoryFor(txt));if(rec)fallback=rec;}catch(err){}
+}
+chat[idx].text=fallback;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();
+}
 finally{updateChatStatus();}
 };
 updateChatStatus();
