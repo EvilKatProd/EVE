@@ -292,109 +292,21 @@ if(!full||isJunkReply(full))throw new Error('none');
 onDelta(full);
 return full;
 }
-function offlineReply(messages,onDelta){
-const last=[...messages].reverse().find(m=>m.role==='user');
-const txt=(last&&last.content||'').trim();
-const lower=txt.toLowerCase();
-const mode=localStorage.getItem('eve_chat_mode')||'collaborator';
-let answer='';
-if(/\b(kill myself|suicide|want to die|self-harm|end my life)\b/.test(lower)){
-answer="I'm here with you. If you might act on this, contact a crisis line now — in the US, call or text 988.";
-}else if(/\b(time|what day|what date|today)\b/.test(lower)&&!/\b(to-?do|todo)\b/.test(lower)){
-answer='It is '+new Date().toLocaleString()+'.';
-}else if(/\b(to-?do|todos|tasks|task list)\b/.test(lower)){
-const todos=readStore('eve_todos',[]);
-const open=todos.filter(t=>!t.done);
-answer=open.length?('Still open:\n'+open.map(t=>'• '+t.text).join('\n')):'Your list is clear.';
-}else if(/\bnotes?\b/.test(lower)){
-const notes=localStorage.getItem('eve_notes')||'';
-answer=notes.trim()?notes.slice(0,1500):'No notes saved yet.';
-}else if(/\balarms?\b/.test(lower)){
-const alarms=readStore('eve_alarms',[]);
-answer=alarms.length?alarms.map(a=>a.time+' '+(a.label||'')).join('\n'):'No alarms set.';
-}else if(/\b(calendar|schedule|appointment|events?)\b/.test(lower)){
-const cals=readStore('eve_cals',[]);
-answer=cals.length?cals.slice(-12).map(c=>(c.date||'')+' '+(c.time||'')+' '+(c.title||'')).join('\n'):'Nothing on the calendar.';
-}else if(/\b(weather|forecast|temperature)\b/.test(lower)){
-const saved=localStorage.getItem('eve_weather_line')||'';
-answer=saved?('Weather on this computer: '+saved):(navigator.onLine?'Opening weather.\nACTION: weather':'I don’t have a weather reading saved on this computer yet.');
-}else if(/^[0-9.+\-*/() \t]+$/.test(txt)&&/[0-9]/.test(txt)){
-try{answer=String(Function('"use strict";return ('+txt+')')());}catch(e){answer='I couldn’t work that out.';}
-}else if(/^(open|show|go to|switch to)\b/.test(lower)){
-const target=lower.replace(/^(open|show|go to|switch to)\s+(the\s+)?/,'').replace(/\s+tab$/,'').trim();
-const found=TABS.find(t=>t.toLowerCase()===target)||TABS.find(t=>t.toLowerCase().includes(target)||target.includes(t.toLowerCase()));
-answer=found?('Opening '+found+'.\nACTION: open '+found):'Which section should I open?';
-}else if(/\b(draw|picture|image|generate an image)\b/.test(lower)){
-answer=navigator.onLine?'Opening pictures.\nACTION: image '+txt:'Pictures you already saved are still here. New ones can be made when this computer is online.';
-}else if(/\b(search|look up|youtube|map|wikipedia)\b/.test(lower)){
-answer=navigator.onLine?'I can open that.\nACTION: open Search':'Search, maps, and video sites are there when this computer is online. Notes, tasks, calendar, music, and video on this computer work either way.';
-}else if(/^(hi|hello|hey|good morning|good evening|good night)\b/.test(lower)){
-if(mode==='spicy')answer="Hey you. I'm right here.";
-else if(mode==='support')answer="Hey. I'm here if you want to talk.";
-else answer="Hey. What are we getting into?";
-}else{
-const sys=messages.filter(m=>m.role==='system').map(m=>m.content).join('\n');
-const know=(sys.split('What you already know about them:')[1]||'').trim();
-const words=lower.split(/\W+/).filter(w=>w.length>3);
-const hit=know && words.some(w=>know.toLowerCase().includes(w));
-if(hit){
-const line=know.split('\n').find(l=>words.some(w=>l.toLowerCase().includes(w)))||know.slice(0,400);
-answer=line.replace(/^[^:]+:\s*/,'').slice(0,500);
-}else if(mode==='support')answer="I'm listening. Say as much or as little as you want.";
-else if(mode==='spicy')answer="You've got my attention. Keep going.";
-else answer="I'm here. Say a little more about that and I'll stay with it.";
-}
-onDelta(answer);
-return answer;
-}
 async function eveFreeStream(messages,opts,onDelta){
 opts=opts||{};
 if(!navigator.onLine)throw new Error('offline');
-const sys=messages.filter(m=>m.role==='system').map(m=>m.content).join('\n\n');
-const turns=messages.filter(m=>{
-if(m.role==='system'||!String(m.content||'').trim())return false;
-if(m.role==='assistant'&&isHollowChat(m.content,''))return false;
-return true;
-}).slice(-14);
-let sysUse=sys;
-if(sys.length>9000){
-const at=sys.indexOf('What you already know about them:');
-const head=sys.slice(0,at>0?Math.min(at,2200):1800);
-const memory=at>0?sys.slice(at,at+8000):sys.slice(-6000);
-sysUse=head+'\n\n'+memory;
-}
-const slim=[{role:'system',content:sysUse}].concat(turns.map(m=>({role:m.role==='assistant'?'assistant':'user',content:String(m.content||'').slice(0,1800)})));
-const lastUser=[...slim].reverse().find(m=>m.role==='user');
-const userText=lastUser?lastUser.content:'';
-async function once(url,body,headers,ms){
+const slim=messages.slice(-16).map(m=>({role:m.role==='assistant'?'assistant':(m.role==='system'?'system':'user'),content:String(m.content||'').slice(0,m.role==='system'?8000:2000)})).filter(m=>m.content.trim());
 const ctrl=new AbortController();
-const timer=setTimeout(()=>ctrl.abort(),ms);
+const timer=setTimeout(()=>ctrl.abort(),25000);
 try{
-const res=await fetch(url,{method:'POST',signal:ctrl.signal,headers:Object.assign({'content-type':'application/json'},headers||{}),body:JSON.stringify(body)});
+const res=await fetch('https://api.llm7.io/v1/chat/completions',{method:'POST',signal:ctrl.signal,headers:{'content-type':'application/json','Authorization':'Bearer unused'},body:JSON.stringify({model:'default',messages:slim,temperature:opts.temperature!=null?opts.temperature:0.7,max_tokens:Math.min(opts.maxTokens||900,1600)})});
 if(!res.ok)throw new Error('bad');
 const data=await res.json();
 const text=data&&data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
-return text?String(text).trim():'';
+if(!text||!String(text).trim()||isJunkReply(String(text)))throw new Error('empty');
+onDelta(String(text).trim());
+return String(text).trim();
 }finally{clearTimeout(timer);}
-}
-const temp=opts.temperature!=null?opts.temperature:0.85;
-const ask=(list,ms)=>Promise.any([
-once('https://text.pollinations.ai/openai',{model:'openai',messages:list,stream:false,temperature:temp},null,ms),
-once('https://api.llm7.io/v1/chat/completions',{model:'gemini-3.1-flash-lite',messages:list,temperature:temp,max_tokens:Math.min(opts.maxTokens||480,520)},{'Authorization':'Bearer unused'},ms)
-]);
-let text='';
-try{text=await ask(slim,16000);}catch(e){
-try{text=await once('https://text.pollinations.ai/openai',{model:'openai',messages:slim,stream:false,temperature:temp},null,12000);}catch(e2){text='';}
-}
-if(opts.feature==='chat'&&isHollowChat(text,userText)){
-const retry=slim.concat([{role:'user',content:'Answer the question in the first sentence. Use the detail I asked about. No stock phrases.'}]);
-try{
-const again=await ask(retry,12000);
-if(again&&!isHollowChat(again,userText))text=again;
-}catch(e){}
-}
-if(text&&!isJunkReply(text)&&!(opts.feature==='chat'&&isHollowChat(text,userText))){onDelta(text);return text;}
-throw new Error('noreply');
 }
 let localLlama=null;
 let localLlamaPromise=null;
@@ -453,12 +365,7 @@ throw new Error('noreply');
 }
 if(pref==='web'||(navigator.onLine&&pref!=='ollama'&&pref!=='cloud')){
 try{const full=await fromWeb();if(full)return full;}catch(e){}
-if(pref==='web'){
-if(creative||opts.feature==='chat')throw new Error('noreply');
-const local=offlineReply(messages,emit);
-if(isJunkReply(local))throw new Error('noreply');
-return local;
-}
+if(pref==='web')throw new Error('noreply');
 }
 if(pref==='cloud'&&aiKey&&navigator.onLine){
 try{
@@ -534,9 +441,7 @@ if(full&&full.trim()&&!isJunkReply(full))return full;
 }
 }
 if(creative||opts.feature==='chat')throw new Error('noreply');
-const local=offlineReply(messages,emit);
-if(isJunkReply(local))throw new Error('noreply');
-return local;
+throw new Error('noreply');
 }
 function aiStream(messages,opts,onDelta){
 const wait=(opts&&opts.wait)||12000;
@@ -2456,7 +2361,7 @@ document.getElementById('wakeWordToggle').onchange=(e)=>{setVoiceMode(e.target.c
 document.getElementById('voiceOutputToggle').checked=true;
 localStorage.setItem('eve_voice_output','1');
 document.getElementById('voiceOutputToggle').onchange=(e)=>localStorage.setItem('eve_voice_output',e.target.checked?'1':'0');
-function say(msg){try{speakText(msg);}catch(e){}if(window._eveChatCmd)window._eveChatSaid=String(msg||'');}
+function say(msg){if(window._eveChatCmd){window._eveChatSaid=String(msg||'');return;}try{speakText(msg);}catch(e){}}
 function onTab(tab,fn){switchTab(tab);setTimeout(()=>{try{fn();}catch(e){}},300);}
 function setVal(id,val){const el=document.getElementById(id);if(el&&val!=null){el.value=val;el.dispatchEvent(new Event('input',{bubbles:true}));}return el;}
 function press(id){const el=document.getElementById(id);if(el)el.click();return !!el;}
@@ -2810,18 +2715,10 @@ document.getElementById('chatInput').value=raw;
 document.getElementById('chatSend').click();
 }
 const CHAT_MODE_PROMPTS={
-collaborator:'You are EVE, working with them on the question they just asked. The first sentence is the actual answer or a clear recommendation. The next sentences use a detail from their message and say why. If their notes or PDFs contain a fact that changes the answer, use that fact and do not invent other facts about them. If those files do not cover the question, still answer it from what they asked. Do not say you do not have the information unless they asked for a stored fact that is not there. Do not open with Certainly, Great question, or I would be happy to. Do not offer to help in general. Do not list your abilities.',
+collaborator:'You are EVE. Every reply is your own. You write working code, stories, scripts, articles, and song lyrics in the chat when asked. You also plan images, music, and video in concrete detail: subject, look, length, and what happens. Do the piece itself. Do not answer with an outline, a list of tips, or a claim that another tab will do it. Use their notes and PDFs when a fact there changes the answer. Do not invent personal facts. Do not open with Certainly or say you would be happy to help.',
 support:"You are EVE in Support & Reflection mode. You are sitting in a real conversation. Reflect the specific thing they just said, in their words, before you add anything. Stay with that, not with a general feeling. You are not a therapist, a counselor, or any licensed professional, and you never imply otherwise. Do not diagnose, do not label what they describe with a clinical term they have not used, and do not present yourself as a substitute for real professional support. If they describe something serious or ongoing, gently encourage them to talk to a real mental health professional. If they mention anything suggesting a safety risk to themselves or others, stay calm, take that seriously, and clearly encourage them to contact a crisis line or emergency services. In the US that is 988. Do not carry on as if it were an ordinary chat. Otherwise ask one question about the detail they actually brought up. Never reply with only that you are here or that you are listening. Do not hand them a plan or a list.",
 spicy:"You are EVE in Spicy mode, flirting with someone you like. React to the actual thing they just said and tease that, not a generic compliment. Stay warm and PG-13. Never describe a sexual act or use graphic sexual language. If they push that way, deflect with humor. Use a detail from their message. Ask one playful question about that detail. Do not turn it into a work meeting unless they ask. Do not say you are here for them."
 };
-function answerFromRecord(question,memory){
-const words=queryWords(question);
-if(!memory||!words.length)return '';
-const parts=String(memory).split(/(?<=[.!?])\s+|\n+/).map(s=>s.trim()).filter(s=>s.length>35&&!/^full text of /i.test(s)&&!/^(who|project):/i.test(s));
-const hits=parts.filter(s=>words.filter(w=>s.toLowerCase().includes(w)).length>=Math.min(2,words.length));
-if(!hits.length)return '';
-return hits.slice(0,6).join('\n');
-}
 function chatModeInstructions(mode){
 const memory='The section "What you already know about them" is memory from their PDFs, notes, and projects. Treat it as fact about the user and their work. When a full PDF is included, read that whole document and answer from any part of it, not only the beginning. Use it when it answers what they just said. Do not say you have no memory or no documents when that section has text. Do not add facts that are not written there.';
 if(mode==='support')return memory+' Stay in this conversation. Do not open another part of the app and do not add an ACTION line.';
@@ -3198,22 +3095,13 @@ document.getElementById('chatSend').onclick=async()=>{
 primeVoice();
 const inp=document.getElementById('chatInput');const txt=inp.value.trim();if(!txt)return;
 const helped=await assistNow(txt);
-if(helped!=null){
-inp.value='';
-addChat('user',txt);
-addChat('ai',helped);
-try{speakText(helped);}catch(e){}
-return;
-}
+let actionNote=helped||'';
 const cmd=txt.toLowerCase().replace(/[?.!]+$/g,'').replace(/^(?:hey[, ]*eve[, ]*)/i,'').trim();
+if(!actionNote){
 window._eveChatCmd=true;window._eveChatSaid='';
 const acted=voiceAct(cmd,txt);
 window._eveChatCmd=false;
-if(acted){
-inp.value='';
-addChat('user',txt);
-addChat('ai',window._eveChatSaid||'Done.');
-return;
+if(acted)actionNote=window._eveChatSaid||'';
 }
 addChat('user',txt);inp.value='';
 let full='';addChat('ai','');const idx=chat.length-1;
@@ -3223,6 +3111,7 @@ try{
 let sysPrompt=CHAT_MODE_PROMPTS[chatModeSelect.value]||CHAT_MODE_PROMPTS.collaborator;
 const mode=chatModeSelect.value||'collaborator';
 sysPrompt+='\n\n'+chatModeInstructions(mode);
+if(actionNote)sysPrompt+='\n\nThe app already finished this. Tell them what happened using only these facts:\n'+actionNote;
 if(mode==='collaborator'&&chatContextToggle.checked){
 const ctx=buildProjectContext();
 if(ctx) sysPrompt+='\n\nProject context the user is currently working on elsewhere in the app (reference it naturally where relevant):\n\n'+ctx;
@@ -3232,11 +3121,7 @@ if(live&&mode==='collaborator')sysPrompt+='\n\nLive information just fetched:\n'
 try{const know=await memoryFor(txt);if(know)sysPrompt+='\n\nWhat you already know about them:\n'+know;}catch(e){}
 const history=[{role:'system',content:sysPrompt},...chat.filter(m=>m.text&&(m.role==='user'||(!isJunkReply(m.text)&&!isHollowChat(m.text,'')))).slice(-16).map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}))];
 const temp=mode==='support'?0.7:mode==='spicy'?0.95:0.85;
-full=await aiStream(history,{maxTokens:520,temperature:temp,feature:'chat',wait:36000},(partial)=>{chat[idx].text=partial;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();});
-if(full&&isHollowChat(full,txt))full='';
-if(!full&&mode==='collaborator'){
-try{const rec=answerFromRecord(txt,await memoryFor(txt));if(rec)full=rec;}catch(e){}
-}
+full=await aiStream(history,{maxTokens:1400,temperature:temp,feature:'chat',wait:30000},(partial)=>{chat[idx].text=partial;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();});
 if(full){
 const actionRe=/ACTION:\s*(weather|search|map|youtube|image|open)\s*([^\n]*)/ig;
 if(mode==='collaborator'){
@@ -3251,16 +3136,10 @@ if(asked)applyEveAction('ACTION: '+kind+' '+arg);
 }
 full=full.replace(actionRe,'').replace(/\n{3,}/g,'\n\n').trim();
 }
-if(!full){chat[idx].text='I couldn’t get a reply. Try again.';}
+if(!full){chat.splice(idx,1);if(statusEl)statusEl.textContent='The chat service did not answer.';}
 else{chat[idx].text=full;speakText(full);}
 localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();
-}catch(e){
-let fallback='I couldn’t get a reply. Try again.';
-if((chatModeSelect.value||'collaborator')==='collaborator'){
-try{const rec=answerFromRecord(txt,await memoryFor(txt));if(rec)fallback=rec;}catch(err){}
-}
-chat[idx].text=fallback;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();
-}
+}catch(e){if(chat[idx]&&!String(chat[idx].text||'').trim())chat.splice(idx,1);if(statusEl)statusEl.textContent='The chat service did not answer.';localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();}
 finally{updateChatStatus();}
 };
 updateChatStatus();
