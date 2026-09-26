@@ -259,8 +259,6 @@ const t=String(text||'').trim();
 if(!t)return true;
 if(/^(?:i['’]?m (?:right )?here|i am here|i['’]?m listening|i['’]?m with you|i hear you|you['’]?ve got my attention|say (?:a little )?more|keep going|what are we getting into|what(?:'s| is) on your mind)\b/i.test(t))return true;
 if(/^(?:that sounds|i understand|thanks for sharing|i appreciate you)\b/i.test(t)&&t.length<180)return true;
-const words=(String(userText||'').toLowerCase().match(/[a-z0-9]{4,}/g)||[]).filter(w=>!/^(about|there|their|would|could|should|really|thing|something|anything|please|thanks|that|this|with|from|your|have|what|when|where|just|into|them|then|than|also|some|more|only|been|were|will)$/.test(w));
-if(words.length>=2&&t.length<240&&!words.some(w=>t.toLowerCase().includes(w)))return true;
 return false;
 }
 async function deviceStream(messages,onDelta){
@@ -387,7 +385,7 @@ try{text=await ask(slim,16000);}catch(e){
 try{text=await once('https://text.pollinations.ai/openai',{model:'openai',messages:slim,stream:false,temperature:temp},null,12000);}catch(e2){text='';}
 }
 if(opts.feature==='chat'&&isHollowChat(text,userText)){
-const retry=slim.concat([{role:'user',content:'That did not answer what I just said. Respond to the specific detail in my last message, in a few sentences, and ask one question about that detail.'}]);
+const retry=slim.concat([{role:'user',content:'Do the actual request. Use the facts you were given. If a fact is missing, say so. Do not add filler.'}]);
 try{
 const again=await ask(retry,12000);
 if(again&&!isHollowChat(again,userText))text=again;
@@ -2456,7 +2454,7 @@ document.getElementById('wakeWordToggle').onchange=(e)=>{setVoiceMode(e.target.c
 document.getElementById('voiceOutputToggle').checked=true;
 localStorage.setItem('eve_voice_output','1');
 document.getElementById('voiceOutputToggle').onchange=(e)=>localStorage.setItem('eve_voice_output',e.target.checked?'1':'0');
-function say(msg){try{speakText(msg);}catch(e){}}
+function say(msg){try{speakText(msg);}catch(e){}if(window._eveChatCmd)window._eveChatSaid=String(msg||'');}
 function onTab(tab,fn){switchTab(tab);setTimeout(()=>{try{fn();}catch(e){}},300);}
 function setVal(id,val){const el=document.getElementById(id);if(el&&val!=null){el.value=val;el.dispatchEvent(new Event('input',{bubbles:true}));}return el;}
 function press(id){const el=document.getElementById(id);if(el)el.click();return !!el;}
@@ -2810,7 +2808,7 @@ document.getElementById('chatInput').value=raw;
 document.getElementById('chatSend').click();
 }
 const CHAT_MODE_PROMPTS={
-collaborator:'You are EVE, a sharp friend in her early twenties. This is a real conversation. Answer the last thing they said first, in plain speech, using at least one concrete detail from that message. If they said something earlier in this chat, tie it in. Have a point of view instead of agreeing with everything. Then ask one specific question about that same thing. Do not say you are here, that you are listening, that you are ready to help, or ask them to tell you more. Three to six sentences. No list unless they asked for one. Do not announce that you are a program and do not open with "Certainly".',
+collaborator:'You are EVE, the assistant on this computer. Do the job they asked. Answer from their notes, tasks, calendar, and the memory section, and use only facts written there. If a fact is not there, say you do not have it. Keep it short and specific. Do not roleplay, do not flirt, and do not ask a follow-up unless a missing detail stops the task. Do not say you are here, listening, or ready to help. Do not announce that you are a program.',
 support:"You are EVE in Support & Reflection mode. You are sitting in a real conversation. Reflect the specific thing they just said, in their words, before you add anything. Stay with that, not with a general feeling. You are not a therapist, a counselor, or any licensed professional, and you never imply otherwise. Do not diagnose, do not label what they describe with a clinical term they have not used, and do not present yourself as a substitute for real professional support. If they describe something serious or ongoing, gently encourage them to talk to a real mental health professional. If they mention anything suggesting a safety risk to themselves or others, stay calm, take that seriously, and clearly encourage them to contact a crisis line or emergency services. In the US that is 988. Do not carry on as if it were an ordinary chat. Otherwise ask one question about the detail they actually brought up. Never reply with only that you are here or that you are listening. Do not hand them a plan or a list.",
 spicy:"You are EVE in Spicy mode, flirting with someone you like. React to the actual thing they just said and tease that, not a generic compliment. Stay warm and PG-13. Never describe a sexual act or use graphic sexual language. If they push that way, deflect with humor. Use a detail from their message. Ask one playful question about that detail. Do not turn it into a work meeting unless they ask. Do not say you are here for them."
 };
@@ -3074,11 +3072,139 @@ if(proj.length)lines.push('Project: '+proj.join(' '));
 if(!who.length&&!proj.length)lines.push(clean.slice(0,900));
 return lines.join('\n').slice(0,1400);
 }
+async function assistNow(raw){
+const text=String(raw||'').trim();
+const lower=text.toLowerCase().replace(/[?.!]+$/g,'').replace(/^(?:hey[, ]*eve[, ]*|please)\s+/,'').trim();
+if(!lower)return null;
+if(/\b(weather|forecast|how hot|how cold|temperature)\b/.test(lower)){
+switchTab('Weather');
+try{if(typeof loadWeather==='function')loadWeather(28.5494,-81.7729);}catch(e){}
+try{
+const d=await fetch('https://api.open-meteo.com/v1/forecast?latitude=28.5494&longitude=-81.7729&current=temperature_2m,apparent_temperature,precipitation,wind_speed_10m,weather_code,uv_index&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto',{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
+const c=d.current;
+const line=Math.round(c.temperature_2m)+'°F, feels '+Math.round(c.apparent_temperature)+'°F, wind '+Math.round(c.wind_speed_10m)+' mph, rain '+Number(c.precipitation||0).toFixed(2)+' in, UV '+(c.uv_index!=null?Number(c.uv_index).toFixed(1):'—')+'.';
+localStorage.setItem('eve_weather_line',Math.round(c.temperature_2m)+'°F');
+return line;
+}catch(e){
+const saved=localStorage.getItem('eve_weather_line');
+return saved?('Last reading: '+saved):'Weather needs a connection the first time.';
+}
+}
+if(/^(?:what(?:'s| is) on my (?:list|to-?do)|show(?: me)? my (?:list|to-?dos?|tasks)|list (?:my )?(?:to-?dos?|tasks))$/.test(lower)){
+const open=readStore('eve_todos',[]).filter(t=>!t.done);
+switchTab('To Do');
+return open.length?open.map(t=>t.text).join('\n'):'Your list is clear.';
+}
+let todo=text.match(/^(?:please\s+)?(?:add|put)\s+(.+?)\s+(?:to|on)\s+my\s+(?:list|to-?do|tasks)$/i)||text.match(/^(?:please\s+)?(?:add|new|create)\s+(?:a\s+)?(?:to-?do|to do|task)\s+(?:to\s+)?(.+)$/i)||text.match(/^(?:please\s+)?remind me to\s+(.+)$/i);
+if(todo){
+const item=(todo[1]||'').replace(/[?.!]+$/,'').trim();
+if(item){
+const list=readStore('eve_todos',[]);
+list.push({text:item,done:false});
+localStorage.setItem('eve_todos',JSON.stringify(list.slice(0,200)));
+switchTab('To Do');
+return 'Added: '+item;
+}
+}
+if(/^(?:show|read)(?: me)? my notes$/.test(lower)){
+switchTab('Notes');
+const notes=(localStorage.getItem('eve_notes')||'').trim();
+return notes||'No notes saved.';
+}
+const note=text.match(/^(?:please\s+)?(?:add|write|take|jot)\s+(?:a\s+)?note\s+(?:that\s+|saying\s+)?(.+)$/i)||text.match(/^(?:please\s+)?note that\s+(.+)$/i);
+if(note){
+const line=note[1].replace(/[?.!]+$/,'').trim();
+if(line){
+const prev=(localStorage.getItem('eve_notes')||'').replace(/\s+$/,'');
+localStorage.setItem('eve_notes',(prev?prev+'\n':'')+line);
+switchTab('Notes');
+return 'Noted: '+line;
+}
+}
+if(/^(?:show|list)(?: me)? my alarms$/.test(lower)){
+const alarms=readStore('eve_alarms',[]);
+switchTab('Alarms');
+return alarms.length?alarms.map(a=>a.time+' '+(a.label||'')).join('\n'):'No alarms set.';
+}
+const alarm=lower.match(/^(?:set|add|create)\s+(?:an?\s+)?alarm\s+(?:for\s+)?(.+)$/);
+if(alarm){
+const tm=clockToInput(alarm[1]);
+const label=(text.match(/\b(?:called|named|labeled)\s+(.+)$/i)||[])[1]||'Alarm';
+if(tm){
+const alarms=readStore('eve_alarms',[]);
+alarms.push({time:tm,label:label.replace(/[?.!]+$/,'').trim()||'Alarm'});
+localStorage.setItem('eve_alarms',JSON.stringify(alarms));
+switchTab('Alarms');
+return 'Alarm set for '+tm+'.';
+}
+}
+if(/^(?:what(?:'s| is) on my (?:calendar|schedule)|show(?: me)? my (?:calendar|schedule)|list (?:my )?events)$/.test(lower)){
+const cals=readStore('eve_cals',[]);
+switchTab('Calendar');
+return cals.length?cals.slice(-12).map(c=>(c.date||'')+' '+(c.time||'')+' '+(c.title||'')).join('\n'):'Nothing on the calendar.';
+}
+const ev=lower.match(/^(?:add|create|put)\s+(?:an?\s+)?(?:calendar\s+)?event\s+(.+)$/);
+if(ev){
+const at=(ev[1].match(/\bat\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i)||[])[1];
+const title=ev[1].replace(/\s+at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?/i,'').replace(/[?.!]+$/,'').trim();
+if(title){
+const cals=readStore('eve_cals',[]);
+cals.push({date:new Date().toISOString().split('T')[0],title,time:at?clockToInput(at):''});
+localStorage.setItem('eve_cals',JSON.stringify(cals));
+switchTab('Calendar');
+return 'Added to the calendar: '+title+(at?(' at '+clockToInput(at)):'')+'.';
+}
+}
+const calc=lower.match(/^(?:calculate|compute|what is|what's)\s+(.+)$/);
+if(calc&&/\d/.test(calc[1])&&/(?:\b(?:plus|minus|times|divided|over)\b|\d\s*[-+*/x]\s*\d)/.test(calc[1])){
+const expr=wordsToMath(calc[1]);
+if(/^[\d+\-*/().\s]+$/.test(expr)&&/\d/.test(expr)){
+try{
+const n=Function('"use strict";return ('+expr+')')();
+switchTab('Calculator');
+return String(n);
+}catch(e){}
+}
+}
+const search=lower.match(/^(?:search|look up)\s+(?:for\s+)?(.+)$/);
+if(search&&search[1]){
+applyEveAction('ACTION: search '+search[1]);
+return 'Searching for '+search[1]+'.';
+}
+const map=lower.match(/^(?:show\s+(?:me\s+)?)?(?:a\s+)?map\s+(?:of\s+|for\s+)?(.+)$/)||lower.match(/^directions\s+to\s+(.+)$/);
+if(map){
+applyEveAction('ACTION: map '+map[1]);
+return 'Map of '+map[1]+'.';
+}
+if(/^(?:what(?:'s| is) the time|what time is it|what(?:'s| is) today)$/.test(lower))return new Date().toLocaleString();
+const open=lower.match(/^(?:open|go to|switch to|show)\s+(?:the\s+)?(.+?)(?:\s+tab)?$/);
+if(open){
+const tab=matchTab(open[1]);
+if(tab){switchTab(tab);return 'Opened '+tab+'.';}
+}
+return null;
+}
 document.getElementById('chatSend').onclick=async()=>{
 primeVoice();
 const inp=document.getElementById('chatInput');const txt=inp.value.trim();if(!txt)return;
+const helped=await assistNow(txt);
+if(helped!=null){
+inp.value='';
+addChat('user',txt);
+addChat('ai',helped);
+try{speakText(helped);}catch(e){}
+return;
+}
 const cmd=txt.toLowerCase().replace(/[?.!]+$/g,'').replace(/^(?:hey[, ]*eve[, ]*)/i,'').trim();
-if(voiceAct(cmd,txt)){inp.value='';return;}
+window._eveChatCmd=true;window._eveChatSaid='';
+const acted=voiceAct(cmd,txt);
+window._eveChatCmd=false;
+if(acted){
+inp.value='';
+addChat('user',txt);
+addChat('ai',window._eveChatSaid||'Done.');
+return;
+}
 addChat('user',txt);inp.value='';
 let full='';addChat('ai','');const idx=chat.length-1;
 const statusEl=document.getElementById('chatStatus');
