@@ -86,11 +86,13 @@ button.secondary{background:var(--input-bg);color:var(--text);padding:8px 12px;b
 </div>
 <script>
 const DEFAULT_AVATAR="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQ0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWEwYjIwIi8+PHRleHQgeD0iNTAlIiB5PSI0NSUiIGZpbGw9IiM0ZjQ2ZTUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjY0IiBmb250LXdlaWdodD0iOTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5FVkU8L3RleHQ+PC9zdmc+";
-const TABS=["Brain","Email","Text","Contacts","Apps","Code Lab","Calculator","Image","Music","Video","Spotify","YouTube","Browser","RPG","Stories","Maps","Weather","Alarms","To Do","Notes","Knowledge","Projects","Legal","Health","Recipes","Call","Calendar","Focus","Search","Tools","Comics","Media"];
+const TABS=["Brain","Email","Text","Contacts","Web Apps","Code Lab","Calculator","Image","Music","Video","Spotify","YouTube","Browser","RPG","Stories","Maps","Weather","Alarms","To Do","Notes","Knowledge","Projects","Legal","Health","Recipes","Call","Calendar","Focus","Search","Tools","Comics","Media"];
 const CHAT_FEATURES=[{id:'chat',label:'Chat'},{id:'codelab',label:'Code Lab'},{id:'rpg',label:'RPG'},{id:'stories',label:'Stories'},{id:'legal',label:'Legal'},{id:'health',label:'Health'}];
 let avatars=[];let hero=localStorage.getItem('eve_hero')||'';
 let chat=JSON.parse(localStorage.getItem('eve_chat')||'[]');
 let activeTab=localStorage.getItem('eve_active_tab')||'Brain';
+if(activeTab==='Apps')activeTab='Web Apps';
+if(!TABS.includes(activeTab))activeTab='Brain';
 let aiKey=localStorage.getItem('eve_anthropic_key')||'';
 window.pyBridge=null;
 let voiceMode='off';
@@ -662,8 +664,8 @@ else if(t==='Contacts')html=`<h3>Contacts</h3>
 <button class=primary id=contactSave style="width:100%">Save contact</button>
 <button class=secondary id=contactCancel style="width:100%;display:none">Cancel</button>
 <div id=contactList style="text-align:left;margin-top:10px"></div>`;
-else if(t==='Apps')html=`<h3>Apps</h3>
-<div style="text-align:left;font-size:11px;color:var(--muted);margin-bottom:6px">Save a name and an address, then open it.</div>
+else if(t==='Web Apps')html=`<h3>Web Apps</h3>
+<div style="text-align:left;font-size:11px;color:var(--muted);margin-bottom:6px">Drag a row to change the order.</div>
 <input id=appName placeholder="Name">
 <input id=appPath placeholder="Address">
 <button class=primary id=appAdd style="width:100%">Add</button>
@@ -977,19 +979,53 @@ clearContactForm();
 renderContacts();
 };
 }
-if(t==='Apps'){
+if(t==='Web Apps'){
 function loadApps(){try{return JSON.parse(localStorage.getItem('eve_web_apps')||'[]');}catch(e){return [];}}
+function saveApps(list){localStorage.setItem('eve_web_apps',JSON.stringify(list));}
 function renderApps(list){
-document.getElementById('appsList').innerHTML=list.map((a,i)=>`<div class=card>${a.name}<div style="font-size:11px;color:var(--muted);word-break:break-all">${a.path}</div><div style="margin-top:4px"><button class=secondary data-open="${i}">Open</button> <button class=secondary data-del="${i}">Remove</button></div></div>`).join('')||'<div style="color:var(--muted)">Nothing saved yet.</div>';
-document.getElementById('appsList').querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{
-const item=loadApps()[+b.getAttribute('data-open')];
-if(!item)return;
-let url=item.path;
-if(!/^https?:\/\//i.test(url))url='https://'+url;
-window.open(url,'_blank','noopener');
-});
-document.getElementById('appsList').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
-const list=loadApps();list.splice(+b.getAttribute('data-del'),1);localStorage.setItem('eve_web_apps',JSON.stringify(list));renderApps(list);
+const box=document.getElementById('appsList');
+box.innerHTML='';
+if(!list.length){box.textContent='Nothing saved yet.';return;}
+let dragFrom=-1;
+list.forEach((a,i)=>{
+const row=document.createElement('div');
+row.className='card';
+row.draggable=true;
+row.style.cursor='grab';
+const name=document.createElement('div');
+name.textContent=a.name;
+const path=document.createElement('div');
+path.style.cssText='font-size:11px;color:var(--muted);word-break:break-all';
+path.textContent=a.path;
+const bar=document.createElement('div');
+bar.style.marginTop='4px';
+const open=document.createElement('button');
+open.className='secondary';
+open.textContent='Open';
+open.onclick=()=>{let url=a.path;if(!/^https?:\/\//i.test(url))url='https://'+url;window.open(url,'_blank','noopener');};
+const del=document.createElement('button');
+del.className='secondary';
+del.textContent='Remove';
+del.style.marginLeft='6px';
+del.onclick=()=>{const cur=loadApps();cur.splice(i,1);saveApps(cur);renderApps(cur);};
+bar.appendChild(open);bar.appendChild(del);
+row.appendChild(name);row.appendChild(path);row.appendChild(bar);
+row.ondragstart=(e)=>{dragFrom=i;if(e.dataTransfer)e.dataTransfer.effectAllowed='move';row.style.opacity='0.45';};
+row.ondragend=()=>{row.style.opacity='';};
+row.ondragover=(e)=>{e.preventDefault();row.style.outline='1px solid #818cf8';};
+row.ondragleave=()=>{row.style.outline='';};
+row.ondrop=(e)=>{
+e.preventDefault();
+const from=dragFrom;
+dragFrom=-1;
+if(from<0||from===i)return;
+const cur=loadApps();
+const [item]=cur.splice(from,1);
+cur.splice(i,0,item);
+saveApps(cur);
+renderApps(cur);
+};
+box.appendChild(row);
 });
 }
 renderApps(loadApps());
@@ -999,7 +1035,7 @@ let path=document.getElementById('appPath').value.trim();
 if(!path){document.getElementById('appsStatus').textContent='Enter an address.';return;}
 const list=loadApps();
 list.push({name:name||path,path});
-localStorage.setItem('eve_web_apps',JSON.stringify(list));
+saveApps(list);
 document.getElementById('appName').value='';
 document.getElementById('appPath').value='';
 document.getElementById('appsStatus').textContent='Added.';
@@ -2420,7 +2456,7 @@ function launchApp(item){
 if(!item)return;
 let url=String(item.path||'');
 if(!/^https?:\/\//i.test(url))url='https://'+url;
-switchTab('Apps');
+switchTab('Web Apps');
 window.open(url,'_blank','noopener');
 say('Opening '+item.name+'.');
 }
@@ -2435,7 +2471,7 @@ return true;
 }
 function matchTab(spoken){
 let s=normTalk(spoken).replace(/^(?:the|my)\s+/,'').replace(/\s+tab$/,'');
-const aliases={'text':'Text','texts':'Text','texting':'Text','sms':'Text','email':'Email','mail':'Email','contacts':'Contacts','contact':'Contacts','apps':'Apps','app list':'Apps','picture':'Image','pictures':'Image','photo':'Image','photos':'Image','image':'Image','images':'Image','song':'Music','songs':'Music','music':'Music','video':'Video','videos':'Video','call':'Call','video call':'Call','video chat':'Call','recipe':'Recipes','recipes':'Recipes','cookbook':'Recipes','map':'Maps','maps':'Maps','to do':'To Do','todo':'To Do','to dos':'To Do','tasks':'To Do','task':'To Do','note':'Notes','notes':'Notes','code':'Code Lab','code lab':'Code Lab','codelab':'Code Lab','code-lab':'Code Lab','coding':'Code Lab','calculator':'Calculator','calc':'Calculator','math':'Calculator','youtube':'YouTube','spotify':'Spotify','browser':'Browser','web':'Browser','weather':'Weather','forecast':'Weather','alarm':'Alarms','alarms':'Alarms','story':'Stories','stories':'Stories','health':'Health','legal':'Legal','focus':'Focus','timer':'Focus','calendar':'Calendar','search':'Search','knowledge':'Knowledge','projects':'Projects','project':'Projects','rpg':'RPG','game':'RPG','adventure':'RPG','brain':'Brain','tools':'Tools','comics':'Comics','comic':'Comics','media':'Media','movies':'Media'};
+const aliases={'text':'Text','texts':'Text','texting':'Text','sms':'Text','email':'Email','mail':'Email','contacts':'Contacts','contact':'Contacts','apps':'Web Apps','app list':'Web Apps','web apps':'Web Apps','webapps':'Web Apps','picture':'Image','pictures':'Image','photo':'Image','photos':'Image','image':'Image','images':'Image','song':'Music','songs':'Music','music':'Music','video':'Video','videos':'Video','call':'Call','video call':'Call','video chat':'Call','recipe':'Recipes','recipes':'Recipes','cookbook':'Recipes','map':'Maps','maps':'Maps','to do':'To Do','todo':'To Do','to dos':'To Do','tasks':'To Do','task':'To Do','note':'Notes','notes':'Notes','code':'Code Lab','code lab':'Code Lab','codelab':'Code Lab','code-lab':'Code Lab','coding':'Code Lab','calculator':'Calculator','calc':'Calculator','math':'Calculator','youtube':'YouTube','spotify':'Spotify','browser':'Browser','web':'Browser','weather':'Weather','forecast':'Weather','alarm':'Alarms','alarms':'Alarms','story':'Stories','stories':'Stories','health':'Health','legal':'Legal','focus':'Focus','timer':'Focus','calendar':'Calendar','search':'Search','knowledge':'Knowledge','projects':'Projects','project':'Projects','rpg':'RPG','game':'RPG','adventure':'RPG','brain':'Brain','tools':'Tools','comics':'Comics','comic':'Comics','media':'Media','movies':'Media'};
 if(aliases[s])return aliases[s];
 return TABS.find(t=>normTalk(t)===s)||null;
 }
@@ -2658,7 +2694,7 @@ if(addApp){
 const list=(()=>{try{return JSON.parse(localStorage.getItem('eve_web_apps')||'[]');}catch(e){return [];}})();
 list.push({name:addApp[1].trim(),path:addApp[2].trim()});
 localStorage.setItem('eve_web_apps',JSON.stringify(list));
-onTab('Apps',()=>{});
+onTab('Web Apps',()=>{});
 say('Saved '+addApp[1].trim()+'.');
 return true;
 }
