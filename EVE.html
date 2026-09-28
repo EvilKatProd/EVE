@@ -516,6 +516,12 @@ function wIcon(code){return (WMO_CODES[code]||['—','🌡️'])[1];}
 function wDesc(code){return (WMO_CODES[code]||['—','🌡️'])[0];}
 function uvInfo(v){if(v==null)return{label:'—',color:'#888'};if(v<3)return{label:'Low',color:'#22c55e'};if(v<6)return{label:'Moderate',color:'#eab308'};if(v<8)return{label:'High',color:'#f97316'};if(v<11)return{label:'Very High',color:'#ef4444'};return{label:'Extreme',color:'#a855f7'};}
 function moonInfo(p){if(p==null)return{label:'—',emoji:'🌑'};if(p<0.03||p>0.97)return{label:'New Moon',emoji:'🌑'};if(p<0.22)return{label:'Waxing Crescent',emoji:'🌒'};if(p<0.28)return{label:'First Quarter',emoji:'🌓'};if(p<0.47)return{label:'Waxing Gibbous',emoji:'🌔'};if(p<0.53)return{label:'Full Moon',emoji:'🌕'};if(p<0.72)return{label:'Waning Gibbous',emoji:'🌖'};if(p<0.78)return{label:'Last Quarter',emoji:'🌗'};return{label:'Waning Crescent',emoji:'🌘'};}
+function weatherFromData(d){
+const c=d&&d.current;
+if(!c||c.temperature_2m==null||Number.isNaN(+c.temperature_2m))return '';
+const moon=moonInfo(d.daily&&d.daily.moon_phase?d.daily.moon_phase[0]:null);
+return Math.round(c.temperature_2m)+'°F, '+wDesc(c.weather_code)+', feels '+Math.round(c.apparent_temperature)+'°F, rain '+Number(c.precipitation||0).toFixed(2)+' in, UV '+(c.uv_index!=null?Number(c.uv_index).toFixed(1):'—')+', wind '+Math.round(c.wind_speed_10m||0)+' mph'+(moon.label&&moon.label!=='—'?(', '+moon.label):'')+'.';
+}
 const heroImg=document.getElementById('heroImg'),grid=document.getElementById('avatarGrid'),chatBox=document.getElementById('chatBox'),tabBar=document.getElementById('tabBar'),tabContent=document.getElementById('tabContent');
 const DB_NAME='eve_avatars_db';const STORE='avatars';
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=()=>{try{r.result.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});}catch{}};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
@@ -1515,6 +1521,7 @@ document.getElementById('weatherMini').textContent=mini;
 localStorage.setItem('eve_weather_line',mini);
 try{localStorage.setItem('eve_weather_raw',JSON.stringify({at:Date.now(),d}));}catch(e){}
 }
+window.paintWeather=paintWeather;
 function loadWeather(lat,lon){
 const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,apparent_temperature,precipitation,wind_speed_10m,weather_code,uv_index&hourly=temperature_2m,precipitation_probability,precipitation,uv_index,weather_code&daily=temperature_2m_max,temperature_2m_min,uv_index_max,precipitation_sum,moon_phase&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=7';
 fetch(url).then(r=>r.json()).then(paintWeather).catch(()=>{
@@ -2751,15 +2758,16 @@ document.getElementById('chatInput').value=raw;
 document.getElementById('chatSend').click();
 }
 const CHAT_MODE_PROMPTS={
-collaborator:'You are EVE. Every reply is your own. You write working code, stories, scripts, articles, and song lyrics in the chat when asked. You also plan images, music, and video in concrete detail: subject, look, length, and what happens. Do the piece itself. Do not answer with an outline, a list of tips, or a claim that another tab will do it. Use their notes and PDFs when a fact there changes the answer. Do not invent personal facts. Do not open with Certainly or say you would be happy to help.',
+collaborator:'You are EVE. Every reply is your own. You write working code, stories, scripts, articles, and song lyrics in the chat when asked. You also plan images, music, and video in concrete detail: subject, look, length, and what happens. Do the piece itself. If weather numbers are in this message, say them. Never say you cannot show the weather. Do not answer with an outline, a list of tips, or a claim that another tab will do it. Use their notes and PDFs when a fact there changes the answer. Do not invent personal facts. Do not open with Certainly or say you would be happy to help.',
 support:"You are EVE in Support & Reflection mode. You are sitting in a real conversation. Reflect the specific thing they just said, in their words, before you add anything. Stay with that, not with a general feeling. You are not a therapist, a counselor, or any licensed professional, and you never imply otherwise. Do not diagnose, do not label what they describe with a clinical term they have not used, and do not present yourself as a substitute for real professional support. If they describe something serious or ongoing, gently encourage them to talk to a real mental health professional. If they mention anything suggesting a safety risk to themselves or others, stay calm, take that seriously, and clearly encourage them to contact a crisis line or emergency services. In the US that is 988. Do not carry on as if it were an ordinary chat. Otherwise ask one question about the detail they actually brought up. Never reply with only that you are here or that you are listening. Do not hand them a plan or a list.",
 spicy:"You are EVE in Spicy mode, flirting with someone you like. React to the actual thing they just said and tease that, not a generic compliment. Stay warm and PG-13. Never describe a sexual act or use graphic sexual language. If they push that way, deflect with humor. Use a detail from their message. Ask one playful question about that detail. Do not turn it into a work meeting unless they ask. Do not say you are here for them."
 };
-function chatModeInstructions(mode){
+function chatModeInstructions(mode, already){
 const memory='The section "What you already know about them" is memory from their PDFs, notes, and projects. Treat it as fact about the user and their work. When a full PDF is included, read that whole document and answer from any part of it, not only the beginning. Use it when it answers what they just said. Do not say you have no memory or no documents when that section has text. Do not add facts that are not written there.';
 if(mode==='support')return memory+' Stay in this conversation. Do not open another part of the app and do not add an ACTION line.';
 if(mode==='spicy')return memory+' Stay playful. Do not add an ACTION line unless they clearly ask you to open something.';
-return 'Their notes and PDFs are included below when they match. Use a fact from them when it changes the answer, and do not invent other facts about the person. For a work question, answer the question itself. When they want weather, a search, a map, a video, a picture, or another section, finish with exactly one line and nothing after it: ACTION: weather | ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
+if(already)return 'A finished action is listed below, including any weather numbers. Say those facts in the chat. If the weather is there, read the temperature and conditions. Never say you cannot show the weather or that it is only in another tab. Do not add an ACTION line.';
+return 'Their notes and PDFs are included below when they match. Use a fact from them when it changes the answer, and do not invent other facts about the person. For a work question, answer the question itself. If live weather numbers are in this message, say them. Do not say you cannot show the weather. When they want a search, a map, a video, a picture, or another section that is not already done, finish with exactly one line and nothing after it: ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
 }
 const chatModeSelect=document.getElementById('chatModeSelect');
 chatModeSelect.value=localStorage.getItem('eve_chat_mode')||'collaborator';
@@ -3021,17 +3029,30 @@ const lower=text.toLowerCase().replace(/[?.!]+$/g,'').replace(/^(?:hey[, ]*eve[,
 if(!lower)return null;
 if(/\b(weather|forecast|how hot|how cold|temperature)\b/.test(lower)){
 switchTab('Weather');
-try{if(typeof loadWeather==='function')loadWeather(28.5494,-81.7729);}catch(e){}
 try{
-const d=await fetch('https://api.open-meteo.com/v1/forecast?latitude=28.5494&longitude=-81.7729&current=temperature_2m,apparent_temperature,precipitation,wind_speed_10m,weather_code,uv_index&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto',{signal:AbortSignal.timeout(6000)}).then(r=>r.json());
-const c=d.current;
-const line=Math.round(c.temperature_2m)+'°F, feels '+Math.round(c.apparent_temperature)+'°F, wind '+Math.round(c.wind_speed_10m)+' mph, rain '+Number(c.precipitation||0).toFixed(2)+' in, UV '+(c.uv_index!=null?Number(c.uv_index).toFixed(1):'—')+'.';
-localStorage.setItem('eve_weather_line',Math.round(c.temperature_2m)+'°F');
-return line;
-}catch(e){
-const saved=localStorage.getItem('eve_weather_line');
-return saved?('Last reading: '+saved):'Weather needs a connection the first time.';
+const res=await fetch('https://api.open-meteo.com/v1/forecast?latitude=28.5494&longitude=-81.7729&current=temperature_2m,apparent_temperature,precipitation,wind_speed_10m,weather_code,uv_index&hourly=temperature_2m,precipitation_probability,precipitation,uv_index,weather_code&daily=temperature_2m_max,temperature_2m_min,uv_index_max,precipitation_sum,moon_phase&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=7',{signal:AbortSignal.timeout(8000)});
+if(res.ok){
+const d=await res.json();
+const line=weatherFromData(d);
+if(line){
+localStorage.setItem('eve_weather_line',Math.round(d.current.temperature_2m)+'°F '+wIcon(d.current.weather_code));
+try{localStorage.setItem('eve_weather_raw',JSON.stringify({at:Date.now(),d}));}catch(e){}
+try{if(typeof window.paintWeather==='function')window.paintWeather(d);}catch(e){}
+return 'Current weather, already on the Weather tab: '+line;
 }
+}
+}catch(e){}
+for(let i=0;i<8;i++){
+await new Promise(r=>setTimeout(r,150));
+try{
+const saved=JSON.parse(localStorage.getItem('eve_weather_raw')||'');
+const line=weatherFromData(saved&&saved.d);
+if(line)return 'Current weather, already on the Weather tab: '+line;
+}catch(e){}
+const mini=localStorage.getItem('eve_weather_line');
+if(mini&&mini!=='--°F')return 'Current weather, already on the Weather tab: '+mini;
+}
+return 'Weather needs a connection the first time.';
 }
 if(/^(?:what(?:'s| is) on my (?:list|to-?do)|show(?: me)? my (?:list|to-?dos?|tasks)|list (?:my )?(?:to-?dos?|tasks))$/.test(lower)){
 const open=readStore('eve_todos',[]).filter(t=>!t.done);
@@ -3146,8 +3167,8 @@ if(statusEl)statusEl.textContent='';
 try{
 let sysPrompt=CHAT_MODE_PROMPTS[chatModeSelect.value]||CHAT_MODE_PROMPTS.collaborator;
 const mode=chatModeSelect.value||'collaborator';
-sysPrompt+='\n\n'+chatModeInstructions(mode);
-if(actionNote)sysPrompt+='\n\nThe app already finished this. Tell them what happened using only these facts:\n'+actionNote;
+sysPrompt+='\n\n'+chatModeInstructions(mode,!!actionNote);
+if(actionNote)sysPrompt+='\n\nThe app already finished this and it is on screen. Tell them these facts in the chat. Do not say you cannot show it:\n'+actionNote;
 if(mode==='collaborator'&&chatContextToggle.checked){
 const ctx=buildProjectContext();
 if(ctx) sysPrompt+='\n\nProject context the user is currently working on elsewhere in the app (reference it naturally where relevant):\n\n'+ctx;
