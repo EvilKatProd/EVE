@@ -531,7 +531,7 @@ return {lat:28.5494,lon:-81.7729,name:'Clermont, Florida'};
 }
 function weatherSpokenLine(detail){
 const bit=String(detail||'').replace(/^Current weather, already on the Weather tab:\s*/i,'').trim();
-if(!bit||bit==='--°F')return '';
+if(!bit||bit==='--°F'||/NaN/.test(bit)||!/\d/.test(bit))return '';
 if(/^in /i.test(bit))return bit;
 return 'In '+weatherCoords().name+' it is '+bit.replace(/^Last reading:\s*/i,'');
 }
@@ -1501,6 +1501,7 @@ adv=null;localStorage.removeItem('eve_rpg_adventure');showActive();renderLog();
 if(t==='Maps'){document.getElementById('mapGo').onclick=async()=>{const q=document.getElementById('mapSearch').value;if(!q)return;try{const res=await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q)+'&limit=1',{signal:AbortSignal.timeout(5000)}).then(r=>r.json());if(res[0]){document.getElementById('mapInfo').textContent=res[0].display_name;const lat=parseFloat(res[0].lat),lon=parseFloat(res[0].lon);document.getElementById('mapFrame').src=`https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.05},${lat-0.05},${lon+0.05},${lat+0.05}&marker=${lat},${lon}&layer=mapnik`;}}catch{}};}
 if(t==='Weather'){
 function paintWeather(d){
+if(!weatherFromData(d))return;
 const c=d.current||{};
 const uv=uvInfo(c.uv_index);
 const daily=d.daily||{};
@@ -1540,7 +1541,7 @@ try{localStorage.setItem('eve_weather_raw',JSON.stringify({at:Date.now(),d}));}c
 window.paintWeather=paintWeather;
 function loadWeather(lat,lon){
 const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,apparent_temperature,precipitation,wind_speed_10m,weather_code,uv_index&hourly=temperature_2m,precipitation_probability,precipitation,uv_index,weather_code&daily=temperature_2m_max,temperature_2m_min,uv_index_max,precipitation_sum,moon_phase&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=7';
-fetch(url).then(r=>r.json()).then(paintWeather).catch(()=>{
+fetch(url).then(r=>r.json()).then(d=>{if(!weatherFromData(d))throw new Error('bad');paintWeather(d);}).catch(()=>{
 const raw=localStorage.getItem('eve_weather_raw');
 if(raw){try{paintWeather(JSON.parse(raw).d);return;}catch(e){}}
 document.getElementById('weatherBox').innerHTML='Weather needs a connection the first time.';
