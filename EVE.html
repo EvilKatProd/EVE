@@ -522,6 +522,22 @@ if(!c||c.temperature_2m==null||Number.isNaN(+c.temperature_2m))return '';
 const moon=moonInfo(d.daily&&d.daily.moon_phase?d.daily.moon_phase[0]:null);
 return Math.round(c.temperature_2m)+'°F, '+wDesc(c.weather_code)+', feels '+Math.round(c.apparent_temperature)+'°F, rain '+Number(c.precipitation||0).toFixed(2)+' in, UV '+(c.uv_index!=null?Number(c.uv_index).toFixed(1):'—')+', wind '+Math.round(c.wind_speed_10m||0)+' mph'+(moon.label&&moon.label!=='—'?(', '+moon.label):'')+'.';
 }
+function weatherCoords(){
+try{
+const s=JSON.parse(localStorage.getItem('eve_coords')||'null');
+if(s&&s.lat!=null&&s.lon!=null)return {lat:+s.lat,lon:+s.lon,name:s.name||'your area'};
+}catch(e){}
+return {lat:28.5494,lon:-81.7729,name:'Clermont, Florida'};
+}
+function weatherSpokenLine(detail){
+const bit=String(detail||'').replace(/^Current weather, already on the Weather tab:\s*/i,'').trim();
+if(!bit||bit==='--°F')return '';
+if(/^in /i.test(bit))return bit;
+return 'In '+weatherCoords().name+' it is '+bit.replace(/^Last reading:\s*/i,'');
+}
+function weatherAskingLocation(text){
+return /\b(location|zip code|postcode|what city|which city|where (?:are|do) you|where you live|your (?:city|town|address)|enable location|share your location)\b/i.test(String(text||''));
+}
 const heroImg=document.getElementById('heroImg'),grid=document.getElementById('avatarGrid'),chatBox=document.getElementById('chatBox'),tabBar=document.getElementById('tabBar'),tabContent=document.getElementById('tabContent');
 const DB_NAME='eve_avatars_db';const STORE='avatars';
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=()=>{try{r.result.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});}catch{}};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
@@ -2760,7 +2776,7 @@ document.getElementById('chatInput').value=raw;
 document.getElementById('chatSend').click();
 }
 const CHAT_MODE_PROMPTS={
-collaborator:'You are EVE. Every reply is your own. You write working code, stories, scripts, articles, and song lyrics in the chat when asked. You also plan images, music, and video in concrete detail. If weather, a map place, search results, a calculation, a list, notes, or an alarm is in this message, say those facts. If a picture, song, video, page, or search was already started in a tab, say that it is there. Never say you cannot show it in chat. Do not answer with an outline or a list of tips instead of the work. Use their notes and PDFs when a fact there changes the answer. Do not invent personal facts. Do not open with Certainly or say you would be happy to help.',
+collaborator:'You are EVE. Every reply is your own. You write working code, stories, scripts, articles, and song lyrics in the chat when asked. You also plan images, music, and video in concrete detail. If weather, a map place, search results, a calculation, a list, notes, or an alarm is in this message, say those facts. Weather is for Clermont, Florida unless another place is named. Never ask for their location, city, or zip code when weather numbers are present. If a picture, song, video, page, or search was already started in a tab, say that it is there. Never say you cannot show it in chat. Do not answer with an outline or a list of tips instead of the work. Use their notes and PDFs when a fact there changes the answer. Do not invent personal facts. Do not open with Certainly or say you would be happy to help.',
 support:"You are EVE in Support & Reflection mode. You are sitting in a real conversation. Reflect the specific thing they just said, in their words, before you add anything. Stay with that, not with a general feeling. You are not a therapist, a counselor, or any licensed professional, and you never imply otherwise. Do not diagnose, do not label what they describe with a clinical term they have not used, and do not present yourself as a substitute for real professional support. If they describe something serious or ongoing, gently encourage them to talk to a real mental health professional. If they mention anything suggesting a safety risk to themselves or others, stay calm, take that seriously, and clearly encourage them to contact a crisis line or emergency services. In the US that is 988. Do not carry on as if it were an ordinary chat. Otherwise ask one question about the detail they actually brought up. Never reply with only that you are here or that you are listening. Do not hand them a plan or a list.",
 spicy:"You are EVE in Spicy mode, flirting with someone you like. React to the actual thing they just said and tease that, not a generic compliment. Stay warm and PG-13. Never describe a sexual act or use graphic sexual language. If they push that way, deflect with humor. Use a detail from their message. Ask one playful question about that detail. Do not turn it into a work meeting unless they ask. Do not say you are here for them."
 };
@@ -2824,7 +2840,7 @@ localStorage.setItem('eve_weather_line',Math.round(d.current.temperature_2m)+'°
 try{localStorage.setItem('eve_weather_raw',JSON.stringify({at:Date.now(),d}));}catch(e){}
 }
 }
-if(line)bits.push('Live weather for Clermont, Florida: '+line);
+if(line)bits.push('Live weather for '+weatherCoords().name+': '+line);
 }catch(e){
 const saved=localStorage.getItem('eve_weather_line');
 if(saved&&saved!=='--°F')bits.push('Last saved weather: '+saved);
@@ -3051,9 +3067,10 @@ const text=String(raw||'').trim();
 const lower=text.toLowerCase().replace(/[?.!]+$/g,'').replace(/^(?:hey[, ]*eve[, ]*|please)\s+/,'').trim();
 if(!lower)return null;
 if(/\b(weather|forecast|how hot|how cold|temperature)\b/.test(lower)){
+const loc=weatherCoords();
 switchTab('Weather');
 try{
-const res=await fetch('https://api.open-meteo.com/v1/forecast?latitude=28.5494&longitude=-81.7729&current=temperature_2m,apparent_temperature,precipitation,wind_speed_10m,weather_code,uv_index&hourly=temperature_2m,precipitation_probability,precipitation,uv_index,weather_code&daily=temperature_2m_max,temperature_2m_min,uv_index_max,precipitation_sum,moon_phase&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=7',{signal:AbortSignal.timeout(8000)});
+const res=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+loc.lat+'&longitude='+loc.lon+'&current=temperature_2m,apparent_temperature,precipitation,wind_speed_10m,weather_code,uv_index&hourly=temperature_2m,precipitation_probability,precipitation,uv_index,weather_code&daily=temperature_2m_max,temperature_2m_min,uv_index_max,precipitation_sum,moon_phase&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=7',{signal:AbortSignal.timeout(8000)});
 if(res.ok){
 const d=await res.json();
 const line=weatherFromData(d);
@@ -3061,21 +3078,21 @@ if(line){
 localStorage.setItem('eve_weather_line',Math.round(d.current.temperature_2m)+'°F '+wIcon(d.current.weather_code));
 try{localStorage.setItem('eve_weather_raw',JSON.stringify({at:Date.now(),d}));}catch(e){}
 try{if(typeof window.paintWeather==='function')window.paintWeather(d);}catch(e){}
-return 'Current weather, already on the Weather tab: '+line;
+return weatherSpokenLine(line);
 }
 }
 }catch(e){}
-for(let i=0;i<8;i++){
+for(let i=0;i<10;i++){
 await new Promise(r=>setTimeout(r,150));
 try{
 const saved=JSON.parse(localStorage.getItem('eve_weather_raw')||'');
 const line=weatherFromData(saved&&saved.d);
-if(line)return 'Current weather, already on the Weather tab: '+line;
+if(line)return weatherSpokenLine(line);
 }catch(e){}
 const mini=localStorage.getItem('eve_weather_line');
-if(mini&&mini!=='--°F')return 'Current weather, already on the Weather tab: '+mini;
+if(mini&&mini!=='--°F')return weatherSpokenLine(mini);
 }
-return 'Weather needs a connection the first time.';
+return '';
 }
 if(/^(?:what(?:'s| is) on my (?:list|to-?do)|show(?: me)? my (?:list|to-?dos?|tasks)|list (?:my )?(?:to-?dos?|tasks))$/.test(lower)){
 const open=readStore('eve_todos',[]).filter(t=>!t.done);
@@ -3179,6 +3196,20 @@ document.getElementById('chatSend').onclick=async()=>{
 primeVoice();
 const inp=document.getElementById('chatInput');const txt=inp.value.trim();if(!txt)return;
 const helped=await assistNow(txt);
+if(/\b(weather|forecast|how hot|how cold|temperature)\b/i.test(txt)){
+let wx=helped&&/\d\s*°F/.test(helped)?helped:'';
+if(!wx){
+try{wx=weatherSpokenLine(weatherFromData(JSON.parse(localStorage.getItem('eve_weather_raw')||'').d));}catch(e){}
+if(!wx)wx=weatherSpokenLine(localStorage.getItem('eve_weather_line')||'');
+}
+if(wx){
+inp.value='';
+addChat('user',txt);
+addChat('ai',wx);
+try{speakText(wx);}catch(e){}
+return;
+}
+}
 let actionNote=helped||'';
 const cmd=txt.toLowerCase().replace(/[?.!]+$/g,'').replace(/^(?:hey[, ]*eve[, ]*)/i,'').trim();
 if(!actionNote){
@@ -3206,11 +3237,15 @@ try{const know=await memoryFor(txt);if(know)sysPrompt+='\n\nWhat you already kno
 const history=[{role:'system',content:sysPrompt},...chat.filter(m=>m.text&&(m.role==='user'||(!isJunkReply(m.text)&&!isHollowChat(m.text,'')))).slice(-16).map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}))];
 const temp=mode==='support'?0.7:mode==='spicy'?0.95:0.85;
 full=await aiStream(history,{maxTokens:1400,temperature:temp,feature:'chat',wait:30000},(partial)=>{chat[idx].text=partial;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();});
-if(full&&(actionNote||live)&&/can(?:not|'t)\s+(?:show|display|open)|only (?:in|on) (?:the )?(?:weather|search|map|image|tab)|unable to (?:show|display)/i.test(full)){
+if(full&&(actionNote||live)&&(/can(?:not|'t)\s+(?:show|display|open)|only (?:in|on) (?:the )?(?:weather|search|map|image|tab)|unable to (?:show|display)/i.test(full)||(/\b(weather|forecast)\b/i.test(txt)&&weatherAskingLocation(full)))){
+const wx=weatherSpokenLine((function(){try{return weatherFromData(JSON.parse(localStorage.getItem('eve_weather_raw')||'').d);}catch(e){return localStorage.getItem('eve_weather_line')||'';}})());
+if(wx&&/\b(weather|forecast|how hot|how cold|temperature)\b/i.test(txt)){full=wx;}
+else{
 try{
-const again=await aiStream(history.concat([{role:'assistant',content:full},{role:'user',content:'The facts are already in your instructions. Say them. Do not say you cannot show this.'}]),{maxTokens:900,temperature:0.4,feature:'chat',wait:20000},(partial)=>{chat[idx].text=partial;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();});
-if(again&&!/can(?:not|'t)\s+(?:show|display)/i.test(again))full=again;
+const again=await aiStream(history.concat([{role:'assistant',content:full},{role:'user',content:'The facts are already in your instructions. Say them. Do not ask for a location. Do not say you cannot show this.'}]),{maxTokens:900,temperature:0.4,feature:'chat',wait:20000},(partial)=>{chat[idx].text=partial;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();});
+if(again&&!/can(?:not|'t)\s+(?:show|display)/i.test(again)&&!weatherAskingLocation(again))full=again;
 }catch(e){}
+}
 }
 if(full){
 const actionRe=/ACTION:\s*(weather|search|map|youtube|image|open)\s*([^\n]*)/ig;
