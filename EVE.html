@@ -2563,7 +2563,7 @@ const rec=lower.match(/^(?:make|create|write|cook)\s+(?:me\s+)?(?:an?\s+)?(?:all
 if(rec){
 const want=rec[1].replace(/^(?:a|an|some)\s+/,'').trim();
 onTab('Recipes',()=>{if(want)setVal('recipeWant',want);press('recipeMake');});
-say('Writing a recipe.');
+say('Recipes is writing that.');
 return true;
 }
 if(/^save (?:this |the )?recipe$/.test(lower)){onTab('Recipes',()=>press('recipeSave'));say('Saving it.');return true;}
@@ -2585,33 +2585,33 @@ return true;
 }
 }
 const pic=lower.match(/^(?:make|create|generate|draw)\s+(?:me\s+)?(?:a\s+)?(?:picture|image|photo)\s+(?:of\s+)?(.+)$/);
-if(pic){onTab('Image',()=>{setVal('imgPrompt',pic[1]);press('genFree');});say('Making that picture.');return true;}
+if(pic){onTab('Image',()=>{setVal('imgPrompt',pic[1]);press('genFree');});say('The Image tab is making a picture of '+pic[1]+'.');return true;}
 const song=lower.match(/^(?:make|create|compose|generate)\s+(?:me\s+)?(?:a\s+)?(?:song|track|piece of music)(?:\s+(?:about|of|for)\s+)?(.*)$/);
 if(song){
 const sec=(lower.match(/(\d+)\s+seconds?/)||[])[1];
 onTab('Music',()=>{if(song[1])setVal('musicPrompt',song[1]);if(sec)setVal('musicDuration',sec);press('musicGenBtn');});
-say('Composing.');
+say('The Music tab is making that song.');
 return true;
 }
 const vid=lower.match(/^(?:make|create|generate)\s+(?:me\s+)?(?:a\s+)?video\s+(?:of|about\s+)?(.*)$/);
 if(vid&&!/\b(call|chat)\b/.test(lower)){
 const sec=(lower.match(/(\d+)\s+seconds?/)||[])[1];
 onTab('Video',()=>{if(vid[1])setVal('videoPrompt',vid[1]);if(sec)setVal('videoSeconds',sec);press('videoGen');});
-say('Making that video.');
+say('The Video tab is making that clip.');
 return true;
 }
 if(/^(?:open\s+)?youtube\.com$/.test(lower)){onTab('YouTube',()=>press('ytSite'));say('Opening YouTube.');return true;}
 const yt=lower.match(/^play\s+(.+?)\s+on\s+youtube$/)||lower.match(/^(?:search\s+)?(?:on\s+)?youtube(?:\s+for)?\s+(.+)$/);
-if(yt){const q=yt[1].replace(/^for\s+/,'');onTab('YouTube',()=>{setVal('ytSearch',q);press('ytGo');});say('Searching YouTube.');return true;}
+if(yt){const q=yt[1].replace(/^for\s+/,'');onTab('YouTube',()=>{setVal('ytSearch',q);press('ytGo');});say('YouTube is open, searching for '+q+'.');return true;}
 if(/^open spotify(?:\.com)?$/.test(lower)){onTab('Spotify',()=>press('spotifyPop'));say('Opening Spotify.');return true;}
 const sp=lower.match(/^(?:play|search)\s+(.+?)\s+on\s+spotify$/);
-if(sp){onTab('Spotify',()=>{setVal('spotifyInput',sp[1]);press('spotifySave');});say('Opening Spotify.');return true;}
+if(sp){onTab('Spotify',()=>{setVal('spotifyInput',sp[1]);press('spotifySave');});say('Spotify is open for '+sp[1]+'.');return true;}
 const web=lower.match(/^(?:browse|open (?:the )?(?:site|website|page))\s+(.+)$/);
 if(web){
 let url=web[1].trim();
 if(!/^https?:\/\//i.test(url))url='https://'+url.replace(/\s+/g,'');
 onTab('Browser',()=>{setVal('bUrl',url);press('bGo');});
-say('Opening that page.');
+say('The browser is open at '+url+'.');
 return true;
 }
 const search=lower.match(/^(?:search|look up)\s+(?:on\s+)?(google|bing|wikipedia|wiki|duckduckgo|duck duck go)?\s*(?:for\s+)?(.+)$/);
@@ -2619,17 +2619,19 @@ if(search&&search[2]){
 const engine=search[1]||'';
 const btn=engine.startsWith('google')?'searchGoogle':engine.startsWith('bing')?'searchBing':engine.startsWith('wiki')?'searchWiki':'searchDDG';
 onTab('Search',()=>{setVal('searchQ',search[2]);press(btn);});
-say('Searching.');
+say('Search is open for '+search[2]+'.');
 return true;
 }
 const map=lower.match(/^(?:show\s+(?:me\s+)?)?(?:a\s+)?map\s+(?:of\s+|for\s+)?(.+)$/)||lower.match(/^directions\s+to\s+(.+)$/);
-if(map){onTab('Maps',()=>{setVal('mapSearch',map[1]);press('mapGo');});say('Opening the map.');return true;}
+if(map){onTab('Maps',()=>{setVal('mapSearch',map[1]);press('mapGo');});say('The map is open for '+map[1]+'.');return true;}
 if(/^(?:show|open|check|get)\s+(?:the\s+)?(?:weather|forecast)$/.test(lower)||/^what'?s the weather\b/.test(lower)){onTab('Weather',()=>{});say('Here is the weather.');return true;}
 const calc=lower.match(/^(?:calculate|compute|what is|what's)\s+(.+)$/);
 if(calc&&/\d/.test(calc[1])&&/(?:\b(?:plus|minus|times|divided|over)\b|\d\s*[-+*/x]\s*\d)/.test(calc[1])){
 const expr=wordsToMath(calc[1]);
+let n='';
+try{if(/^[\d+\-*/().\s]+$/.test(expr))n=String(Function('"use strict";return ('+expr+')')());}catch(e){}
 onTab('Calculator',()=>{window.cv=expr;if(typeof window.ce==='function')window.ce();});
-say('Here you go.');
+say(n?('The answer is '+n+'.'):'The calculator is open.');
 return true;
 }
 const alarm=lower.match(/^(?:set|add|create)\s+(?:an?\s+)?alarm\s+(?:for\s+)?(.+)$/);
@@ -2674,7 +2676,7 @@ if(codeLang){onTab('Code Lab',()=>{pickOption('codeLang',codeLang[1]);});say('La
 const codeMode=lower.match(/^(?:set\s+)?code\s*lab\s+(?:mode\s+)?(?:to\s+)?(generate|explain|fix|convert)$/);
 if(codeMode){onTab('Code Lab',()=>{pickOption('codeMode',codeMode[1]);});say(codeMode[1]);return true;}
 const code=lower.match(/^(?:write|make|generate)\s+(?:some\s+)?(?:python\s+|javascript\s+|html\s+)?code\s+(?:for|to|that)\s+(.+)$/);
-if(code){onTab('Code Lab',()=>{setVal('codePrompt',code[1]);press('genCode');});say('Writing that.');return true;}
+if(code){onTab('Code Lab',()=>{setVal('codePrompt',code[1]);press('genCode');});say('Code Lab is writing that.');return true;}
 if(/^run (?:the )?code$/.test(lower)){onTab('Code Lab',()=>press('runCode'));say('Running it.');return true;}
 if(/^copy (?:the )?code$/.test(lower)){onTab('Code Lab',()=>press('copyCode'));say('Copied.');return true;}
 if(/^download (?:the )?code$/.test(lower)){onTab('Code Lab',()=>press('downloadCode'));say('Downloading.');return true;}
@@ -2758,7 +2760,7 @@ document.getElementById('chatInput').value=raw;
 document.getElementById('chatSend').click();
 }
 const CHAT_MODE_PROMPTS={
-collaborator:'You are EVE. Every reply is your own. You write working code, stories, scripts, articles, and song lyrics in the chat when asked. You also plan images, music, and video in concrete detail: subject, look, length, and what happens. Do the piece itself. If weather numbers are in this message, say them. Never say you cannot show the weather. Do not answer with an outline, a list of tips, or a claim that another tab will do it. Use their notes and PDFs when a fact there changes the answer. Do not invent personal facts. Do not open with Certainly or say you would be happy to help.',
+collaborator:'You are EVE. Every reply is your own. You write working code, stories, scripts, articles, and song lyrics in the chat when asked. You also plan images, music, and video in concrete detail. If weather, a map place, search results, a calculation, a list, notes, or an alarm is in this message, say those facts. If a picture, song, video, page, or search was already started in a tab, say that it is there. Never say you cannot show it in chat. Do not answer with an outline or a list of tips instead of the work. Use their notes and PDFs when a fact there changes the answer. Do not invent personal facts. Do not open with Certainly or say you would be happy to help.',
 support:"You are EVE in Support & Reflection mode. You are sitting in a real conversation. Reflect the specific thing they just said, in their words, before you add anything. Stay with that, not with a general feeling. You are not a therapist, a counselor, or any licensed professional, and you never imply otherwise. Do not diagnose, do not label what they describe with a clinical term they have not used, and do not present yourself as a substitute for real professional support. If they describe something serious or ongoing, gently encourage them to talk to a real mental health professional. If they mention anything suggesting a safety risk to themselves or others, stay calm, take that seriously, and clearly encourage them to contact a crisis line or emergency services. In the US that is 988. Do not carry on as if it were an ordinary chat. Otherwise ask one question about the detail they actually brought up. Never reply with only that you are here or that you are listening. Do not hand them a plan or a list.",
 spicy:"You are EVE in Spicy mode, flirting with someone you like. React to the actual thing they just said and tease that, not a generic compliment. Stay warm and PG-13. Never describe a sexual act or use graphic sexual language. If they push that way, deflect with humor. Use a detail from their message. Ask one playful question about that detail. Do not turn it into a work meeting unless they ask. Do not say you are here for them."
 };
@@ -2766,8 +2768,8 @@ function chatModeInstructions(mode, already){
 const memory='The section "What you already know about them" is memory from their PDFs, notes, and projects. Treat it as fact about the user and their work. When a full PDF is included, read that whole document and answer from any part of it, not only the beginning. Use it when it answers what they just said. Do not say you have no memory or no documents when that section has text. Do not add facts that are not written there.';
 if(mode==='support')return memory+' Stay in this conversation. Do not open another part of the app and do not add an ACTION line.';
 if(mode==='spicy')return memory+' Stay playful. Do not add an ACTION line unless they clearly ask you to open something.';
-if(already)return 'A finished action is listed below, including any weather numbers. Say those facts in the chat. If the weather is there, read the temperature and conditions. Never say you cannot show the weather or that it is only in another tab. Do not add an ACTION line.';
-return 'Their notes and PDFs are included below when they match. Use a fact from them when it changes the answer, and do not invent other facts about the person. For a work question, answer the question itself. If live weather numbers are in this message, say them. Do not say you cannot show the weather. When they want a search, a map, a video, a picture, or another section that is not already done, finish with exactly one line and nothing after it: ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
+if(already)return 'A finished action is listed below. Those facts are already on screen. Say them in the chat. That includes weather, maps, search hits, math, lists, notes, alarms, and anything the tab just opened. Never say you cannot show it, cannot display it, or that it is only in another tab. Do not add an ACTION line.';
+return 'Their notes and PDFs are included below when they match. Use a fact from them when it changes the answer, and do not invent other facts about the person. For a work question, answer the question itself. If live weather, map, search, or math facts are in this message, say them. Never say you cannot show those facts. Only add an ACTION line if that work is not already done: ACTION: search QUERY | ACTION: map PLACE | ACTION: youtube QUERY | ACTION: image DESCRIPTION | ACTION: open TAB.';
 }
 const chatModeSelect=document.getElementById('chatModeSelect');
 chatModeSelect.value=localStorage.getItem('eve_chat_mode')||'collaborator';
@@ -2781,41 +2783,62 @@ updateChatModeNote();
 const chatContextToggle=document.getElementById('chatContextToggle');
 chatContextToggle.checked=localStorage.getItem('eve_chat_context')==='1';
 chatContextToggle.onchange=()=>localStorage.setItem('eve_chat_context',chatContextToggle.checked?'1':'0');
+async function wikiHits(q){
+q=String(q||'').replace(/[?.!]+$/,'').trim();
+if(!q||!navigator.onLine)return '';
+try{
+const res=await fetch('https://en.wikipedia.org/w/api.php?action=opensearch&search='+encodeURIComponent(q)+'&limit=3&namespace=0&format=json&origin=*',{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+const titles=res[1]||[], blurbs=res[2]||[], links=res[3]||[];
+const lines=titles.map((t,i)=>t+(blurbs[i]?': '+blurbs[i]:'')+(links[i]?' '+links[i]:'')).filter(Boolean);
+return lines.length?lines.join('\n'):'';
+}catch(e){return '';}
+}
+async function namedPlace(q){
+q=String(q||'').replace(/[?.!]+$/,'').trim();
+if(!q||!navigator.onLine)return '';
+try{
+const res=await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q)+'&limit=1',{headers:{'Accept':'application/json'},signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+if(res[0]&&res[0].display_name)return res[0].display_name+' ('+res[0].lat+', '+res[0].lon+')';
+}catch(e){}
+return '';
+}
 async function gatherLiveContext(txt){
 const bits=[];
 const lower=txt.toLowerCase();
 if(!navigator.onLine){
 if(/\b(weather|forecast|temperature|how hot|how cold)\b/.test(lower)){
 const saved=localStorage.getItem('eve_weather_line');
-if(saved)bits.push('Last saved weather: '+saved);
+if(saved&&saved!=='--°F')bits.push('Last saved weather: '+saved);
 }
 return bits.join('\n\n');
 }
 if(/\b(weather|forecast|temperature|how hot|how cold)\b/.test(lower)){
 try{
-const d=await fetch('https://api.open-meteo.com/v1/forecast?latitude=28.5494&longitude=-81.7729&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto',{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
-const c=d.current;
-bits.push('Live weather for Clermont, Florida: '+Math.round(c.temperature_2m)+'°F, feels like '+Math.round(c.apparent_temperature)+'°F, wind '+Math.round(c.wind_speed_10m)+' mph.');
-localStorage.setItem('eve_weather_line',Math.round(c.temperature_2m)+'°F');
-}catch(e){}
+const saved=JSON.parse(localStorage.getItem('eve_weather_raw')||'');
+let line=weatherFromData(saved&&saved.d);
+if(!line){
+const d=await fetch('https://api.open-meteo.com/v1/forecast?latitude=28.5494&longitude=-81.7729&current=temperature_2m,apparent_temperature,precipitation,wind_speed_10m,weather_code,uv_index&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto',{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
+line=weatherFromData(d);
+if(line){
+localStorage.setItem('eve_weather_line',Math.round(d.current.temperature_2m)+'°F '+wIcon(d.current.weather_code));
+try{localStorage.setItem('eve_weather_raw',JSON.stringify({at:Date.now(),d}));}catch(e){}
+}
+}
+if(line)bits.push('Live weather for Clermont, Florida: '+line);
+}catch(e){
+const saved=localStorage.getItem('eve_weather_line');
+if(saved&&saved!=='--°F')bits.push('Last saved weather: '+saved);
+}
 }
 const place=txt.match(/\b(?:map|maps|where is|directions to)\s+(.+)/i);
 if(place){
-const q=place[1].replace(/[?.!]+$/,'').trim();
-try{
-const res=await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q)+'&limit=1',{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
-if(res[0])bits.push('Live map result for '+q+': '+res[0].display_name+' ('+res[0].lat+', '+res[0].lon+').');
-}catch(e){}
+const hit=await namedPlace(place[1]);
+if(hit)bits.push('Live map result: '+hit);
 }
 const look=txt.match(/\b(?:search|look up|google|who is|what is|tell me about)\s+(.+)/i);
-if(look){
-const q=look[1].replace(/[?.!]+$/,'').trim();
-try{
-const res=await fetch('https://en.wikipedia.org/w/api.php?action=opensearch&search='+encodeURIComponent(q)+'&limit=3&namespace=0&format=json&origin=*',{signal:AbortSignal.timeout(5000)}).then(r=>r.json());
-const titles=res[1]||[], blurbs=res[2]||[], links=res[3]||[];
-const lines=titles.map((t,i)=>t+(blurbs[i]?': '+blurbs[i]:'')+(links[i]?' '+links[i]:'')).filter(Boolean);
-if(lines.length)bits.push('Live reference results for "'+q+'":\n'+lines.join('\n'));
-}catch(e){}
+if(look&&!/\b(?:what is|what's)\s+[\d]/.test(lower)){
+const hits=await wikiHits(look[1]);
+if(hits)bits.push('Live search results:\n'+hits);
 }
 return bits.join('\n\n');
 }
@@ -3126,19 +3149,23 @@ if(/^[\d+\-*/().\s]+$/.test(expr)&&/\d/.test(expr)){
 try{
 const n=Function('"use strict";return ('+expr+')')();
 switchTab('Calculator');
-return String(n);
+return 'The answer is '+n+'.';
 }catch(e){}
 }
 }
 const search=lower.match(/^(?:search|look up)\s+(?:for\s+)?(.+)$/);
 if(search&&search[1]){
-applyEveAction('ACTION: search '+search[1]);
-return 'Searching for '+search[1]+'.';
+const q=search[1].replace(/[?.!]+$/,'').trim();
+applyEveAction('ACTION: search '+q);
+const hits=await wikiHits(q);
+return hits?('Search is open. Results to tell them:\n'+hits):('Search is open for '+q+'.');
 }
 const map=lower.match(/^(?:show\s+(?:me\s+)?)?(?:a\s+)?map\s+(?:of\s+|for\s+)?(.+)$/)||lower.match(/^directions\s+to\s+(.+)$/);
 if(map){
-applyEveAction('ACTION: map '+map[1]);
-return 'Map of '+map[1]+'.';
+const q=map[1].replace(/[?.!]+$/,'').trim();
+applyEveAction('ACTION: map '+q);
+const hit=await namedPlace(q);
+return hit?('The map is open. Place to tell them: '+hit):('The map is open for '+q+'.');
 }
 if(/^(?:what(?:'s| is) the time|what time is it|what(?:'s| is) today)$/.test(lower))return new Date().toLocaleString();
 const open=lower.match(/^(?:open|go to|switch to|show)\s+(?:the\s+)?(.+?)(?:\s+tab)?$/);
@@ -3179,6 +3206,12 @@ try{const know=await memoryFor(txt);if(know)sysPrompt+='\n\nWhat you already kno
 const history=[{role:'system',content:sysPrompt},...chat.filter(m=>m.text&&(m.role==='user'||(!isJunkReply(m.text)&&!isHollowChat(m.text,'')))).slice(-16).map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}))];
 const temp=mode==='support'?0.7:mode==='spicy'?0.95:0.85;
 full=await aiStream(history,{maxTokens:1400,temperature:temp,feature:'chat',wait:30000},(partial)=>{chat[idx].text=partial;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();});
+if(full&&(actionNote||live)&&/can(?:not|'t)\s+(?:show|display|open)|only (?:in|on) (?:the )?(?:weather|search|map|image|tab)|unable to (?:show|display)/i.test(full)){
+try{
+const again=await aiStream(history.concat([{role:'assistant',content:full},{role:'user',content:'The facts are already in your instructions. Say them. Do not say you cannot show this.'}]),{maxTokens:900,temperature:0.4,feature:'chat',wait:20000},(partial)=>{chat[idx].text=partial;localStorage.setItem('eve_chat',JSON.stringify(chat));renderChat();});
+if(again&&!/can(?:not|'t)\s+(?:show|display)/i.test(again))full=again;
+}catch(e){}
+}
 if(full){
 const actionRe=/ACTION:\s*(weather|search|map|youtube|image|open)\s*([^\n]*)/ig;
 if(mode==='collaborator'){
